@@ -12,7 +12,6 @@ import banco_dados
 
 app = FastAPI(title="Facturación y ERP SIFEN PY")
 
-# Cria as pastas necessárias
 if not os.path.exists("notas_pdf"): os.makedirs("notas_pdf")
 if not os.path.exists("certificados"): os.makedirs("certificados")
 
@@ -38,36 +37,47 @@ class DadosNota(BaseModel):
     valor_total: float
     itens: List[ItemNota]
 
+# NOVO: Modelo para a Categoria
+class CategoriaNova(BaseModel):
+    nome: str
+
+# --- ROTAS DE CATEGORIAS (NOVO) ---
+@app.post("/cadastrar-categoria")
+def cadastrar_categoria(cat: CategoriaNova):
+    sucesso = banco_dados.cadastrar_categoria(cat.nome.strip())
+    if sucesso:
+        return {"mensaje": "Categoría creada con éxito"}
+    raise HTTPException(status_code=400, detail="Esta categoría ya existe")
+
+@app.get("/listar-categorias")
+def listar_categorias():
+    return banco_dados.listar_categorias()
+
+@app.delete("/deletar-categoria/{id_categoria}")
+def deletar_categoria(id_categoria: int):
+    banco_dados.deletar_categoria(id_categoria)
+    return {"mensaje": "Categoría eliminada"}
+
 # --- ROTAS DE CONFIGURAÇÃO DA EMPRESA ---
 @app.get("/obter-configuracao")
 def obter_configuracao():
     return banco_dados.obter_configuracao()
 
 @app.post("/salvar-configuracao")
-def salvar_configuracao(
-    nome_empresa: str = Form(...), 
-    ruc: str = Form(...), 
-    endereco: str = Form(""), 
-    senha_certificado: str = Form("")
-):
+def salvar_configuracao(nome_empresa: str = Form(...), ruc: str = Form(...), endereco: str = Form(""), senha_certificado: str = Form("")):
     banco_dados.salvar_configuracao_texto(nome_empresa, ruc, endereco, senha_certificado)
-    return {"mensaje": "Datos de la empresa guardados con éxito"}
+    return {"mensaje": "Datos guardados"}
 
 @app.post("/upload-certificado")
 def upload_certificado(arquivo: UploadFile = File(...)):
-    if not arquivo.filename.endswith(('.p12', '.pfx')):
-        raise HTTPException(status_code=400, detail="Formato inválido. Use .p12 o .pfx")
-    
-    # Salva o arquivo na pasta 'certificados'
+    if not arquivo.filename.endswith(('.p12', '.pfx')): raise HTTPException(status_code=400, detail="Formato inválido.")
     caminho_destino = f"certificados/{arquivo.filename}"
-    with open(caminho_destino, "wb") as buffer:
-        shutil.copyfileobj(arquivo.file, buffer)
-    
-    # Grava o caminho no banco de dados
+    with open(caminho_destino, "wb") as buffer: shutil.copyfileobj(arquivo.file, buffer)
     banco_dados.salvar_caminho_certificado(caminho_destino)
-    return {"mensaje": "Certificado digital subido y vinculado con éxito"}
+    return {"mensaje": "Certificado digital subido"}
 
-# --- ROTAS DE ESTOQUE E VENDAS (MANTIDAS) ---
+
+# --- ROTAS DE ESTOQUE E VENDAS ---
 @app.post("/cadastrar-produto")
 def cadastrar_produto(produto: ProdutoNovo):
     banco_dados.cadastrar_produto(
@@ -106,8 +116,7 @@ def emitir_nota(dados: DadosNota):
 @app.get("/baixar-pdf/{id_nota}")
 def baixar_pdf(id_nota: str):
     caminho = f"notas_pdf/nota_{id_nota}.pdf"
-    if os.path.exists(caminho):
-        return FileResponse(caminho, media_type='application/pdf', filename=f"Factura_{id_nota}.pdf")
+    if os.path.exists(caminho): return FileResponse(caminho, media_type='application/pdf', filename=f"Factura_{id_nota}.pdf")
     raise HTTPException(status_code=404, detail="PDF no encontrado")
 
 @app.get("/listar-notas")

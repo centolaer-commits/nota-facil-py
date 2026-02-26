@@ -17,7 +17,7 @@ cursor.execute('''
     )
 ''')
 
-# 2. Tabela de Produtos (Com Categorias)
+# 2. Tabela de Produtos (A categoria agora vai puxar o nome exato do banco)
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS produtos (
         codigo_barras TEXT PRIMARY KEY,
@@ -30,7 +30,7 @@ cursor.execute('''
     )
 ''')
 
-# 3. NOVA Tabela de Configuração da Empresa (Obriga a ter apenas o ID 1)
+# 3. Tabela de Configuração da Empresa
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS empresa (
         id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -41,28 +41,53 @@ cursor.execute('''
         caminho_certificado TEXT
     )
 ''')
-# Insere dados padrão se a tabela estiver vazia
 cursor.execute('INSERT OR IGNORE INTO empresa (id, nome_empresa, ruc) VALUES (1, "Mi Empresa S.A.", "80012345-6")')
 
+# 4. NOVA: Tabela de Categorias
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS categorias (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT UNIQUE NOT NULL
+    )
+''')
+cursor.execute('INSERT OR IGNORE INTO categorias (nome) VALUES ("General")')
+
 conexao.commit()
+
+# --- FUNÇÕES DE CATEGORIAS (NOVO) ---
+def cadastrar_categoria(nome):
+    try:
+        cursor.execute('INSERT INTO categorias (nome) VALUES (?)', (nome,))
+        conexao.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False # Retorna falso se já existir uma categoria com esse nome
+
+def listar_categorias():
+    cursor.execute('SELECT id, nome FROM categorias ORDER BY nome ASC')
+    linhas = cursor.fetchall()
+    return [{"id": l[0], "nome": l[1]} for l in linhas]
+
+def deletar_categoria(id_categoria):
+    cursor.execute('DELETE FROM categorias WHERE id = ?', (id_categoria,))
+    conexao.commit()
+
 
 # --- FUNÇÕES DE CONFIGURAÇÃO DA EMPRESA ---
 def obter_configuracao():
     cursor.execute('SELECT nome_empresa, ruc, endereco, senha_certificado, caminho_certificado FROM empresa WHERE id = 1')
     linha = cursor.fetchone()
-    if linha:
-        return {"nome_empresa": linha[0], "ruc": linha[1], "endereco": linha[2], "senha_certificado": linha[3], "caminho_certificado": linha[4]}
+    if linha: return {"nome_empresa": linha[0], "ruc": linha[1], "endereco": linha[2], "senha_certificado": linha[3], "caminho_certificado": linha[4]}
     return None
 
 def salvar_configuracao_texto(nome, ruc, endereco, senha):
-    cursor.execute('''
-        UPDATE empresa SET nome_empresa = ?, ruc = ?, endereco = ?, senha_certificado = ? WHERE id = 1
-    ''', (nome, ruc, endereco, senha))
+    cursor.execute('UPDATE empresa SET nome_empresa = ?, ruc = ?, endereco = ?, senha_certificado = ? WHERE id = 1', (nome, ruc, endereco, senha))
     conexao.commit()
 
 def salvar_caminho_certificado(caminho):
     cursor.execute('UPDATE empresa SET caminho_certificado = ? WHERE id = 1', (caminho,))
     conexao.commit()
+
 
 # --- FUNÇÕES DE ESTOQUE ---
 def cadastrar_produto(codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade):
@@ -80,8 +105,7 @@ def listar_produtos():
 def buscar_produto_por_codigo(codigo_barras):
     cursor.execute('SELECT * FROM produtos WHERE codigo_barras = ?', (codigo_barras,))
     l = cursor.fetchone()
-    if l:
-        return {"descricao": l[1], "preco_venda": l[5]}
+    if l: return {"descricao": l[1], "preco_venda": l[5]}
     return None
 
 def atualizar_estoque(codigo_barras, quantidade_vendida):
@@ -91,6 +115,7 @@ def atualizar_estoque(codigo_barras, quantidade_vendida):
 def deletar_produto(codigo_barras):
     cursor.execute('DELETE FROM produtos WHERE codigo_barras = ?', (codigo_barras,))
     conexao.commit()
+
 
 # --- FUNÇÕES DE VENDAS ---
 def salvar_nota(ruc, cliente, valor, cdc, itens):
@@ -103,9 +128,7 @@ def salvar_nota(ruc, cliente, valor, cdc, itens):
     conexao.commit()
 
 def listar_todas_notas(busca=""):
-    if busca:
-        cursor.execute("SELECT * FROM notas WHERE nome_cliente LIKE ? OR cdc LIKE ? ORDER BY id DESC", (f"%{busca}%", f"%{busca}%"))
-    else:
-        cursor.execute('SELECT * FROM notas ORDER BY id DESC')
+    if busca: cursor.execute("SELECT * FROM notas WHERE nome_cliente LIKE ? OR cdc LIKE ? ORDER BY id DESC", (f"%{busca}%", f"%{busca}%"))
+    else: cursor.execute('SELECT * FROM notas ORDER BY id DESC')
     linhas = cursor.fetchall()
     return [{"id": l[0], "nome_cliente": l[2], "valor_total": l[3], "cdc": l[4]} for l in linhas]
