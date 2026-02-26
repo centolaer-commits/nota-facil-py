@@ -1,6 +1,8 @@
 fastapi
 uvicorn
-pydantic
-requests
-qrcode[pil]
-fpdf2
+qrcode
+reportlab
+cryptography
+signxml
+lxml
+python-multipart
