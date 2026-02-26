@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema ERP & SIFEN - Facturación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .menu-ativo { background-color: #e5e7eb; border-left: 4px solid #2563eb; color: #1d4ed8; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans h-screen overflow-hidden">
+
+    <div id="login-screen" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-96 text-center">
+            <h1 class="text-2xl font-bold text-blue-700 mb-6">🔒 Acceso al Sistema</h1>
+            <input type="password" id="senha" placeholder="Contraseña (admin123)" class="w-full border p-3 rounded mb-4 text-center">
+            <button onclick="fazerLogin()" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700">Ingresar</button>
+            <p id="erro-login" class="text-red-500 mt-2 hidden">Contraseña incorrecta</p>
+        </div>
+    </div>
+
+    <div id="app-screen" class="hidden flex h-full">
+        
+        <div class="w-64 bg-white shadow-lg h-full flex flex-col justify-between">
+            <div>
+                <div class="p-6 text-center border-b">
+                    <h2 class="text-2xl font-extrabold text-blue-700">ERP Fácil PY</h2>
+                    <p class="text-xs text-gray-500 mt-1">Soporte SIFEN e-Kuatia</p>
+                </div>
+                <nav class="mt-4 flex flex-col">
+                    <button onclick="mudarTela('pos', this)" class="nav-btn menu-ativo p-4 text-left hover:bg-gray-50 transition">🛒 Punto de Venta</button>
+                    <button onclick="mudarTela('inventario', this)" class="nav-btn p-4 text-left hover:bg-gray-50 transition">📦 Inventario y Stock</button>
+                    <button onclick="mudarTela('reportes', this)" class="nav-btn p-4 text-left hover:bg-gray-50 transition">📊 Reportes y Ventas</button>
+                    <button onclick="mudarTela('config', this)" class="nav-btn p-4 text-left hover:bg-gray-50 transition">⚙️ Configuración</button>
+                </nav>
+            </div>
+            <div class="p-4 border-t">
+                <button onclick="window.location.reload()" class="w-full text-red-500 hover:text-red-700 text-left p-2 font-bold">🚪 Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <div class="flex-1 p-8 overflow-y-auto">
+            
+            <div id="tela-pos" class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md section-tela">
+                <h1 class="text-2xl font-bold text-blue-700 mb-6">Emisión de Factura</h1>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <input type="text" id="ruc" class="border p-2 rounded bg-gray-100 text-gray-500 font-bold" readonly title="Configurado en Ajustes">
+                    <input type="text" id="cliente" class="border p-2 rounded" placeholder="Nombre o RUC del Cliente Comprador">
+                </div>
+                
+                <div class="border p-4 rounded bg-gray-50 mb-4 shadow-inner">
+                    <input type="text" id="scanner-barras" placeholder="||||| Escanear Código de Barras aquí..." class="w-full border-2 border-yellow-400 bg-yellow-50 p-4 rounded text-center text-lg font-bold focus:outline-none focus:border-blue-500 mb-4" onkeypress="verificarScanner(event)">
+                    <div id="lista-produtos" class="space-y-2 mb-3 max-h-48 overflow-y-auto"></div>
+                    <div class="flex gap-2 border-t border-gray-200 pt-4 mt-2">
+                        <input type="text" id="manual-desc" placeholder="Descripción manual (ej: Servicio)" class="border p-3 rounded w-1/2 text-sm focus:outline-none focus:border-blue-500">
+                        <input type="number" id="manual-qtd" placeholder="Cant." value="1" class="border p-3 rounded w-1/4 text-sm focus:outline-none focus:border-blue-500">
+                        <input type="number" id="manual-preco" placeholder="Precio Uni." class="border p-3 rounded w-1/4 text-sm focus:outline-none focus:border-blue-500">
+                        <button onclick="adicionarManual()" class="bg-gray-800 text-white px-5 rounded font-bold hover:bg-gray-900 transition shadow">+</button>
+                    </div>
+                </div>
+
+                <div class="text-2xl font-bold text-right mb-6 text-green-700">Total: Gs. <span id="valor-total-tela">0</span></div>
+                <button onclick="emitirNota()" class="w-full bg-green-500 text-white font-bold py-4 text-xl rounded-lg hover:bg-green-600 shadow-lg transition">🚀 Emitir Factura y Descontar Stock</button>
+                
+                <div id="resultado" class="mt-6 hidden text-center border-t pt-4 bg-green-50 rounded p-4">
+                    <h2 class="text-xl font-bold text-green-600">✅ ¡Factura Aprobada!</h2>
+                    <img id="qrcode-img" src="" class="mx-auto mt-2 w-40 h-40 border p-2 bg-white">
+                    <a id="btn-pdf" href="#" target="_blank" class="inline-block mt-4 bg-red-500 text-white px-8 py-3 rounded font-bold hover:bg-red-600 shadow-md">📄 Descargar PDF</a>
+                </div>
+            </div>
+
+            <div id="tela-inventario" class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-md section-tela hidden">
+                <h1 class="text-2xl font-bold text-gray-800 mb-6">Control de Inventario</h1>
+                <div class="bg-blue-50 p-6 rounded-lg border border-blue-100 mb-8 shadow-sm">
+                    <h3 class="font-bold text-blue-800 mb-4 border-b border-blue-200 pb-2">➕ Añadir / Editar Producto</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                        <div class="md:col-span-1"><label class="text-xs font-bold text-gray-600">Código de Barras *</label><input type="text" id="novo-cod" class="w-full border p-2 rounded"></div>
+                        <div class="md:col-span-3"><label class="text-xs font-bold text-gray-600">Descripción del Producto *</label><input type="text" id="novo-desc" class="w-full border p-2 rounded"></div>
+                        <div class="md:col-span-2"><label class="text-xs font-bold text-gray-600">Categoría</label><input type="text" id="novo-cat" class="w-full border p-2 rounded"></div>
+                        <div class="md:col-span-2"><label class="text-xs font-bold text-gray-600">Sub-categoría</label><input type="text" id="novo-subcat" class="w-full border p-2 rounded"></div>
+                        <div class="md:col-span-1"><label class="text-xs font-bold text-gray-600">Precio Costo (Gs) *</label><input type="number" id="novo-custo" class="w-full border p-2 rounded" placeholder="0" oninput="calcularLucro()"></div>
+                        <div class="md:col-span-1"><label class="text-xs font-bold text-gray-600">Precio Venta (Gs) *</label><input type="number" id="novo-preco" class="w-full border p-2 rounded" placeholder="0" oninput="calcularLucro()"><div id="info-lucro" class="h-4 mt-1"></div></div>
+                        <div class="md:col-span-1"><label class="text-xs font-bold text-gray-600">Stock Inicial *</label><input type="number" id="novo-qtd" class="w-full border p-2 rounded" placeholder="0"></div>
+                        <div class="md:col-span-1 pt-5"><button onclick="cadastrarProduto()" class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 shadow">Guardar</button></div>
+                    </div>
+                </div>
+                <div class="border rounded-lg overflow-hidden shadow-sm">
+                    <table class="w-full text-left bg-white">
+                        <thead class="bg-gray-800 text-white"><tr><th class="p-3 text-sm">Cód. / Detalles</th><th class="p-3 text-sm">Categoría</th><th class="p-3 text-sm text-right">Finanzas</th><th class="p-3 text-sm text-center">Stock</th><th class="p-3 text-sm text-center">Acción</th></tr></thead>
+                        <tbody id="tabela-estoque" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tela-reportes" class="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-md section-tela hidden">
+                <h1 class="text-2xl font-bold text-gray-800 mb-6">Historial de Ventas SIFEN</h1>
+                <div class="flex gap-2 mb-4"><input type="text" id="busca" placeholder="Buscar por cliente o CDC..." class="w-full border p-3 rounded bg-gray-50 focus:bg-white" onkeyup="buscarNotas()"></div>
+                <div class="border rounded overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-100"><tr><th class="p-3">Cliente / CDC</th><th class="p-3 text-right">Total (Gs)</th></tr></thead>
+                        <tbody id="tabela-historico" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tela-config" class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md section-tela hidden">
+                <h1 class="text-2xl font-bold text-gray-800 mb-6">Ajustes de la Empresa y SIFEN</h1>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4 border-r pr-6">
+                        <h3 class="font-bold text-blue-700 border-b pb-2">1. Datos Fiscales</h3>
+                        <div><label class="text-sm font-bold text-gray-600">Nombre de la Empresa</label><input type="text" id="conf-nome" class="w-full border p-2 rounded mt-1"></div>
+                        <div><label class="text-sm font-bold text-gray-600">RUC Emisor</label><input type="text" id="conf-ruc" class="w-full border p-2 rounded mt-1"></div>
+                        <div><label class="text-sm font-bold text-gray-600">Dirección</label><input type="text" id="conf-endereco" class="w-full border p-2 rounded mt-1"></div>
+                        <div>
+                            <label class="text-sm font-bold text-gray-600">Contraseña del Certificado Digital (.p12)</label>
+                            <input type="password" id="conf-senha-cert" class="w-full border p-2 rounded mt-1" placeholder="••••••••">
+                            <p class="text-xs text-gray-500 mt-1">Entregada por su proveedora (E-Sign, etc.)</p>
+                        </div>
+                        <button onclick="salvarConfiguracao()" class="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 shadow mt-4">Guardar Textos</button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-blue-700 border-b pb-2">2. Certificado Digital (e-Kuatia)</h3>
+                        <div class="border-2 border-dashed border-gray-300 p-6 rounded-lg text-center bg-gray-50">
+                            <p class="text-sm text-gray-600 mb-4">Sube aquí el archivo <b>.p12</b> o <b>.pfx</b> entregado por su certificadora.</p>
+                            <input type="file" id="arquivo-cert" accept=".p12,.pfx" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4">
+                            <button onclick="fazerUploadCertificado()" class="bg-gray-800 text-white font-bold py-2 px-6 rounded hover:bg-gray-900">Subir Archivo Seguro</button>
+                        </div>
+                        <div id="status-cert" class="text-sm text-center p-2 rounded hidden"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let produtosCaixa = [];
+
+        function mudarTela(telaId, elementoBotao) {
+            document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tela-' + telaId).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo'));
+            elementoBotao.classList.add('menu-ativo');
+
+            if(telaId === 'inventario') carregarEstoque();
+            if(telaId === 'reportes') carregarHistorico();
+            if(telaId === 'config') carregarConfiguracao();
+            if(telaId === 'pos') document.getElementById('scanner-barras').focus();
+        }
+
+        async function fazerLogin() {
+            if(document.getElementById('senha').value === 'admin123') {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                document.getElementById('scanner-barras').focus();
+                
+                // Puxa as configurações do banco assim que entra!
+                await carregarConfiguracao();
+            } else {
+                document.getElementById('erro-login').classList.remove('hidden');
+            }
+        }
+
+        // --- MÓDULO: CONFIGURAÇÕES DA EMPRESA ---
+        async function carregarConfiguracao() {
+            const res = await fetch('/obter-configuracao');
+            const dados = await res.json();
+            if(dados) {
+                // Preenche a tela de configurações
+                document.getElementById('conf-nome').value = dados.nome_empresa || '';
+                document.getElementById('conf-ruc').value = dados.ruc || '';
+                document.getElementById('conf-endereco').value = dados.endereco || '';
+                document.getElementById('conf-senha-cert').value = dados.senha_certificado || '';
+                
+                // Preenche o campo RUC da tela do POS (Caixa)
+                document.getElementById('ruc').value = dados.ruc || 'Falta configurar RUC';
+                
+                const status = document.getElementById('status-cert');
+                if(dados.caminho_certificado) {
+                    status.classList.remove('hidden'); status.classList.add('bg-green-100', 'text-green-800');
+                    status.innerHTML = `✅ Certificado actual: <b>${dados.caminho_certificado.split('/').pop()}</b>`;
+                }
+            }
+        }
+
+        async function salvarConfiguracao() {
+            const formData = new FormData();
+            formData.append('nome_empresa', document.getElementById('conf-nome').value);
+            formData.append('ruc', document.getElementById('conf-ruc').value);
+            formData.append('endereco', document.getElementById('conf-endereco').value);
+            formData.append('senha_certificado', document.getElementById('conf-senha-cert').value);
+
+            const res = await fetch('/salvar-configuracao', { method: 'POST', body: formData });
+            if(res.ok) {
+                alert("✅ Datos guardados con éxito.");
+                carregarConfiguracao(); // Atualiza a tela do POS com o RUC novo
+            }
+        }
+
+        async function fazerUploadCertificado() {
+            const arquivoInput = document.getElementById('arquivo-cert');
+            if(arquivoInput.files.length === 0) return alert("Por favor, seleccione un archivo .p12");
+
+            const formData = new FormData();
+            formData.append('arquivo', arquivoInput.files[0]);
+
+            const res = await fetch('/upload-certificado', { method: 'POST', body: formData });
+            if(res.ok) {
+                alert("✅ Certificado subido de forma segura.");
+                arquivoInput.value = ''; // limpa o campo
+                carregarConfiguracao(); // atualiza o aviso visual
+            } else {
+                alert("❌ Error al subir el archivo.");
+            }
+        }
+
+        // --- AS OUTRAS FUNÇÕES MANTIVERAM-SE INTACTAS ---
+        function calcularLucro() {
+            const costo = parseFloat(document.getElementById('novo-custo').value) || 0;
+            const venta = parseFloat(document.getElementById('novo-preco').value) || 0;
+            const divInfo = document.getElementById('info-lucro');
+            if (venta > 0 && costo >= 0) {
+                const lucro = venta - costo; const margem = (lucro / venta) * 100;
+                if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}% (Gs. ${lucro.toLocaleString('es-PY')})`; divInfo.className = "text-xs text-green-600 mt-1 font-bold"; }
+                else if (lucro === 0) { divInfo.innerHTML = `Sin ganancia`; divInfo.className = "text-xs text-yellow-600 mt-1 font-bold"; }
+                else { divInfo.innerHTML = `Pérdida: Gs. ${lucro.toLocaleString('es-PY')}`; divInfo.className = "text-xs text-red-600 mt-1 font-bold"; }
+            } else { divInfo.innerHTML = ""; }
+        }
+
+        async function cadastrarProduto() {
+            const custo = parseFloat(document.getElementById('novo-custo').value) || 0;
+            const preco = parseFloat(document.getElementById('novo-preco').value) || 0;
+            const qtd = parseInt(document.getElementById('novo-qtd').value) || 0;
+            const dados = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value.trim() || "General", subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: custo, preco_venda: preco, quantidade: qtd };
+            if(!dados.codigo_barras || !dados.descricao || preco === 0) return alert("⚠️ Por favor, complete Código, Descripción y Precio Venta.");
+            try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-cat', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; carregarEstoque(); } else alert("❌ Error: Posiblemente este Código ya está registrado."); } catch (error) { alert("❌ Error de red."); }
+        }
+
+        async function deletarProduto(codigo) { if(confirm("¿Está seguro?")) { await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE' }); carregarEstoque(); } }
+
+        async function carregarEstoque() {
+            const res = await fetch('/listar-produtos'); const produtos = await res.json(); const tbody = document.getElementById('tabela-estoque'); tbody.innerHTML = '';
+            produtos.forEach(p => {
+                let corStock = p.quantidade > 5 ? 'text-green-600' : 'text-red-600 font-bold'; let lucro = p.preco_venda - p.preco_custo; let margem = p.preco_venda > 0 ? ((lucro / p.preco_venda) * 100).toFixed(1) : 0; let corLucro = lucro >= 0 ? 'text-green-600' : 'text-red-600';
+                tbody.innerHTML += `<tr class="hover:bg-gray-50 transition"><td class="p-3"><div class="font-bold text-gray-800">${p.descricao}</div><div class="text-xs text-gray-500">Cód: ${p.codigo_barras}</div></td><td class="p-3"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">${p.categoria}</span><div class="text-xs text-gray-500 mt-1">${p.subcategoria}</div></td><td class="p-3 text-right"><div class="font-semibold text-gray-800">Venta: Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-xs text-gray-500">Costo: Gs. ${p.preco_custo.toLocaleString('es-PY')}</div><div class="text-xs font-bold ${corLucro}">GP: ${margem}%</div></td><td class="p-3 text-center ${corStock}">${p.quantidade} und</td><td class="p-3 text-center"><button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded">🗑️</button></td></tr>`;
+            });
+        }
+
+        async function verificarScanner(event) { if(event.key === 'Enter') { const input = document.getElementById('scanner-barras'); const codigo = input.value.trim(); if(!codigo) return; try { const res = await fetch(`/buscar-produto/${codigo}`); if(res.ok) { const produto = await res.json(); produtosCaixa.push({ codigo_barras: codigo, descricao: produto.descricao, quantidade: 1, preco_unitario: produto.preco }); atualizarInterfaceCaixa(); } else alert("⚠️ Producto no encontrado."); } catch(e) { console.error(e); } input.value = ''; } }
+
+        function adicionarManual() {
+            const desc = document.getElementById('manual-desc').value.trim(); const qtd = parseInt(document.getElementById('manual-qtd').value) || 1; const preco = parseFloat(document.getElementById('manual-preco').value) || 0;
+            if(!desc || preco <= 0) return alert("Complete la descripción y el precio.");
+            produtosCaixa.push({ codigo_barras: null, descricao: desc, quantidade: qtd, preco_unitario: preco }); atualizarInterfaceCaixa();
+            document.getElementById('manual-desc').value = ''; document.getElementById('manual-qtd').value = '1'; document.getElementById('manual-preco').value = '';
+        }
+
+        function atualizarInterfaceCaixa() {
+            const container = document.getElementById('lista-produtos'); container.innerHTML = ''; let total = 0;
+            produtosCaixa.forEach((p) => { const subtotal = p.quantidade * p.preco_unitario; total += subtotal; container.innerHTML += `<div class="bg-white p-3 border rounded flex justify-between shadow-sm items-center"><span class="font-semibold text-gray-700">${p.quantidade}x ${p.descricao}</span><span class="font-bold text-blue-700">Gs. ${subtotal.toLocaleString('es-PY')}</span></div>`; });
+            document.getElementById('valor-total-tela').innerText = total.toLocaleString('es-PY');
+        }
+
+        async function emitirNota() {
+            if(produtosCaixa.length === 0) return alert("Añada al menos un producto.");
+            const total = produtosCaixa.reduce((acc, p) => acc + (p.quantidade * p.preco_unitario), 0);
+            const btn = document.querySelector('button[onclick="emitirNota()"]'); btn.innerText = "⏳ Procesando..."; btn.disabled = true;
+            const res = await fetch('/emitir-nota', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: total, itens: produtosCaixa }) });
+            const dados = await res.json(); btn.innerText = "🚀 Emitir Factura y Descontar Stock"; btn.disabled = false;
+            if (dados.cdc) { document.getElementById('resultado').classList.remove('hidden'); document.getElementById('qrcode-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(dados.link_qrcode)}`; document.getElementById('btn-pdf').href = dados.link_pdf; produtosCaixa = []; atualizarInterfaceCaixa(); }
+        }
+
+        async function carregarHistorico(termoBusca = "") {
+            const res = await fetch(`/listar-notas?busca=${termoBusca}`); const dados = await res.json(); const tbody = document.getElementById('tabela-historico'); tbody.innerHTML = '';
+            dados.historico.forEach(nota => { tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-3 text-sm font-semibold">${nota.nome_cliente} <br><span class="text-xs text-gray-400 font-normal font-mono">CDC: ${nota.cdc.substring(0,20)}...</span></td><td class="p-3 text-right font-bold text-green-700">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td></tr>`; });
+        }
+        function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
+    </script>
+</body>
+</html>
