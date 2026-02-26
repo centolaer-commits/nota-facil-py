@@ -132,3 +132,31 @@ def listar_todas_notas(busca=""):
     else: cursor.execute('SELECT * FROM notas ORDER BY id DESC')
     linhas = cursor.fetchall()
     return [{"id": l[0], "nome_cliente": l[2], "valor_total": l[3], "cdc": l[4]} for l in linhas]
+def obter_dados_dashboard():
+    cursor.execute('SELECT valor_total, itens FROM notas')
+    notas = cursor.fetchall()
+    
+    total_vendas = 0
+    total_notas = len(notas)
+    produtos_vendidos = {}
+    
+    for nota in notas:
+        total_vendas += nota[0]
+        # Transforma o texto JSON salvo no banco de volta em lista
+        itens = json.loads(nota[1]) 
+        for item in itens:
+            nome = item.get("descricao", "Manual / Otros")
+            qtd = item.get("quantidade", 0)
+            if nome in produtos_vendidos:
+                produtos_vendidos[nome] += qtd
+            else:
+                produtos_vendidos[nome] = qtd
+                
+    # Organiza os produtos do que mais vendeu para o que menos vendeu
+    top_produtos = sorted(produtos_vendidos.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    return {
+        "total_vendas": total_vendas,
+        "total_notas": total_notas,
+        "top_produtos": [{"nome": p[0], "quantidade": p[1]} for p in top_produtos]
+    }

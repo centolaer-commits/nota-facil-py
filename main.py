@@ -78,6 +78,9 @@ def upload_certificado(arquivo: UploadFile = File(...)):
 
 
 # --- ROTAS DE ESTOQUE E VENDAS ---
+@app.get("/dados-dashboard")
+def dados_dashboard():
+    return banco_dados.obter_dados_dashboard()
 @app.post("/cadastrar-produto")
 def cadastrar_produto(produto: ProdutoNovo):
     banco_dados.cadastrar_produto(
