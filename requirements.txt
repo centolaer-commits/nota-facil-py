@@ -6,3 +6,4 @@ cryptography
 signxml
 lxml
 python-multipart
+fpdf
