@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema ERP & SIFEN - Facturación</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .menu-ativo { background-color: #eff6ff; border-left-color: #2563eb; color: #1d4ed8; font-weight: bold; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans h-screen overflow-hidden flex flex-col md:flex-row">
@@ -52,8 +55,8 @@
                             <span>📊 Reportes</span> <span id="seta-rep" class="text-xs">▼</span>
                         </button>
                         <div id="menu-rep" class="hidden flex-col bg-gray-50">
+                            <button onclick="mudarTela('dashboard', this)" class="nav-btn border-l-4 border-blue-300 w-full p-3 pl-10 text-sm text-left hover:bg-gray-200 transition">📈 Dashboard</button>
                             <button onclick="mudarTela('reportes', this)" class="nav-btn border-l-4 border-blue-300 w-full p-3 pl-10 text-sm text-left hover:bg-gray-200 transition">📜 Historial SIFEN</button>
-                            <button onclick="alert('Módulo de Dashboard en desarrollo (Fase 2)')" class="w-full p-3 pl-10 text-sm text-left text-gray-400">📈 Dashboard (Pronto)</button>
                         </div>
                     </div>
 
@@ -103,12 +106,10 @@
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 items-start">
                         <div class="md:col-span-1"><label class="text-xs font-bold text-gray-600">Código *</label><input type="text" id="novo-cod" class="w-full border p-2 rounded"></div>
                         <div class="md:col-span-3"><label class="text-xs font-bold text-gray-600">Descripción *</label><input type="text" id="novo-desc" class="w-full border p-2 rounded"></div>
-                        
                         <div class="md:col-span-2">
                             <label class="text-xs font-bold text-gray-600">Categoría</label>
                             <select id="novo-cat" class="w-full border p-2 rounded bg-white text-gray-800"></select>
                         </div>
-                        
                         <div class="md:col-span-2"><label class="text-xs font-bold text-gray-600">Sub-categoría</label><input type="text" id="novo-subcat" class="w-full border p-2 rounded"></div>
                         <div class="md:col-span-1"><label class="text-xs font-bold text-gray-600">Costo (Gs) *</label><input type="number" id="novo-custo" class="w-full border p-2 rounded" placeholder="0" oninput="calcularLucro()"></div>
                         <div class="md:col-span-1"><label class="text-xs font-bold text-gray-600">Venta (Gs) *</label><input type="number" id="novo-preco" class="w-full border p-2 rounded" placeholder="0" oninput="calcularLucro()"><div id="info-lucro" class="h-4 mt-1"></div></div>
@@ -135,6 +136,28 @@
                         <thead class="bg-gray-100"><tr><th class="p-3 text-sm text-gray-700">Categorías Disponibles en el Sistema</th><th class="p-3 text-sm text-center w-24">Acción</th></tr></thead>
                         <tbody id="tabela-categorias" class="divide-y text-sm md:text-base"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <div id="tela-dashboard" class="max-w-5xl mx-auto bg-white p-4 md:p-6 rounded-lg shadow-md section-tela hidden">
+                <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">📈 Dashboard e Indicadores</h1>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 md:mb-8">
+                    <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-6 rounded-xl shadow-lg text-white">
+                        <h3 class="text-sm font-semibold uppercase tracking-wider opacity-80">Ingresos Totales</h3>
+                        <p class="text-3xl md:text-4xl font-extrabold mt-2">Gs. <span id="dash-vendas">0</span></p>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-500 to-green-700 p-6 rounded-xl shadow-lg text-white">
+                        <h3 class="text-sm font-semibold uppercase tracking-wider opacity-80">Facturas Emitidas</h3>
+                        <p class="text-3xl md:text-4xl font-extrabold mt-2"><span id="dash-notas">0</span></p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 md:p-6 border rounded-xl shadow-sm">
+                    <h3 class="font-bold text-gray-700 mb-4 text-center text-lg">Top 5 Productos Más Vendidos</h3>
+                    <div class="relative h-64 md:h-80 w-full">
+                        <canvas id="grafico-produtos"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -176,6 +199,7 @@
 
     <script>
         let produtosCaixa = [];
+        let graficoAtual = null; // Variável para controlar o desenho do gráfico
 
         // --- SISTEMA DE MENUS E TELAS ---
         function toggleSidebar() {
@@ -186,30 +210,22 @@
         function toggleAcordeao(menuId, setaId) {
             const menu = document.getElementById(menuId);
             const seta = document.getElementById(setaId);
-            if(menu.classList.contains('hidden')) {
-                menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲';
-            } else {
-                menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼';
-            }
+            if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } 
+            else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; }
         }
 
         function mudarTela(telaId, elementoBotao) {
-            // Esconde todas as telas
             document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden'));
             document.getElementById('tela-' + telaId).classList.remove('hidden');
-            
-            // Remove a seleção visual de todos os botões do menu
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo'));
             if(elementoBotao) elementoBotao.classList.add('menu-ativo');
-
-            // Fecha o menu no celular automaticamente após clicar
             if(window.innerWidth < 768) toggleSidebar();
 
-            // Carrega dados da tela específica
             if(telaId === 'inventario') carregarEstoque();
             if(telaId === 'reportes') carregarHistorico();
             if(telaId === 'config') carregarConfiguracao();
-            if(telaId === 'categorias') carregarCategorias(); // A mágica da nova tela
+            if(telaId === 'categorias') carregarCategorias();
+            if(telaId === 'dashboard') carregarDashboard(); // Aciona a inteligência visual
             if(telaId === 'pos') document.getElementById('scanner-barras').focus();
         }
 
@@ -218,55 +234,70 @@
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-screen').classList.remove('hidden');
                 document.getElementById('app-screen').classList.add('flex');
-                document.getElementById('mobile-header').classList.remove('hidden'); // Mostra header do celular
+                document.getElementById('mobile-header').classList.remove('hidden');
                 document.getElementById('scanner-barras').focus();
                 
                 await carregarConfiguracao();
-                await carregarCategorias(); // Puxa as categorias logo no login!
+                await carregarCategorias();
             } else { document.getElementById('erro-login').classList.remove('hidden'); }
+        }
+
+        // --- MÓDULO: DASHBOARD INTELIGENTE ---
+        async function carregarDashboard() {
+            try {
+                const res = await fetch('/dados-dashboard');
+                const dados = await res.json();
+                
+                // 1. Atualiza os Cartões de Resumo
+                document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY');
+                document.getElementById('dash-notas').innerText = dados.total_notas;
+
+                // 2. Prepara os dados para o gráfico
+                const nomes = dados.top_produtos.map(p => p.nome);
+                const quantidades = dados.top_produtos.map(p => p.quantidade);
+
+                // Se não houver vendas, exibe aviso
+                if (nomes.length === 0) {
+                    nomes.push("Sin ventas"); quantidades.push(0);
+                }
+
+                const ctx = document.getElementById('grafico-produtos').getContext('2d');
+                
+                // 3. Apaga o gráfico antigo se ele existir (para não criar gráficos fantasmas)
+                if(graficoAtual) { graficoAtual.destroy(); }
+
+                // 4. Desenha o novo Gráfico de Barras com Chart.js
+                graficoAtual = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: nomes,
+                        datasets: [{
+                            label: 'Cantidad Vendida (Unidades)',
+                            data: quantidades,
+                            backgroundColor: 'rgba(37, 99, 235, 0.8)', // Azul do botão principal
+                            borderColor: 'rgba(30, 64, 175, 1)',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }, // Esconde legenda desnecessária
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } // Apenas números inteiros no eixo Y
+                    }
+                });
+            } catch (error) { console.error("Error al cargar el dashboard:", error); }
         }
 
         // --- MÓDULO: CATEGORIAS INTELIGENTES ---
         async function carregarCategorias() {
-            const res = await fetch('/listar-categorias');
-            const categorias = await res.json();
-            
-            // 1. Preenche o Dropdown na tela de Cadastro de Produto
-            const select = document.getElementById('novo-cat');
-            if(select) {
-                select.innerHTML = '';
-                categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; });
-            }
-
-            // 2. Preenche a Tabela na tela de Gestão de Categorias
-            const tbody = document.getElementById('tabela-categorias');
-            if(tbody) {
-                tbody.innerHTML = '';
-                categorias.forEach(c => {
-                    // Impede de deletar a categoria "General" para o sistema nunca quebrar
-                    let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-400">Fijo</span>` : `<button onclick="deletarCategoria(${c.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded">🗑️</button>`;
-                    tbody.innerHTML += `<tr><td class="p-3 font-semibold text-gray-700">${c.nome}</td><td class="p-3 text-center">${btnDelete}</td></tr>`;
-                });
-            }
+            const res = await fetch('/listar-categorias'); const categorias = await res.json();
+            const select = document.getElementById('novo-cat'); if(select) { select.innerHTML = ''; categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); }
+            const tbody = document.getElementById('tabela-categorias'); if(tbody) { tbody.innerHTML = ''; categorias.forEach(c => { let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-400">Fijo</span>` : `<button onclick="deletarCategoria(${c.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded">🗑️</button>`; tbody.innerHTML += `<tr><td class="p-3 font-semibold text-gray-700">${c.nome}</td><td class="p-3 text-center">${btnDelete}</td></tr>`; }); }
         }
-
-        async function adicionarCategoria() {
-            const nome = document.getElementById('nova-cat-nome').value.trim();
-            if(!nome) return alert("Escriba un nombre para la categoría.");
-            
-            const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome}) });
-            if(res.ok) {
-                document.getElementById('nova-cat-nome').value = '';
-                carregarCategorias(); // Atualiza a lista automaticamente!
-            } else { alert("❌ Esta categoría ya existe."); }
-        }
-
-        async function deletarCategoria(id) {
-            if(confirm("¿Seguro que desea eliminar esta categoría? (Los productos que la usan no se borrarán)")) {
-                await fetch(`/deletar-categoria/${id}`, {method: 'DELETE'});
-                carregarCategorias();
-            }
-        }
+        async function adicionarCategoria() { const nome = document.getElementById('nova-cat-nome').value.trim(); if(!nome) return alert("Escriba un nombre."); const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome}) }); if(res.ok) { document.getElementById('nova-cat-nome').value = ''; carregarCategorias(); } else alert("❌ Ya existe."); }
+        async function deletarCategoria(id) { if(confirm("¿Seguro?")) { await fetch(`/deletar-categoria/${id}`, {method: 'DELETE'}); carregarCategorias(); } }
 
         // --- OUTRAS FUNÇÕES (Mantidas Intactas) ---
         async function carregarConfiguracao() { const res = await fetch('/obter-configuracao'); const dados = await res.json(); if(dados) { document.getElementById('conf-nome').value = dados.nome_empresa || ''; document.getElementById('conf-ruc').value = dados.ruc || ''; document.getElementById('conf-endereco').value = dados.endereco || ''; document.getElementById('conf-senha-cert').value = dados.senha_certificado || ''; document.getElementById('ruc').value = dados.ruc || 'Falta configurar RUC'; const status = document.getElementById('status-cert'); if(dados.caminho_certificado) { status.classList.remove('hidden'); status.classList.add('bg-green-100', 'text-green-800'); status.innerHTML = `✅ Certificado actual: <b>${dados.caminho_certificado.split('/').pop()}</b>`; } } }
