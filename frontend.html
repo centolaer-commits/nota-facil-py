@@ -6,30 +6,19 @@
     <title>NubePY | Gestión SIFEN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
     <script>
         tailwind.config = {
             theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            dark: '#1e293b', // Slate 800 (Menu, Textos Fortes)
-                            primary: '#334155', // Slate 700 (Subtítulos)
-                            accent: '#0d9488', // Teal 600 (Botões, Destaques)
-                            accentHover: '#0f766e', // Teal 700
-                            light: '#f1f5f9', // Slate 100 (Fundos)
-                        }
-                    }
-                }
+                extend: { colors: { brand: { dark: '#1e293b', primary: '#334155', accent: '#0d9488', accentHover: '#0f766e', light: '#f1f5f9' } } }
             }
         }
     </script>
     <style>
-        /* Estilo para o item do menu selecionado */
         .menu-ativo { background-color: #f1f5f9; border-left-color: #0d9488; color: #0f766e; font-weight: 600; }
-        /* Esconde barra de rolagem (estético) */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* Animação para os Toasts */
         .toast-enter { transform: translateX(100%); opacity: 0; }
         .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 300ms ease-out; }
         .toast-exit { transform: translateX(0); opacity: 1; }
@@ -40,6 +29,20 @@
 
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
 
+    <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white p-4 rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-brand-dark flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2 text-brand-accent"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" /></svg>
+                    Escanear con Cámara
+                </h3>
+                <button onclick="fecharCamera()" class="text-red-500 hover:bg-red-50 p-2 rounded-full font-bold text-xl leading-none transition">&times;</button>
+            </div>
+            <div id="reader" class="w-full rounded-lg overflow-hidden border-2 border-brand-accent/30"></div>
+            <p class="text-xs text-center text-gray-500 mt-4">Apunte la cámara al código de barras.</p>
+        </div>
+    </div>
+
     <div id="login-screen" class="fixed inset-0 bg-brand-dark flex items-center justify-center z-50 px-4">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center">
             <div class="flex items-center justify-center mb-6 text-brand-accent">
@@ -47,8 +50,8 @@
                  <h1 class="text-3xl font-bold text-brand-dark">NubePY</h1>
             </div>
             <p class="text-brand-primary mb-6 text-sm">Acceso al Sistema de Gestión</p>
-            <input type="password" id="senha" placeholder="Contraseña (admin123)" class="w-full border-gray-300 border p-3 rounded-lg mb-4 text-center focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition">
-            <button onclick="fazerLogin()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-lg hover:bg-brand-accentHover transition shadow-md hover:shadow-lg">Ingresar</button>
+            <input type="password" id="senha" placeholder="Contraseña (admin123)" class="w-full border-gray-300 border p-3 rounded-lg mb-4 text-center focus:ring-2 focus:ring-brand-accent outline-none">
+            <button onclick="fazerLogin()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-lg hover:bg-brand-accentHover shadow-md">Ingresar</button>
             <p id="erro-login" class="text-red-500 mt-4 text-sm hidden bg-red-50 p-2 rounded">Contraseña incorrecta</p>
         </div>
     </div>
@@ -105,7 +108,6 @@
             </div>
             <div class="p-4 border-t border-gray-100">
                 <button onclick="window.location.reload()" class="w-full text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-3 text-sm font-bold flex items-center transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
                     Cerrar Sesión
                 </button>
             </div>
@@ -116,48 +118,36 @@
         <div class="flex-1 p-4 md:p-8 pb-32 md:pb-8 overflow-y-auto w-full h-full">
             
             <div id="tela-pos" class="max-w-5xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela">
-                <header class="mb-6">
-                    <h1 class="text-2xl font-bold text-brand-dark">Punto de Venta</h1>
-                    <p class="text-sm text-brand-primary">Emisión rápida de facturas electrónicas.</p>
-                </header>
+                <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Punto de Venta</h1><p class="text-sm text-brand-primary">Emisión rápida de facturas electrónicas.</p></header>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-brand-light rounded-xl border border-gray-200">
-                    <div class="md:col-span-1">
-                        <label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Emisor</label>
-                        <input type="text" id="ruc" class="w-full border-gray-300 border p-2 rounded-lg bg-gray-100 text-gray-500 font-semibold text-sm" readonly>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Cliente</label>
-                        <input type="text" id="cliente" class="w-full border-gray-300 border p-2 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition text-sm" placeholder="Nombre o RUC del Cliente (Opcional)">
-                    </div>
+                    <div class="md:col-span-1"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Emisor</label><input type="text" id="ruc" class="w-full border-gray-300 border p-2 rounded-lg bg-gray-100 text-gray-500 font-semibold text-sm" readonly></div>
+                    <div class="md:col-span-2"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Cliente</label><input type="text" id="cliente" class="w-full border-gray-300 border p-2 rounded-lg focus:ring-2 focus:ring-brand-accent outline-none text-sm" placeholder="Nombre o RUC del Cliente"></div>
                 </div>
 
                 <div class="border border-gray-200 p-4 rounded-xl bg-white shadow-sm mb-6 relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-brand-accent"></div>
                     
-                    <div class="flex items-center mb-4 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
-                        <span class="text-2xl mr-2">🔎</span>
-                        <input type="text" id="scanner-barras" placeholder="Escanear Código de Barras aquí..." class="w-full bg-transparent p-2 text-lg font-bold focus:outline-none text-brand-dark placeholder-gray-400" onkeypress="verificarScanner(event)">
+                    <div class="flex items-center mb-4 bg-yellow-50 rounded-lg border border-yellow-200 overflow-hidden">
+                        <span class="text-xl pl-3 py-3">🔎</span>
+                        <input type="text" id="scanner-barras" placeholder="Escanear Código..." class="w-full bg-transparent p-3 text-lg font-bold focus:outline-none text-brand-dark" onkeypress="verificarScanner(event)">
+                        <button onclick="abrirCamera('scanner-barras')" class="bg-brand-dark text-white px-5 py-4 font-bold hover:bg-brand-primary transition flex items-center shadow-lg" title="Usar Cámara del Celular">
+                            📷
+                        </button>
                     </div>
                     
                     <div id="lista-produtos" class="space-y-2 mb-4 max-h-64 overflow-y-auto min-h-[100px]">
-                        <div id="carrinho-vazio" class="flex flex-col items-center justify-center h-32 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 mb-2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
-                            <p class="text-sm font-medium">El carrito está vacío</p>
-                            <p class="text-xs">Escanee un producto o agréguelo manualmente.</p>
-                        </div>
+                        <div id="carrinho-vazio" class="flex flex-col items-center justify-center h-32 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50"><p class="text-sm font-medium">El carrito está vacío</p></div>
                     </div>
 
                     <div class="bg-brand-light p-3 rounded-lg border border-gray-200">
                          <p class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-2">Agregar Item Manualmente</p>
                         <div class="flex flex-col md:flex-row gap-2">
-                            <input type="text" id="manual-desc" placeholder="Descripción del producto..." class="border-gray-300 border p-2 rounded-lg w-full md:w-1/2 text-sm focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none">
+                            <input type="text" id="manual-desc" placeholder="Descripción..." class="border-gray-300 border p-2 rounded-lg w-full md:w-1/2 text-sm focus:ring-2 focus:ring-brand-accent outline-none">
                             <div class="flex gap-2 w-full md:w-1/2">
-                                <input type="number" id="manual-qtd" placeholder="Cant." value="1" class="border-gray-300 border p-2 rounded-lg w-1/3 text-sm focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-center">
-                                <input type="number" id="manual-preco" placeholder="Precio Unit. (Gs)" class="border-gray-300 border p-2 rounded-lg w-2/3 text-sm focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none">
-                                <button onclick="adicionarManual()" class="bg-brand-dark text-white px-4 rounded-lg font-bold hover:bg-brand-primary transition shadow-sm flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
-                                </button>
+                                <input type="number" id="manual-qtd" placeholder="Cant." value="1" class="border-gray-300 border p-2 rounded-lg w-1/3 text-sm text-center">
+                                <input type="number" id="manual-preco" placeholder="Precio (Gs)" class="border-gray-300 border p-2 rounded-lg w-2/3 text-sm">
+                                <button onclick="adicionarManual()" class="bg-brand-dark text-white px-4 rounded-lg font-bold hover:bg-brand-primary transition">+</button>
                             </div>
                         </div>
                     </div>
@@ -168,219 +158,75 @@
                     <div class="text-3xl font-extrabold text-brand-accent">Gs. <span id="valor-total-tela">0</span></div>
                 </div>
                 
-                <button onclick="emitirNota()" id="btn-emitir" class="w-full bg-brand-accent text-white font-bold py-4 text-lg rounded-xl hover:bg-brand-accentHover shadow-md hover:shadow-lg transition flex items-center justify-center relative overflow-hidden group">
-                    <span class="relative z-10 flex items-center">
-                        🚀 Emitir Factura Electrónica
-                    </span>
-                </button>
+                <button onclick="emitirNota()" id="btn-emitir" class="w-full bg-brand-accent text-white font-bold py-4 text-lg rounded-xl hover:bg-brand-accentHover shadow-md transition">🚀 Emitir Factura Electrónica</button>
                 
                 <div id="resultado" class="mt-6 hidden text-center border-t border-gray-100 pt-6">
                     <div class="bg-green-50 p-6 rounded-2xl border border-green-100 inline-block shadow-sm">
-                        <h2 class="text-xl font-bold text-green-700 flex items-center justify-center mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6 mr-2"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
-                            ¡Factura Aprobada!
-                        </h2>
+                        <h2 class="text-xl font-bold text-green-700 mb-4">✅ ¡Factura Aprobada!</h2>
                         <img id="qrcode-img" src="" class="mx-auto mb-4 w-36 h-36 border-4 border-white rounded-xl shadow-sm">
-                        <a id="btn-pdf" href="#" target="_blank" class="inline-flex items-center bg-brand-dark text-white px-6 py-3 rounded-lg font-bold hover:bg-brand-primary shadow-md transition text-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                            Descargar PDF (KuDE)
-                        </a>
+                        <a id="btn-pdf" href="#" target="_blank" class="inline-flex bg-brand-dark text-white px-6 py-3 rounded-lg font-bold hover:bg-brand-primary shadow-md">Descargar PDF (KuDE)</a>
                     </div>
                 </div>
             </div>
 
             <div id="tela-inventario" class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
-                <header class="mb-6 flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-brand-dark">Inventario de Productos</h1>
-                        <p class="text-sm text-brand-primary">Gestión de stock y precios.</p>
-                    </div>
-                </header>
+                <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Inventario</h1></header>
 
-                <div class="bg-brand-light p-6 rounded-xl border border-gray-200 mb-8 shadow-sm">
-                    <h3 class="font-bold text-brand-dark mb-4 flex items-center text-lg">
-                        <span class="bg-brand-accent text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">+</span> 
-                        Nuevo Producto
-                    </h3>
+                <div class="bg-brand-light p-6 rounded-xl border border-gray-200 mb-8">
+                    <h3 class="font-bold text-brand-dark mb-4">➕ Nuevo Producto</h3>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                        <div class="md:col-span-2">
+                        
+                        <div class="md:col-span-3">
                             <label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Código *</label>
-                            <div class="relative">
-                                <input type="text" id="novo-cod" placeholder="Escanear..." class="w-full border-2 border-yellow-300 bg-yellow-50/50 p-2 pl-8 rounded-lg font-bold focus:outline-none focus:border-brand-accent text-sm" onkeypress="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('novo-desc').focus(); }">
-                                <span class="absolute left-2 top-2.5 text-yellow-500">🔎</span>
+                            <div class="flex rounded-lg border-2 border-yellow-300 bg-yellow-50 overflow-hidden">
+                                <input type="text" id="novo-cod" placeholder="Escanear..." class="w-full bg-transparent p-2 pl-3 font-bold focus:outline-none text-sm text-brand-dark" onkeypress="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('novo-desc').focus(); }">
+                                <button onclick="abrirCamera('novo-cod')" class="bg-brand-dark text-white px-3 hover:bg-brand-primary transition" title="Usar Cámara">📷</button>
                             </div>
                         </div>
-                        <div class="md:col-span-4"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Descripción *</label><input type="text" id="novo-desc" class="w-full border-gray-300 border p-2 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm"></div>
-                        <div class="md:col-span-3">
-                            <label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Categoría</label>
-                            <select id="novo-cat" class="w-full border-gray-300 border p-2 rounded-lg bg-white text-brand-dark focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm"></select>
-                        </div>
-                         <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Sub-cat.</label><input type="text" id="novo-subcat" class="w-full border-gray-300 border p-2 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm"></div>
+
+                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Descripción *</label><input type="text" id="novo-desc" class="w-full border-gray-300 border p-2 rounded-lg text-sm"></div>
+                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Categoría</label><select id="novo-cat" class="w-full border-gray-300 border p-2 rounded-lg bg-white text-sm"></select></div>
+                         <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Sub-cat.</label><input type="text" id="novo-subcat" class="w-full border-gray-300 border p-2 rounded-lg text-sm"></div>
                         
-                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Costo (Gs)</label><input type="number" id="novo-custo" class="w-full border-gray-300 border p-2 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm" placeholder="0" oninput="calcularLucro()"></div>
-                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Venta (Gs) *</label><input type="number" id="novo-preco" class="w-full border-gray-300 border p-2 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm" placeholder="0" oninput="calcularLucro()"><div id="info-lucro" class="h-4 mt-1 text-xs font-bold truncate"></div></div>
-                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Stock Inicial</label><input type="number" id="novo-qtd" class="w-full border-gray-300 border p-2 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm" placeholder="0"></div>
-                        <div class="md:col-span-3 pt-5"><button onclick="cadastrarProduto()" class="w-full bg-brand-accent text-white font-bold py-2.5 rounded-lg hover:bg-brand-accentHover shadow-sm transition text-sm flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-2"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>Guardar Producto</button></div>
+                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Costo (Gs)</label><input type="number" id="novo-custo" class="w-full border-gray-300 border p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()"></div>
+                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Venta (Gs) *</label><input type="number" id="novo-preco" class="w-full border-gray-300 border p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()"><div id="info-lucro" class="h-4 mt-1 text-xs font-bold"></div></div>
+                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Stock Inicial</label><input type="number" id="novo-qtd" class="w-full border-gray-300 border p-2 rounded-lg text-sm" placeholder="0"></div>
+                        <div class="md:col-span-3 pt-5"><button onclick="cadastrarProduto()" class="w-full bg-brand-accent text-white font-bold py-2.5 rounded-lg hover:bg-brand-accentHover text-sm">Guardar Producto</button></div>
                     </div>
                 </div>
 
-                <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div class="border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
                     <table class="w-full text-left bg-white min-w-[700px]">
-                        <thead class="bg-brand-primary text-white">
-                            <tr>
-                                <th class="p-4 text-xs font-bold uppercase tracking-wider">Producto / Código</th>
-                                <th class="p-4 text-xs font-bold uppercase tracking-wider">Categorización</th>
-                                <th class="p-4 text-xs font-bold uppercase tracking-wider text-right">Finanzas (Gs)</th>
-                                <th class="p-4 text-xs font-bold uppercase tracking-wider text-center">Stock</th>
-                                <th class="p-4 text-xs font-bold uppercase tracking-wider text-center w-28">Acciones</th>
-                            </tr>
-                        </thead>
+                        <thead class="bg-brand-primary text-white"><tr><th class="p-4 text-xs font-bold uppercase">Producto</th><th class="p-4 text-xs font-bold uppercase">Categoría</th><th class="p-4 text-xs font-bold uppercase text-right">Precio</th><th class="p-4 text-xs font-bold uppercase text-center">Stock</th><th class="p-4 text-xs font-bold uppercase text-center">Acción</th></tr></thead>
                         <tbody id="tabela-estoque" class="divide-y divide-gray-100 text-sm"></tbody>
                     </table>
-                     <div id="estoque-vazio" class="hidden flex-col items-center justify-center p-12 text-gray-400 bg-gray-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 mb-4 text-gray-300"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
-                        <h3 class="text-lg font-medium text-brand-primary">No hay productos registrados</h3>
-                        <p class="text-sm mt-1">Utilice el formulario de arriba para añadir su primer producto.</p>
-                    </div>
+                    <div id="estoque-vazio" class="hidden flex-col items-center p-12 text-gray-400 bg-gray-50"><p>No hay productos.</p></div>
                 </div>
             </div>
 
             <div id="tela-categorias" class="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
-                <header class="mb-6">
-                    <h1 class="text-2xl font-bold text-brand-dark">Categorías</h1>
-                    <p class="text-sm text-brand-primary">Organice sus productos para mejores reportes.</p>
-                </header>
-                
-                <div class="flex gap-3 mb-8 bg-brand-light p-5 rounded-xl border border-gray-200 items-end">
-                    <div class="flex-1">
-                         <label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Nueva Categoría</label>
-                        <input type="text" id="nova-cat-nome" placeholder="Ej: Bebidas, Electrónica..." class="w-full border-gray-300 border p-3 rounded-lg text-sm focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none">
-                    </div>
-                    <button onclick="adicionarCategoria()" class="bg-brand-accent text-white px-6 py-3 rounded-lg font-bold hover:bg-brand-accentHover transition shadow-sm flex items-center text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
-                        Crear
-                    </button>
-                </div>
-
-                <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                    <table class="w-full text-left bg-white">
-                        <thead class="bg-brand-light border-b border-gray-200">
-                            <tr>
-                                <th class="p-4 text-xs font-bold uppercase tracking-wider text-brand-primary">Nombre de la Categoría</th>
-                                <th class="p-4 text-xs font-bold uppercase tracking-wider text-center text-brand-primary w-24">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-categorias" class="divide-y divide-gray-100 text-sm"></tbody>
-                    </table>
-                </div>
+                <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Categorías</h1></header>
+                <div class="flex gap-3 mb-8 bg-brand-light p-5 rounded-xl border border-gray-200 items-end"><div class="flex-1"><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Nueva Categoría</label><input type="text" id="nova-cat-nome" class="w-full border-gray-300 border p-3 rounded-lg text-sm"></div><button onclick="adicionarCategoria()" class="bg-brand-accent text-white px-6 py-3 rounded-lg font-bold">Crear</button></div>
+                <table class="w-full text-left bg-white border border-gray-200 rounded-xl overflow-hidden"><thead class="bg-brand-light border-b border-gray-200"><tr><th class="p-4 text-xs font-bold uppercase text-brand-primary">Nombre</th><th class="p-4 text-xs font-bold uppercase text-center text-brand-primary w-24">Acción</th></tr></thead><tbody id="tabela-categorias" class="divide-y divide-gray-100 text-sm"></tbody></table>
             </div>
 
             <div id="tela-dashboard" class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
-                <header class="mb-6 flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-brand-dark">Dashboard</h1>
-                        <p class="text-sm text-brand-primary">Visión general de su negocio.</p>
-                    </div>
-                    <div class="text-sm text-brand-primary bg-brand-light px-3 py-1 rounded-full border border-gray-200">
-                        Hoy: <span class="font-bold text-brand-dark" id="data-hoje"></span>
-                    </div>
-                </header>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-gradient-to-br from-brand-dark to-brand-primary p-6 rounded-2xl shadow-md text-white relative overflow-hidden">
-                         <div class="absolute right-0 top-0 opacity-10 transform translate-x-4 -translate-y-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-32 h-32"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.051-.659-1.172-.879-1.172-2.303 0-3.182 1.172-.879 3.07-.879 4.242 0L15 6.818M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                         </div>
-                        <h3 class="text-sm font-medium uppercase tracking-wider opacity-90 mb-3 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a.75.75 0 00-.75.75v.75m0 0H1.5m0-1.5a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h.75" /></svg> Ingresos Totales</h3>
-                        <p class="text-4xl font-extrabold tracking-tight">Gs. <span id="dash-vendas">0</span></p>
-                    </div>
-                    <div class="bg-gradient-to-br from-brand-accent to-brand-accentHover p-6 rounded-2xl shadow-md text-white relative overflow-hidden">
-                         <div class="absolute right-0 top-0 opacity-10 transform translate-x-4 -translate-y-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-32 h-32"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.25 2.25 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" /></svg>
-                         </div>
-                        <h3 class="text-sm font-medium uppercase tracking-wider opacity-90 mb-3 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.002c0 .621.504 1.125 1.125 1.125h3.002c.621 0 1.125-.504 1.125-1.125V6.375c0-.621-.504-1.125-1.125-1.125H3.375zm0 9c-.621 0-1.125.504-1.125 1.125v3.002c0 .621.504 1.125 1.125 1.125h3.002c.621 0 1.125-.504 1.125-1.125V15.375c0-.621-.504-1.125-1.125-1.125H3.375zm9-9c-.621 0-1.125.504-1.125 1.125v3.002c0 .621.504 1.125 1.125 1.125h3.002c.621 0 1.125-.504 1.125-1.125V6.375c0-.621-.504-1.125-1.125-1.125H12.375zm9 9c-.621 0-1.125.504-1.125 1.125v3.002c0 .621.504 1.125 1.125 1.125h3.002c.621 0 1.125-.504 1.125-1.125V15.375c0-.621-.504-1.125-1.125-1.125H21.375z" /></svg> Facturas Emitidas</h3>
-                        <p class="text-4xl font-extrabold tracking-tight"><span id="dash-notas">0</span></p>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
-                    <h3 class="font-bold text-brand-dark mb-6 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2 text-brand-accent"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-6.75a1.125 1.125 0 01-1.125-1.125V3.375c0-.621.504-1.125 1.125-1.125h9.75c.621 0 1.125.504 1.125 1.125V18.75z" /></svg>
-                        Top 5 Productos Más Vendidos
-                    </h3>
-                    <div class="relative h-80 w-full">
-                        <canvas id="grafico-produtos"></canvas>
-                    </div>
-                </div>
+                <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Dashboard</h1></header>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"><div class="bg-gradient-to-br from-brand-dark to-brand-primary p-6 rounded-2xl shadow-md text-white"><h3 class="text-sm font-medium uppercase tracking-wider opacity-90 mb-3">Ingresos Totales</h3><p class="text-4xl font-extrabold">Gs. <span id="dash-vendas">0</span></p></div><div class="bg-gradient-to-br from-brand-accent to-brand-accentHover p-6 rounded-2xl shadow-md text-white"><h3 class="text-sm font-medium uppercase tracking-wider opacity-90 mb-3">Facturas Emitidas</h3><p class="text-4xl font-extrabold"><span id="dash-notas">0</span></p></div></div>
+                <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm"><h3 class="font-bold text-brand-dark mb-6">Top 5 Productos Más Vendidos</h3><div class="relative h-80 w-full"><canvas id="grafico-produtos"></canvas></div></div>
             </div>
 
             <div id="tela-reportes" class="max-w-5xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
-                <header class="mb-6">
-                    <h1 class="text-2xl font-bold text-brand-dark">Historial SIFEN</h1>
-                    <p class="text-sm text-brand-primary">Consulte todas las facturas electrónicas emitidas.</p>
-                </header>
-                
-                <div class="flex gap-3 mb-6 bg-brand-light p-4 rounded-xl border border-gray-200">
-                    <div class="relative flex-1">
-                        <input type="text" id="busca" placeholder="Buscar por cliente o CDC..." class="w-full border-gray-300 border p-3 pl-10 rounded-lg bg-white focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm" onkeyup="buscarNotas()">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 absolute left-3 top-3.5 text-gray-400"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" /></svg>
-                    </div>
-                    <button onclick="showToast('Exportación a Excel pronto...', 'info')" class="bg-brand-primary text-white px-4 rounded-lg font-bold hover:bg-brand-dark transition shadow-sm flex items-center text-sm opacity-70 cursor-not-allowed">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-                        Exportar
-                    </button>
-                </div>
-
-                <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                    <table class="w-full text-left min-w-[600px]">
-                        <thead class="bg-brand-primary text-white"><tr><th class="p-4 text-xs font-bold uppercase tracking-wider">Cliente / CDC</th><th class="p-4 text-xs font-bold uppercase tracking-wider text-right">Total (Gs)</th></tr></thead>
-                        <tbody id="tabela-historico" class="divide-y divide-gray-100 text-sm bg-white"></tbody>
-                    </table>
-                    <div id="historico-vazio" class="hidden flex-col items-center justify-center p-12 text-gray-400 bg-gray-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 mb-4 text-gray-300"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-                        <h3 class="text-lg font-medium text-brand-primary">Aún no hay facturas emitidas</h3>
-                        <p class="text-sm mt-1">Sus ventas aparecerán aquí.</p>
-                    </div>
-                </div>
+                <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Historial SIFEN</h1></header>
+                <div class="flex gap-3 mb-6 bg-brand-light p-4 rounded-xl border border-gray-200"><input type="text" id="busca" placeholder="Buscar por cliente o CDC..." class="w-full border-gray-300 border p-3 rounded-lg text-sm" onkeyup="buscarNotas()"></div>
+                <table class="w-full text-left min-w-[600px] border border-gray-200 rounded-xl overflow-hidden"><thead class="bg-brand-primary text-white"><tr><th class="p-4 text-xs font-bold uppercase">Cliente / CDC</th><th class="p-4 text-xs font-bold uppercase text-right">Total (Gs)</th></tr></thead><tbody id="tabela-historico" class="divide-y divide-gray-100 text-sm bg-white"></tbody></table>
             </div>
 
             <div id="tela-config" class="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
-                <header class="mb-8 border-b border-gray-100 pb-4">
-                    <h1 class="text-2xl font-bold text-brand-dark">Ajustes de la Empresa</h1>
-                    <p class="text-sm text-brand-primary">Configure sus datos fiscales y certificado digital.</p>
-                </header>
-                
+                <header class="mb-8 border-b border-gray-100 pb-4"><h1 class="text-2xl font-bold text-brand-dark">Ajustes</h1></header>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="space-y-5 md:border-r md:border-gray-100 md:pr-8">
-                        <h3 class="font-bold text-brand-dark flex items-center text-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2 text-brand-accent"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg>
-                            Datos Fiscales
-                        </h3>
-                        <div><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Nombre de la Empresa</label><input type="text" id="conf-nome" class="w-full border-gray-300 border p-3 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm"></div>
-                        <div><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">RUC Emisor</label><input type="text" id="conf-ruc" class="w-full border-gray-300 border p-3 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm"></div>
-                        <div><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Dirección</label><input type="text" id="conf-endereco" class="w-full border-gray-300 border p-3 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm"></div>
-                        <div><label class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1 block">Contraseña Certificado (.p12)</label><input type="password" id="conf-senha-cert" class="w-full border-gray-300 border p-3 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none text-sm"></div>
-                        <button onclick="salvarConfiguracao()" class="w-full bg-brand-primary text-white font-bold py-3 rounded-lg hover:bg-brand-dark transition shadow-sm mt-2 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                            Guardar Datos
-                        </button>
-                    </div>
-                    <div class="space-y-5">
-                        <h3 class="font-bold text-brand-dark flex items-center text-lg">
-                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2 text-brand-accent"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
-                            Certificado Digital
-                        </h3>
-                        <div class="border-2 border-dashed border-brand-accent/30 p-6 rounded-xl text-center bg-brand-light/50 hover:bg-brand-light transition cursor-pointer group">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mx-auto text-brand-accent mb-3 group-hover:scale-110 transition"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 01-1.125-1.125V17.25M5.625 13.5L12 7.125 18.375 13.5M12 2.25v13.5" /></svg>
-                            <input type="file" id="arquivo-cert" accept=".p12,.pfx" class="block w-full text-sm text-brand-primary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-brand-accent file:text-white hover:file:bg-brand-accentHover cursor-pointer mx-auto">
-                            <p class="text-xs text-gray-500 mt-2">Formatos aceptados: .p12 o .pfx</p>
-                        </div>
-                        <button onclick="fazerUploadCertificado()" class="w-full bg-brand-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-brand-dark text-sm transition shadow-sm flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-                            Subir Archivo
-                        </button>
-                        <div id="status-cert" class="text-sm text-center p-3 rounded-lg hidden border"></div>
-                    </div>
+                    <div class="space-y-5 md:border-r md:border-gray-100 md:pr-8"><h3 class="font-bold text-brand-dark text-lg">Datos Fiscales</h3><div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Nombre</label><input type="text" id="conf-nome" class="w-full border p-3 rounded-lg text-sm"></div><div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">RUC</label><input type="text" id="conf-ruc" class="w-full border p-3 rounded-lg text-sm"></div><div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Dirección</label><input type="text" id="conf-endereco" class="w-full border p-3 rounded-lg text-sm"></div><div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Contraseña (.p12)</label><input type="password" id="conf-senha-cert" class="w-full border p-3 rounded-lg text-sm"></div><button onclick="salvarConfiguracao()" class="w-full bg-brand-primary text-white font-bold py-3 rounded-lg">Guardar Datos</button></div>
+                    <div class="space-y-5"><h3 class="font-bold text-brand-dark text-lg">Certificado Digital</h3><div class="border-2 border-dashed border-brand-accent/30 p-6 rounded-xl text-center bg-brand-light/50"><input type="file" id="arquivo-cert" accept=".p12,.pfx" class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-brand-accent file:text-white cursor-pointer mx-auto"></div><button onclick="fazerUploadCertificado()" class="w-full bg-brand-primary text-white font-bold py-3 px-6 rounded-lg text-sm">Subir Archivo</button><div id="status-cert" class="text-sm text-center p-3 rounded-lg hidden border"></div></div>
                 </div>
             </div>
 
@@ -391,126 +237,90 @@
         let produtosCaixa = [];
         let graficoAtual = null;
 
-        // --- NOVO: SISTEMA DE TOASTS (NOTIFICAÇÕES) ---
+        // --- SISTEMA DE CÂMERA (HTML5-QRCode) ---
+        let leitorCamera = null;
+        let campoDestinoScanner = ''; // Guarda quem pediu a câmera (POS ou Inventário)
+
+        function abrirCamera(idCampo) {
+            campoDestinoScanner = idCampo;
+            document.getElementById('camera-modal').classList.remove('hidden');
+            document.getElementById('camera-modal').classList.add('flex');
+
+            // Cria o leitor se não existir
+            if (!leitorCamera) {
+                leitorCamera = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 150} }, false);
+            }
+            // Liga a câmera
+            leitorCamera.render(onScanSucesso, onScanErro);
+        }
+
+        function onScanSucesso(codigoDecodificado) {
+            fecharCamera(); // Desliga a câmera imediatamente após ler
+            
+            // Joga o número no campo que pediu
+            const campo = document.getElementById(campoDestinoScanner);
+            campo.value = codigoDecodificado;
+            showToast("Código leído: " + codigoDecodificado, "success");
+
+            // Automações de UX
+            if (campoDestinoScanner === 'scanner-barras') {
+                // Se foi no POS, já tenta colocar no carrinho automaticamente
+                verificarScanner({ key: 'Enter' }); 
+            } else if (campoDestinoScanner === 'novo-cod') {
+                // Se foi no Inventário, pula pro campo de descrição
+                document.getElementById('novo-desc').focus();
+            }
+        }
+
+        function onScanErro(erro) { /* Erros normais de foco, ignora até ler certo */ }
+
+        function fecharCamera() {
+            document.getElementById('camera-modal').classList.add('hidden');
+            document.getElementById('camera-modal').classList.remove('flex');
+            if (leitorCamera) {
+                leitorCamera.clear(); // Desliga a luz da lente
+            }
+        }
+
+        // --- TOASTS ---
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            
-            // Cores baseadas no tipo
             const bgColor = type === 'success' ? 'bg-brand-accent' : (type === 'error' ? 'bg-red-500' : 'bg-brand-primary');
             const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
-
             toast.className = `${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center min-w-[300px] toast-enter relative overflow-hidden`;
-            toast.innerHTML = `
-                <span class="text-xl mr-3">${icon}</span>
-                <p class="font-bold text-sm">${message}</p>
-                <div class="absolute bottom-0 left-0 h-1 bg-white/30 animate-[toast-progress_3s_linear_forwards]"></div>
-            `;
-
+            toast.innerHTML = `<span class="text-xl mr-3">${icon}</span><p class="font-bold text-sm">${message}</p><div class="absolute bottom-0 left-0 h-1 bg-white/30 animate-[toast-progress_3s_linear_forwards]"></div>`;
             container.appendChild(toast);
-
-            // Animação de entrada
             requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); });
-
-            // Remove após 3 segundos
-            setTimeout(() => {
-                toast.classList.remove('toast-enter-active'); toast.classList.add('toast-exit-active');
-                setTimeout(() => { container.removeChild(toast); }, 300); // Espera a animação de saída terminar
-            }, 3000);
+            setTimeout(() => { toast.classList.remove('toast-enter-active'); toast.classList.add('toast-exit-active'); setTimeout(() => { container.removeChild(toast); }, 300); }, 3000);
         }
 
-        // --- FUNÇÕES AUXILIARES DE UI ---
+        // --- FUNÇÕES DE NAVEGAÇÃO ---
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
         function toggleAcordeao(menuId, setaId) { const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; } }
-        function updateDate() { const now = new Date(); const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; document.getElementById('data-hoje').toLocaleDateString('es-PY', options); document.getElementById('data-hoje').innerText = now.toLocaleDateString('es-PY', options); }
+        function mudarTela(telaId, elementoBotao) { document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden')); document.getElementById('tela-' + telaId).classList.remove('hidden'); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); if(elementoBotao) elementoBotao.classList.add('menu-ativo'); if(window.innerWidth < 768) toggleSidebar(); if(telaId === 'inventario') { carregarEstoque(); document.getElementById('novo-cod').focus(); } if(telaId === 'reportes') carregarHistorico(); if(telaId === 'config') carregarConfiguracao(); if(telaId === 'categorias') carregarCategorias(); if(telaId === 'dashboard') { carregarDashboard(); } if(telaId === 'pos') document.getElementById('scanner-barras').focus(); }
+        async function fazerLogin() { if(document.getElementById('senha').value === 'admin123') { document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); document.getElementById('scanner-barras').focus(); await carregarConfiguracao(); await carregarCategorias(); showToast("¡Bienvenido a NubePY!"); } else { document.getElementById('erro-login').classList.remove('hidden'); } }
 
-        function mudarTela(telaId, elementoBotao) {
-            document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden'));
-            document.getElementById('tela-' + telaId).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo'));
-            if(elementoBotao) elementoBotao.classList.add('menu-ativo');
-            if(window.innerWidth < 768) toggleSidebar();
-
-            if(telaId === 'inventario') { carregarEstoque(); document.getElementById('novo-cod').focus(); }
-            if(telaId === 'reportes') carregarHistorico();
-            if(telaId === 'config') carregarConfiguracao();
-            if(telaId === 'categorias') carregarCategorias();
-            if(telaId === 'dashboard') { carregarDashboard(); updateDate(); }
-            if(telaId === 'pos') document.getElementById('scanner-barras').focus();
-        }
-
-        async function fazerLogin() {
-            if(document.getElementById('senha').value === 'admin123') {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
-                document.getElementById('app-screen').classList.add('flex');
-                document.getElementById('mobile-header').classList.remove('hidden');
-                document.getElementById('scanner-barras').focus();
-                await carregarConfiguracao();
-                await carregarCategorias();
-                showToast("¡Bienvenido a NubePY!"); // Exemplo do Toast
-            } else { 
-                document.getElementById('erro-login').classList.remove('hidden');
-                // showToast("Contraseña incorrecta", "error"); // Opcional: usar toast aqui também
-            } 
-        }
-
-        // --- FUNÇÕES CORE COM TOASTS E EMPTY STATES ---
-
-        async function carregarDashboard() { try { const res = await fetch('/dados-dashboard'); const dados = await res.json(); document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText = dados.total_notas; const nomes = dados.top_produtos.map(p => p.nome); const quantidades = dados.top_produtos.map(p => p.quantidade); if (nomes.length === 0) { nomes.push("Sin ventas aún"); quantidades.push(0); } const ctx = document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) { graficoAtual.destroy(); } graficoAtual = new Chart(ctx, { type: 'bar', data: { labels: nomes, datasets: [{ label: 'Unidades', data: quantidades, backgroundColor: '#0d9488', borderColor: '#0f766e', borderWidth: 1, borderRadius: 8, hoverBackgroundColor: '#0f766e' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } } } }); } catch (error) { showToast("Error al cargar dashboard", "error"); } }
-        
-        async function carregarCategorias() { const res = await fetch('/listar-categorias'); const categorias = await res.json(); const select = document.getElementById('novo-cat'); if(select) { select.innerHTML = ''; categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); } const tbody = document.getElementById('tabela-categorias'); if(tbody) { tbody.innerHTML = ''; categorias.forEach(c => { let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">Fijo</span>` : `<button onclick="deletarCategoria(${c.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1 rounded transition text-sm">🗑️ Eliminar</button>`; tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4 font-bold text-brand-dark">${c.nome}</td><td class="p-4 text-center">${btnDelete}</td></tr>`; }); } }
+        // --- INTEGRAÇÃO COM BACKEND (Mantidas) ---
+        async function carregarDashboard() { try { const res = await fetch('/dados-dashboard'); const dados = await res.json(); document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText = dados.total_notas; const nomes = dados.top_produtos.map(p => p.nome); const quantidades = dados.top_produtos.map(p => p.quantidade); if (nomes.length === 0) { nomes.push("Sin ventas aún"); quantidades.push(0); } const ctx = document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) { graficoAtual.destroy(); } graficoAtual = new Chart(ctx, { type: 'bar', data: { labels: nomes, datasets: [{ label: 'Unidades', data: quantidades, backgroundColor: '#0d9488', borderColor: '#0f766e', borderWidth: 1, borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } } }); } catch (error) {} }
+        async function carregarCategorias() { const res = await fetch('/listar-categorias'); const categorias = await res.json(); const select = document.getElementById('novo-cat'); if(select) { select.innerHTML = ''; categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); } const tbody = document.getElementById('tabela-categorias'); if(tbody) { tbody.innerHTML = ''; categorias.forEach(c => { let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">Fijo</span>` : `<button onclick="deletarCategoria(${c.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1 rounded transition text-sm">🗑️</button>`; tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4 font-bold text-brand-dark">${c.nome}</td><td class="p-4 text-center">${btnDelete}</td></tr>`; }); } }
         async function adicionarCategoria() { const nome = document.getElementById('nova-cat-nome').value.trim(); if(!nome) return showToast("Escriba un nombre para la categoría.", "info"); const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome}) }); if(res.ok) { document.getElementById('nova-cat-nome').value = ''; carregarCategorias(); showToast("Categoría creada con éxito."); } else showToast("❌ Esta categoría ya existe.", "error"); }
         async function deletarCategoria(id) { if(confirm("¿Seguro?")) { await fetch(`/deletar-categoria/${id}`, {method: 'DELETE'}); carregarCategorias(); showToast("Categoría eliminada."); } }
-        
         async function carregarConfiguracao() { const res = await fetch('/obter-configuracao'); const dados = await res.json(); if(dados) { document.getElementById('conf-nome').value = dados.nome_empresa || ''; document.getElementById('conf-ruc').value = dados.ruc || ''; document.getElementById('conf-endereco').value = dados.endereco || ''; document.getElementById('conf-senha-cert').value = dados.senha_certificado || ''; document.getElementById('ruc').value = dados.ruc || 'Falta RUC'; const status = document.getElementById('status-cert'); if(dados.caminho_certificado) { status.classList.remove('hidden'); status.classList.add('bg-green-50', 'text-green-800', 'border-green-200'); status.innerHTML = `✅ Certificado activo: <b>${dados.caminho_certificado.split('/').pop()}</b>`; } } }
         async function salvarConfiguracao() { const formData = new FormData(); formData.append('nome_empresa', document.getElementById('conf-nome').value); formData.append('ruc', document.getElementById('conf-ruc').value); formData.append('endereco', document.getElementById('conf-endereco').value); formData.append('senha_certificado', document.getElementById('conf-senha-cert').value); const res = await fetch('/salvar-configuracao', { method: 'POST', body: formData }); if(res.ok) { showToast("✅ Datos fiscales guardados."); carregarConfiguracao(); } }
-        async function fazerUploadCertificado() { const arquivoInput = document.getElementById('arquivo-cert'); if(arquivoInput.files.length === 0) return showToast("Seleccione un archivo .p12", "info"); const formData = new FormData(); formData.append('arquivo', arquivoInput.files[0]); const res = await fetch('/upload-certificado', { method: 'POST', body: formData }); if(res.ok) { showToast("✅ Certificado subido correctamente."); arquivoInput.value = ''; carregarConfiguracao(); } else showToast("❌ Error al subir certificado.", "error"); }
-        
-        function calcularLucro() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const venta = parseFloat(document.getElementById('novo-preco').value) || 0; const divInfo = document.getElementById('info-lucro'); if (venta > 0 && costo >= 0) { const lucro = venta - costo; const margem = (lucro / venta) * 100; if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}% (Gs. ${lucro.toLocaleString('es-PY')})`; divInfo.className = "h-4 mt-1 text-xs font-bold truncate text-green-600"; } else if (lucro === 0) { divInfo.innerHTML = `Sin margen (0%)`; divInfo.className = "h-4 mt-1 text-xs font-bold truncate text-yellow-600"; } else { divInfo.innerHTML = `Pérdida: Gs. ${lucro.toLocaleString('es-PY')}`; divInfo.className = "h-4 mt-1 text-xs font-bold truncate text-red-600"; } } else divInfo.innerHTML = ""; }
-        async function cadastrarProduto() { const custo = parseFloat(document.getElementById('novo-custo').value) || 0; const preco = parseFloat(document.getElementById('novo-preco').value) || 0; const qtd = parseInt(document.getElementById('novo-qtd').value) || 0; const dados = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: custo, preco_venda: preco, quantidade: qtd }; if(!dados.codigo_barras || !dados.descricao || preco === 0) return showToast("⚠️ Complete Código, Descripción y Precio de Venta.", "info"); try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; carregarEstoque(); document.getElementById('novo-cod').focus(); showToast("✅ Producto guardado."); } else showToast("❌ El código de barras ya existe.", "error"); } catch (e) { showToast("❌ Error de conexión.", "error"); } }
-        
-        // NOVO: Botão de Editar (Apenas visual por enquanto)
-        function abrirModalEdicao(codigo) { showToast(`Función de Editar (Prod: ${codigo}) en desarrollo...`, "info"); }
-
-        async function deletarProduto(codigo) { if(confirm("¿Seguro que desea eliminar este producto?")) { await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE' }); carregarEstoque(); showToast("Producto eliminado."); } }
-        
-        async function carregarEstoque() { 
-            const res = await fetch('/listar-produtos'); const produtos = await res.json(); 
-            const tbody = document.getElementById('tabela-estoque'); const emptyState = document.getElementById('estoque-vazio'); tbody.innerHTML = ''; 
-            // Lógica do Empty State
-            if (produtos.length === 0) { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } 
-            else { tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); 
-                produtos.forEach(p => { let corStock = p.quantidade > 5 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; let lucro = p.preco_venda - p.preco_custo; let margem = p.preco_venda > 0 ? ((lucro / p.preco_venda) * 100).toFixed(1) : 0; let corLucro = lucro >= 0 ? 'text-green-600' : 'text-red-600'; 
-                // Adicionado botão de Editar (Lápis) ao lado do de Deletar
-                tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4"><div class="font-bold text-brand-dark text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td><td class="p-4"><span class="bg-brand-light text-brand-primary border border-brand-primary/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span><div class="text-xs text-gray-500 mt-1 ml-1">${p.subcategoria}</div></td><td class="p-4 text-right"><div class="font-bold text-brand-dark text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-xs text-gray-500">Costo: ${p.preco_custo.toLocaleString('es-PY')}</div><div class="text-xs font-bold ${corLucro} mt-1">${margem}% GP</div></td><td class="p-4 text-center ${corStock} text-sm">${p.quantidade}</td><td class="p-4 text-center flex justify-center gap-2">
-                    <button onclick="abrirModalEdicao('${p.codigo_barras}')" class="text-brand-accent hover:text-brand-accentHover bg-brand-accent/10 hover:bg-brand-accent/20 p-2 rounded transition" title="Editar">✏️</button>
-                    <button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded transition" title="Eliminar">🗑️</button></td></tr>`; }); 
-            }
-        }
-        
+        async function fazerUploadCertificado() { const arquivoInput = document.getElementById('arquivo-cert'); if(arquivoInput.files.length === 0) return showToast("Seleccione un archivo .p12", "info"); const formData = new FormData(); formData.append('arquivo', arquivoInput.files[0]); const res = await fetch('/upload-certificado', { method: 'POST', body: formData }); if(res.ok) { showToast("✅ Certificado subido."); arquivoInput.value = ''; carregarConfiguracao(); } else showToast("❌ Error al subir.", "error"); }
+        function calcularLucro() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const venta = parseFloat(document.getElementById('novo-preco').value) || 0; const divInfo = document.getElementById('info-lucro'); if (venta > 0 && costo >= 0) { const lucro = venta - costo; const margem = (lucro / venta) * 100; if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}%`; divInfo.className = "h-4 mt-1 text-xs font-bold text-green-600"; } else if (lucro === 0) { divInfo.innerHTML = `Sin margen`; divInfo.className = "h-4 mt-1 text-xs font-bold text-yellow-600"; } else { divInfo.innerHTML = `Pérdida`; divInfo.className = "h-4 mt-1 text-xs font-bold text-red-600"; } } else divInfo.innerHTML = ""; }
+        async function cadastrarProduto() { const custo = parseFloat(document.getElementById('novo-custo').value) || 0; const preco = parseFloat(document.getElementById('novo-preco').value) || 0; const qtd = parseInt(document.getElementById('novo-qtd').value) || 0; const dados = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: custo, preco_venda: preco, quantidade: qtd }; if(!dados.codigo_barras || !dados.descricao || preco === 0) return showToast("Complete Código, Descripción y Venta.", "info"); try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; carregarEstoque(); document.getElementById('novo-cod').focus(); showToast("✅ Producto guardado."); } else showToast("❌ El código ya existe.", "error"); } catch (e) { showToast("❌ Error de red.", "error"); } }
+        function abrirModalEdicao(codigo) { showToast(`Edición en desarrollo...`, "info"); }
+        async function deletarProduto(codigo) { if(confirm("¿Seguro?")) { await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE' }); carregarEstoque(); showToast("Producto eliminado."); } }
+        async function carregarEstoque() { const res = await fetch('/listar-produtos'); const produtos = await res.json(); const tbody = document.getElementById('tabela-estoque'); const emptyState = document.getElementById('estoque-vazio'); tbody.innerHTML = ''; if (produtos.length === 0) { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } else { tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); produtos.forEach(p => { let corStock = p.quantidade > 5 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4"><div class="font-bold text-brand-dark text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td><td class="p-4"><span class="bg-brand-light text-brand-primary border border-brand-primary/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td><td class="p-4 text-right"><div class="font-bold text-brand-dark text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div></td><td class="p-4 text-center ${corStock} text-sm">${p.quantidade}</td><td class="p-4 text-center flex justify-center gap-2"><button onclick="abrirModalEdicao('${p.codigo_barras}')" class="text-brand-accent bg-brand-accent/10 p-2 rounded transition">✏️</button><button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 bg-red-50 p-2 rounded transition">🗑️</button></td></tr>`; }); } }
         async function verificarScanner(event) { if(event.key === 'Enter') { const input = document.getElementById('scanner-barras'); const codigo = input.value.trim(); if(!codigo) return; try { const res = await fetch(`/buscar-produto/${codigo}`); if(res.ok) { const produto = await res.json(); produtosCaixa.push({ codigo_barras: codigo, descricao: produto.descricao, quantidade: 1, preco_unitario: produto.preco }); atualizarInterfaceCaixa(); input.value = ''; showToast(`✅ ${produto.descricao} agregado.`, 'success'); } else showToast("⚠️ Producto no encontrado.", "info"); } catch(e) {} input.value = ''; } }
         function adicionarManual() { const desc = document.getElementById('manual-desc').value.trim(); const qtd = parseInt(document.getElementById('manual-qtd').value) || 1; const preco = parseFloat(document.getElementById('manual-preco').value) || 0; if(!desc || preco <= 0) return showToast("Complete descripción y precio.", "info"); produtosCaixa.push({ codigo_barras: null, descricao: desc, quantidade: qtd, preco_unitario: preco }); atualizarInterfaceCaixa(); document.getElementById('manual-desc').value = ''; document.getElementById('manual-qtd').value = '1'; document.getElementById('manual-preco').value = ''; }
-        
-        function atualizarInterfaceCaixa() { const container = document.getElementById('lista-produtos'); const emptyState = document.getElementById('carrinho-vazio'); container.innerHTML = ''; let total = 0; 
-            if (produtosCaixa.length === 0) { emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } else { emptyState.classList.add('hidden'); emptyState.classList.remove('flex');
-            produtosCaixa.forEach((p, index) => { const subtotal = p.quantidade * p.preco_unitario; total += subtotal; container.innerHTML += `<div class="bg-white p-3 border border-gray-200 rounded-lg flex justify-between shadow-sm items-center relative group hover:border-red-300 transition"><span class="font-bold text-brand-dark text-sm"><span class="bg-brand-light text-brand-primary px-2 py-1 rounded text-xs mr-2">${p.quantidade}x</span> ${p.descricao}</span><span class="font-bold text-brand-accent text-sm">Gs. ${subtotal.toLocaleString('es-PY')}</span> <button onclick="removerItemCarrinho(${index})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow-sm">X</button></div>`; }); }
-            document.getElementById('valor-total-tela').innerText = total.toLocaleString('es-PY'); 
-        }
-        // Nova função para remover item do carrinho
+        function atualizarInterfaceCaixa() { const container = document.getElementById('lista-produtos'); const emptyState = document.getElementById('carrinho-vazio'); container.innerHTML = ''; let total = 0; if (produtosCaixa.length === 0) { emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } else { emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); produtosCaixa.forEach((p, index) => { const subtotal = p.quantidade * p.preco_unitario; total += subtotal; container.innerHTML += `<div class="bg-white p-3 border border-gray-200 rounded-lg flex justify-between shadow-sm items-center relative group hover:border-red-300 transition"><span class="font-bold text-brand-dark text-sm"><span class="bg-brand-light text-brand-primary px-2 py-1 rounded text-xs mr-2">${p.quantidade}x</span> ${p.descricao}</span><span class="font-bold text-brand-accent text-sm">Gs. ${subtotal.toLocaleString('es-PY')}</span> <button onclick="removerItemCarrinho(${index})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow-sm">X</button></div>`; }); } document.getElementById('valor-total-tela').innerText = total.toLocaleString('es-PY'); }
         function removerItemCarrinho(index) { produtosCaixa.splice(index, 1); atualizarInterfaceCaixa(); }
-
-        async function emitirNota() { if(produtosCaixa.length === 0) return showToast("El carrito está vacío.", "info"); const total = produtosCaixa.reduce((acc, p) => acc + (p.quantidade * p.preco_unitario), 0); const btn = document.getElementById('btn-emitir'); btn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Procesando SIFEN...'; btn.disabled = true; try { const res = await fetch('/emitir-nota', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: total, itens: produtosCaixa }) }); const dados = await res.json(); btn.innerHTML = '<span class="relative z-10 flex items-center">🚀 Emitir Factura Electrónica</span>'; btn.disabled = false; if (dados.cdc) { document.getElementById('resultado').classList.remove('hidden'); document.getElementById('qrcode-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(dados.link_qrcode)}`; document.getElementById('btn-pdf').href = dados.link_pdf; produtosCaixa = []; atualizarInterfaceCaixa(); showToast("✅ Factura emitida correctamente.", "success"); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); } else { showToast("❌ Error al emitir.", "error"); } } catch(e) { btn.disabled = false; btn.innerHTML = '<span class="relative z-10 flex items-center">🚀 Emitir Factura Electrónica</span>'; showToast("❌ Error de comunicación.", "error"); } }
-        
-        async function carregarHistorico(termoBusca = "") { const res = await fetch(`/listar-notas?busca=${termoBusca}`); const dados = await res.json(); const tbody = document.getElementById('tabela-historico'); const emptyState = document.getElementById('historico-vazio'); tbody.innerHTML = ''; 
-            if (dados.historico.length === 0 && termoBusca === "") { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } 
-            else { tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex');
-                dados.historico.forEach(nota => { tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4"><div class="font-bold text-brand-dark text-sm">${nota.nome_cliente}</div><div class="text-xs text-gray-400 font-mono break-all mt-1">CDC: ${nota.cdc.substring(0,25)}...</div></td><td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td></tr>`; }); 
-            }
-        }
+        async function emitirNota() { if(produtosCaixa.length === 0) return showToast("El carrito está vacío.", "info"); const total = produtosCaixa.reduce((acc, p) => acc + (p.quantidade * p.preco_unitario), 0); const btn = document.getElementById('btn-emitir'); btn.innerHTML = '⏳ Procesando SIFEN...'; btn.disabled = true; try { const res = await fetch('/emitir-nota', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: total, itens: produtosCaixa }) }); const dados = await res.json(); btn.innerHTML = '🚀 Emitir Factura Electrónica'; btn.disabled = false; if (dados.cdc) { document.getElementById('resultado').classList.remove('hidden'); document.getElementById('qrcode-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(dados.link_qrcode)}`; document.getElementById('btn-pdf').href = dados.link_pdf; produtosCaixa = []; atualizarInterfaceCaixa(); showToast("✅ Factura emitida.", "success"); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); } else { showToast("❌ Error al emitir.", "error"); } } catch(e) { btn.disabled = false; btn.innerHTML = '🚀 Emitir Factura Electrónica'; showToast("❌ Error de red.", "error"); } }
+        async function carregarHistorico(termoBusca = "") { const res = await fetch(`/listar-notas?busca=${termoBusca}`); const dados = await res.json(); const tbody = document.getElementById('tabela-historico'); tbody.innerHTML = ''; dados.historico.forEach(nota => { tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4"><div class="font-bold text-brand-dark text-sm">${nota.nome_cliente}</div><div class="text-xs text-gray-400 font-mono break-all mt-1">CDC: ${nota.cdc.substring(0,25)}...</div></td><td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td></tr>`; }); }
         function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
-        
-        // Adiciona a animação CSS para a barra de progresso do Toast
         document.head.insertAdjacentHTML('beforeend', `<style>@keyframes toast-progress { from { width: 100%; } to { width: 0%; } }</style>`);
     </script>
 </body>
