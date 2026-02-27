@@ -167,10 +167,18 @@
             </div>
 
             <div id="tela-inventario" class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
-                <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Inventario</h1></header>
+                <header class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 pb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-brand-dark">Inventario</h1>
+                        <p class="text-sm text-gray-500">Gestión de productos y stock.</p>
+                    </div>
+                    <button type="button" onclick="toggleFormProducto()" class="bg-brand-accent text-white font-bold py-2.5 px-6 rounded-lg hover:bg-brand-accentHover transition shadow-md whitespace-nowrap">
+                        ➕ Nuevo Producto
+                    </button>
+                </header>
                 
-                <div class="bg-brand-light p-6 rounded-xl border border-gray-200 mb-8">
-                    <h3 class="font-bold text-brand-dark mb-4">➕ Nuevo Producto</h3>
+                <div id="form-novo-produto" class="bg-brand-light p-6 rounded-xl border border-gray-200 mb-8 hidden shadow-inner">
+                    <h3 class="font-bold text-brand-dark mb-4 border-b border-gray-200 pb-2">Registrar Nuevo Producto</h3>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
                         <div class="md:col-span-3">
                             <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Código Barra *</label>
@@ -191,25 +199,39 @@
                             <label class="text-xs font-bold text-blue-600 uppercase block mb-1">Cód. Proveedor</label>
                             <input type="text" id="novo-prov" class="w-full border border-gray-300 p-2 rounded-lg text-sm focus:border-blue-500" placeholder="Ej: REF-991">
                         </div>
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-4">
                             <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Costo (Gs)</label>
                             <input type="number" id="novo-custo" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()">
                         </div>
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-4">
                             <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Venta (Gs) *</label>
                             <input type="number" id="novo-preco" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()">
                             <div id="info-lucro" class="h-4 mt-1 text-xs font-bold"></div>
                         </div>
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-4">
                             <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Stock Inicial</label>
                             <input type="number" id="novo-qtd" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0">
                         </div>
-                        <div class="md:col-span-3 pt-5">
-                            <button type="button" onclick="cadastrarProduto()" class="w-full bg-brand-accent text-white font-bold py-2.5 rounded-lg text-sm hover:bg-brand-accentHover transition">Guardar Producto</button>
+                        
+                        <div class="md:col-span-12 flex justify-end gap-3 pt-4 border-t border-gray-200 mt-2">
+                            <button type="button" onclick="toggleFormProducto()" class="text-gray-500 hover:text-gray-700 font-bold py-2 px-4 rounded-lg transition text-sm">Cancelar</button>
+                            <button type="button" onclick="cadastrarProduto()" class="bg-brand-accent text-white font-bold py-2 px-8 rounded-lg hover:bg-brand-accentHover transition shadow-md text-sm">💾 Guardar Producto</button>
                         </div>
                     </div>
                 </div>
                 
+                <div class="flex flex-col sm:flex-row gap-4 mb-6 bg-brand-light p-4 rounded-xl border border-gray-200 items-center shadow-sm">
+                    <div class="flex-1 w-full relative">
+                        <span class="absolute left-3 top-3 text-gray-400">🔎</span>
+                        <input type="text" id="busca-inventario" placeholder="Buscar por código o descripción..." class="w-full border border-gray-300 p-3 pl-10 rounded-lg text-sm focus:ring-2 focus:ring-brand-accent outline-none" oninput="filtrarEstoque()">
+                    </div>
+                    <div class="w-full sm:w-64">
+                        <select id="filtro-cat-inventario" class="w-full border border-gray-300 p-3 rounded-lg text-sm focus:ring-2 focus:ring-brand-accent outline-none bg-white font-medium" onchange="filtrarEstoque()">
+                            <option value="">📁 Todas las Categorías</option>
+                            </select>
+                    </div>
+                </div>
+
                 <div class="border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
                     <table class="w-full text-left bg-white min-w-[800px]">
                         <thead class="bg-brand-primary text-white">
@@ -224,6 +246,7 @@
                         </thead>
                         <tbody id="tabela-estoque" class="divide-y divide-gray-100 text-sm"></tbody>
                     </table>
+                    <div id="estoque-vazio" class="hidden flex-col items-center p-12 text-gray-400 bg-gray-50"><p>No se encontraron productos.</p></div>
                 </div>
             </div>
 
@@ -309,7 +332,7 @@
                             <h1 class="text-3xl font-extrabold text-brand-dark">Cierre de Caja</h1>
                             <p class="text-sm text-brand-primary">Resumen financiero y stock de ventas de hoy.</p>
                         </div>
-                        <button onclick="mudarTela('dashboard', null)" class="text-brand-accent hover:text-brand-dark transition font-bold text-sm bg-brand-light px-4 py-2 rounded-lg">← Volver</button>
+                        <button onclick="mudarTela('dashboard', null)" class="text-brand-accent hover:text-brand-dark transition font-bold text-sm bg-brand-light px-4 py-2 rounded-lg border border-brand-accent/20">← Volver</button>
                     </div>
                 </header>
 
@@ -347,7 +370,7 @@
             <div id="tela-reportes" class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
                 <header class="mb-6 flex justify-between items-center">
                     <h1 class="text-2xl font-bold text-brand-dark">Historial SIFEN</h1>
-                    <button onclick="mudarTela('dashboard', null)" class="text-brand-accent hover:text-brand-dark transition font-bold text-sm bg-brand-light px-4 py-2 rounded-lg">← Volver</button>
+                    <button onclick="mudarTela('dashboard', null)" class="text-brand-accent hover:text-brand-dark transition font-bold text-sm bg-brand-light px-4 py-2 rounded-lg border border-brand-accent/20">← Volver</button>
                 </header>
                 <div class="flex gap-3 mb-6 bg-brand-light p-4 rounded-xl border border-gray-200">
                     <input type="text" id="busca" placeholder="Buscar por cliente o CDC..." class="w-full border border-gray-300 p-3 rounded-lg text-sm" onkeyup="buscarNotas()">
@@ -465,13 +488,11 @@
                 elementoBotao.classList.add('menu-ativo'); 
             }
 
-            // Oculta menu no celular
             if(window.innerWidth < 768) {
                 document.getElementById('sidebar').classList.add('-translate-x-full'); 
                 document.getElementById('overlay').classList.add('hidden'); 
             }
 
-            // MUDANÇA: Oculta a Sidebar inteira para as telas de Relatório
             const sidebar = document.getElementById('sidebar');
             const mobileHeader = document.getElementById('mobile-header');
             
@@ -512,6 +533,70 @@
             } 
         }
 
+        // --- UX DO INVENTÁRIO (OCULTAR/MOSTRAR FORMULÁRIO) ---
+        function toggleFormProducto() {
+            const form = document.getElementById('form-novo-produto');
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                document.getElementById('novo-cod').focus();
+            } else {
+                form.classList.add('hidden');
+            }
+        }
+
+        // --- FILTRO DE ESTOQUE ---
+        function filtrarEstoque() {
+            const termo = document.getElementById('busca-inventario').value.toLowerCase();
+            const catFiltro = document.getElementById('filtro-cat-inventario').value;
+
+            const filtrados = productosGlobais.filter(p => {
+                const bateNomeCod = p.descricao.toLowerCase().includes(termo) || p.codigo_barras.toLowerCase().includes(termo) || (p.codigo_proveedor && p.codigo_proveedor.toLowerCase().includes(termo));
+                const bateCat = catFiltro === "" || p.categoria === catFiltro;
+                return bateNomeCod && bateCat;
+            });
+
+            renderizarTabelaEstoque(filtrados);
+        }
+
+        function renderizarTabelaEstoque(lista) {
+            const tbody = document.getElementById('tabela-estoque'); 
+            const emptyState = document.getElementById('estoque-vazio'); 
+            tbody.innerHTML = ''; 
+            
+            if (lista.length === 0) { 
+                tbody.closest('table').classList.add('hidden'); 
+                emptyState.classList.remove('hidden'); 
+                emptyState.classList.add('flex'); 
+            } else { 
+                tbody.closest('table').classList.remove('hidden'); 
+                emptyState.classList.add('hidden'); 
+                emptyState.classList.remove('flex'); 
+                
+                lista.forEach(p => { 
+                    let corStock = p.quantidade > 5 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; 
+                    let prov = p.codigo_proveedor ? `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-200">${p.codigo_proveedor}</span>` : `<span class="text-gray-300">-</span>`; 
+                    tbody.innerHTML += `
+                    <tr class="hover:bg-brand-light transition border-b border-gray-50">
+                        <td class="p-4"><div class="font-bold text-brand-dark text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td>
+                        <td class="p-4"><span class="bg-brand-light text-brand-primary border border-brand-primary/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td>
+                        <td class="p-4">${prov}</td>
+                        <td class="p-4 text-right"><div class="font-bold text-brand-dark text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-400 mt-1">Costo: Gs. ${p.preco_custo.toLocaleString('es-PY')}</div></td>
+                        <td class="p-4 text-center ${corStock} text-lg">${p.quantidade}</td>
+                        <td class="p-4 text-center flex justify-center gap-2"><button type="button" onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 bg-red-50 hover:bg-red-100 p-2 rounded transition" title="Eliminar">🗑️</button></td>
+                    </tr>`; 
+                }); 
+            } 
+        }
+
+        async function carregarEstoque() { 
+            try {
+                const res = await fetch('/listar-produtos'); 
+                productosGlobais = await res.json(); 
+                filtrarEstoque(); // Usa o filtro para desenhar a tabela
+            } catch(e) { console.error(e); }
+        }
+
+        // --- ENTRADA DE STOCK (RESTOCK) ---
         let productoRestockAtual = null;
 
         function filtrarRestock() {
@@ -619,6 +704,7 @@
             } 
         }
 
+        // --- PUNTO DE VENTA (CARRINHO) ---
         let isScanning = false;
         async function verificarScanner(event) { 
             if(event && event.key === 'Enter') { 
@@ -643,7 +729,7 @@
                         if(res.ok) { 
                             const producto = await res.json(); 
                             const precoSeguro = parseFloat(producto.preco) || parseFloat(producto.preco_venda) || 0;
-                            productosCaixa.push({ codigo_barras: codigo, descricao: producto.descricao, quantidade: 1, preco_unitario: precoSeguro }); 
+                            productosCaixa.push({ codigo_barras: codigo, descricao: producto.descricao, cantidad: 1, preco_unitario: precoSeguro }); 
                             atualizarInterfaceCaixa(); 
                             showToast(`✅ Producto agregado.`, 'success'); 
                         } else { 
@@ -781,6 +867,7 @@
             } 
         }
 
+        // --- INTEGRAÇÃO COM BACKEND ---
         async function carregarCierreCaja() {
             try {
                 const res = await fetch('/cierre-caja');
@@ -837,11 +924,20 @@
             try {
                 const res = await fetch('/listar-categorias'); 
                 const categorias = await res.json(); 
-                const select = document.getElementById('novo-cat'); 
-                if(select) { 
-                    select.innerHTML = ''; 
-                    categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); 
+                
+                const selectForm = document.getElementById('novo-cat'); 
+                const selectFiltro = document.getElementById('filtro-cat-inventario');
+                
+                if(selectForm) { 
+                    selectForm.innerHTML = ''; 
+                    categorias.forEach(c => { selectForm.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); 
                 } 
+                
+                if(selectFiltro) {
+                    selectFiltro.innerHTML = '<option value="">📁 Todas las Categorías</option>';
+                    categorias.forEach(c => { selectFiltro.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; });
+                }
+
                 const tbody = document.getElementById('tabela-categorias'); 
                 if(tbody) { 
                     tbody.innerHTML = ''; 
@@ -995,8 +1091,10 @@
                 if (res.ok) { 
                     ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => document.getElementById(id).value = ''); 
                     document.getElementById('info-lucro').innerHTML = ''; 
+                    
+                    // Oculta o formulário e recarrega a tabela de estoque
+                    toggleFormProducto();
                     carregarEstoque(); 
-                    document.getElementById('novo-cod').focus(); 
                     showToast("✅ Producto guardado exitosamente."); 
                 } else { 
                     showToast("❌ El código de barras ya existe.", "error"); 
@@ -1016,40 +1114,6 @@
                     showToast("❌ Error al eliminar producto.", "error"); 
                 }
             } 
-        }
-        
-        async function carregarEstoque() { 
-            try {
-                const res = await fetch('/listar-produtos'); 
-                productosGlobais = await res.json(); 
-                const tbody = document.getElementById('tabela-estoque'); 
-                const emptyState = document.getElementById('estoque-vazio'); 
-                tbody.innerHTML = ''; 
-                
-                if (productosGlobais.length === 0) { 
-                    tbody.closest('table').classList.add('hidden'); 
-                    emptyState.classList.remove('hidden'); 
-                    emptyState.classList.add('flex'); 
-                } else { 
-                    tbody.closest('table').classList.remove('hidden'); 
-                    emptyState.classList.add('hidden'); 
-                    emptyState.classList.remove('flex'); 
-                    
-                    productosGlobais.forEach(p => { 
-                        let corStock = p.quantidade > 5 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; 
-                        let prov = p.codigo_proveedor ? `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-200">${p.codigo_proveedor}</span>` : `<span class="text-gray-300">-</span>`; 
-                        tbody.innerHTML += `
-                        <tr class="hover:bg-brand-light transition border-b border-gray-50">
-                            <td class="p-4"><div class="font-bold text-brand-dark text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td>
-                            <td class="p-4"><span class="bg-brand-light text-brand-primary border border-brand-primary/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td>
-                            <td class="p-4">${prov}</td>
-                            <td class="p-4 text-right"><div class="font-bold text-brand-dark text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-400 mt-1">Costo: Gs. ${p.preco_custo.toLocaleString('es-PY')}</div></td>
-                            <td class="p-4 text-center ${corStock} text-lg">${p.quantidade}</td>
-                            <td class="p-4 text-center flex justify-center gap-2"><button type="button" onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 bg-red-50 hover:bg-red-100 p-2 rounded transition" title="Eliminar">🗑️</button></td>
-                        </tr>`; 
-                    }); 
-                } 
-            } catch(e) { console.error(e); }
         }
 
         async function carregarHistorico(termoBusca = "") { 
