@@ -36,10 +36,8 @@
     <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white p-4 rounded-2xl w-full max-w-md shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-brand-dark flex items-center">
-                    📷 Escanear Producto
-                </h3>
-                <button onclick="fecharCamera()" class="text-red-500 hover:bg-red-50 p-2 rounded-full font-bold text-xl leading-none transition">&times;</button>
+                <h3 class="font-bold text-brand-dark flex items-center">📷 Escanear Producto</h3>
+                <button type="button" onclick="fecharCamera()" class="text-red-500 hover:bg-red-50 p-2 rounded-full font-bold text-xl leading-none transition">&times;</button>
             </div>
             <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-brand-accent/30 min-h-[250px] flex items-center justify-center text-white text-sm">
                 Iniciando cámara...
@@ -55,16 +53,14 @@
             </div>
             <p class="text-brand-primary mb-6 text-sm">Acceso al Sistema de Gestión</p>
             <input type="password" id="senha" placeholder="Contraseña (admin123)" class="w-full border-gray-300 border p-3 rounded-lg mb-4 text-center focus:ring-2 focus:ring-brand-accent outline-none">
-            <button onclick="fazerLogin()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-lg hover:bg-brand-accentHover shadow-md transition">Ingresar</button>
+            <button type="button" onclick="fazerLogin()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-lg hover:bg-brand-accentHover shadow-md transition">Ingresar</button>
             <p id="erro-login" class="text-red-500 mt-4 text-sm hidden bg-red-50 p-2 rounded">Contraseña incorrecta</p>
         </div>
     </div>
 
     <div id="mobile-header" class="flex md:hidden bg-brand-dark text-white p-4 shadow-md justify-between items-center z-20 w-full hidden">
-        <div class="flex items-center">
-            <h2 class="text-lg font-bold text-white">NubePY</h2>
-        </div>
-        <button onclick="toggleSidebar()" class="text-3xl focus:outline-none text-brand-accent hover:text-white transition">☰</button>
+        <h2 class="text-lg font-bold text-white">NubePY</h2>
+        <button type="button" onclick="toggleSidebar()" class="text-3xl focus:outline-none text-brand-accent hover:text-white transition">☰</button>
     </div>
 
     <div id="app-screen" class="hidden flex-1 h-full overflow-hidden relative w-full">
@@ -79,39 +75,29 @@
                 </div>
                 
                 <nav class="mt-4 flex flex-col p-2 space-y-1">
-                    <button onclick="mudarTela('pos', this)" class="nav-btn menu-ativo border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center">
-                        <span class="mr-3 text-lg">🛒</span> Punto de Venta
-                    </button>
+                    <button type="button" onclick="mudarTela('pos', this)" class="nav-btn menu-ativo border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center"><span class="mr-3 text-lg">🛒</span> Punto de Venta</button>
                     
                     <div class="mt-2">
-                        <button onclick="toggleAcordeao('menu-inv', 'seta-inv')" class="w-full p-3 rounded-r-lg text-left hover:bg-brand-light transition flex justify-between items-center border-l-4 border-transparent group">
-                            <div class="flex items-center"><span class="mr-3 text-lg">📦</span> Inventario</div> <span id="seta-inv" class="text-xs text-gray-400 group-hover:text-brand-accent">▼</span>
-                        </button>
+                        <button type="button" onclick="toggleAcordeao('menu-inv', 'seta-inv')" class="w-full p-3 rounded-r-lg text-left hover:bg-brand-light transition flex justify-between items-center border-l-4 border-transparent group"><div class="flex items-center"><span class="mr-3 text-lg">📦</span> Inventario</div> <span id="seta-inv" class="text-xs text-gray-400 group-hover:text-brand-accent">▼</span></button>
                         <div id="menu-inv" class="hidden flex-col pl-4 mt-1 space-y-1">
-                            <button onclick="mudarTela('inventario', this)" class="nav-btn border-l-2 border-gray-200 w-full p-2 pl-4 text-sm text-left hover:bg-brand-light hover:border-brand-accent transition rounded-r-lg">Productos</button>
-                            <button onclick="mudarTela('categorias', this)" class="nav-btn border-l-2 border-gray-200 w-full p-2 pl-4 text-sm text-left hover:bg-brand-light hover:border-brand-accent transition rounded-r-lg">Categorías</button>
+                            <button type="button" onclick="mudarTela('inventario', this)" class="nav-btn border-l-2 border-gray-200 w-full p-2 pl-4 text-sm text-left hover:bg-brand-light hover:border-brand-accent transition rounded-r-lg">Productos</button>
+                            <button type="button" onclick="mudarTela('categorias', this)" class="nav-btn border-l-2 border-gray-200 w-full p-2 pl-4 text-sm text-left hover:bg-brand-light hover:border-brand-accent transition rounded-r-lg">Categorías</button>
                         </div>
                     </div>
 
                     <div class="mt-2">
-                        <button onclick="toggleAcordeao('menu-rep', 'seta-rep')" class="w-full p-3 rounded-r-lg text-left hover:bg-brand-light transition flex justify-between items-center border-l-4 border-transparent group">
-                             <div class="flex items-center"><span class="mr-3 text-lg">📊</span> Reportes</div> <span id="seta-rep" class="text-xs text-gray-400 group-hover:text-brand-accent">▼</span>
-                        </button>
+                        <button type="button" onclick="toggleAcordeao('menu-rep', 'seta-rep')" class="w-full p-3 rounded-r-lg text-left hover:bg-brand-light transition flex justify-between items-center border-l-4 border-transparent group"><div class="flex items-center"><span class="mr-3 text-lg">📊</span> Reportes</div> <span id="seta-rep" class="text-xs text-gray-400 group-hover:text-brand-accent">▼</span></button>
                         <div id="menu-rep" class="hidden flex-col pl-4 mt-1 space-y-1">
-                            <button onclick="mudarTela('dashboard', this)" class="nav-btn border-l-2 border-gray-200 w-full p-2 pl-4 text-sm text-left hover:bg-brand-light hover:border-brand-accent transition rounded-r-lg">Dashboard</button>
-                            <button onclick="mudarTela('reportes', this)" class="nav-btn border-l-2 border-gray-200 w-full p-2 pl-4 text-sm text-left hover:bg-brand-light hover:border-brand-accent transition rounded-r-lg">Historial SIFEN</button>
+                            <button type="button" onclick="mudarTela('dashboard', this)" class="nav-btn border-l-2 border-gray-200 w-full p-2 pl-4 text-sm text-left hover:bg-brand-light hover:border-brand-accent transition rounded-r-lg">Dashboard</button>
+                            <button type="button" onclick="mudarTela('reportes', this)" class="nav-btn border-l-2 border-gray-200 w-full p-2 pl-4 text-sm text-left hover:bg-brand-light hover:border-brand-accent transition rounded-r-lg">Historial SIFEN</button>
                         </div>
                     </div>
 
-                    <button onclick="mudarTela('config', this)" class="nav-btn border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center mt-2">
-                        <span class="mr-3 text-lg">⚙️</span> Ajustes
-                    </button>
+                    <button type="button" onclick="mudarTela('config', this)" class="nav-btn border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center mt-2"><span class="mr-3 text-lg">⚙️</span> Ajustes</button>
                 </nav>
             </div>
             <div class="p-4 border-t border-gray-100">
-                <button onclick="window.location.reload()" class="w-full text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-3 text-sm font-bold flex items-center justify-center transition">
-                    Cerrar Sesión
-                </button>
+                <button type="button" onclick="window.location.reload()" class="w-full text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-3 text-sm font-bold flex items-center justify-center transition">Cerrar Sesión</button>
             </div>
         </div>
 
@@ -142,16 +128,15 @@
                     <div class="flex items-center mb-4 bg-yellow-50 rounded-lg border border-yellow-200 overflow-hidden">
                         <span class="text-xl pl-3 py-3">🔎</span>
                         <input type="text" id="scanner-barras" placeholder="Escanear Código..." class="w-full bg-transparent p-3 text-lg font-bold focus:outline-none text-brand-dark" onkeypress="verificarScanner(event)">
-                        <button onclick="abrirCamera('scanner-barras')" class="bg-brand-dark text-white px-5 py-4 font-bold hover:bg-brand-primary transition shadow-lg" title="Usar Cámara">
-                            📷
-                        </button>
+                        <button type="button" onclick="abrirCamera('scanner-barras')" class="bg-brand-dark text-white px-5 py-4 font-bold hover:bg-brand-primary transition shadow-lg" title="Usar Cámara">📷</button>
                     </div>
                     
-                    <div id="lista-produtos" class="space-y-2 mb-4 max-h-64 overflow-y-auto min-h-[100px] pr-2">
-                        <div id="carrinho-vazio" class="flex flex-col items-center justify-center h-32 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
-                            <p class="text-sm font-medium">El carrito está vacío</p>
-                        </div>
+                    <div id="carrinho-vazio" class="flex flex-col items-center justify-center h-24 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 mb-4">
+                        <p class="text-sm font-medium">El carrito está vacío</p>
                     </div>
+                    
+                    <div id="lista-produtos" class="space-y-2 mb-4 max-h-64 overflow-y-auto pr-2">
+                        </div>
 
                     <div class="bg-brand-light p-3 rounded-lg border border-gray-200">
                          <p class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-2">Agregar Item Manualmente</p>
@@ -160,7 +145,7 @@
                             <div class="flex gap-2 w-full md:w-1/2">
                                 <input type="number" id="manual-qtd" placeholder="Cant." value="1" class="border-gray-300 border p-2 rounded-lg w-1/3 text-sm text-center">
                                 <input type="number" id="manual-preco" placeholder="Precio (Gs)" class="border-gray-300 border p-2 rounded-lg w-2/3 text-sm">
-                                <button onclick="adicionarManual()" class="bg-brand-dark text-white px-4 rounded-lg font-bold hover:bg-brand-primary transition">+</button>
+                                <button type="button" onclick="adicionarManual()" class="bg-brand-dark text-white px-4 rounded-lg font-bold hover:bg-brand-primary transition">+</button>
                             </div>
                         </div>
                     </div>
@@ -171,7 +156,7 @@
                     <div class="text-3xl font-extrabold text-brand-accent">Gs. <span id="valor-total-tela">0</span></div>
                 </div>
                 
-                <button onclick="emitirNota()" id="btn-emitir" class="w-full bg-brand-accent text-white font-bold py-4 text-lg rounded-xl hover:bg-brand-accentHover shadow-md transition">🚀 Emitir Factura Electrónica</button>
+                <button type="button" onclick="emitirNota()" id="btn-emitir" class="w-full bg-brand-accent text-white font-bold py-4 text-lg rounded-xl hover:bg-brand-accentHover shadow-md transition">🚀 Emitir Factura Electrónica</button>
                 
                 <div id="resultado" class="mt-6 hidden text-center border-t border-gray-100 pt-6">
                     <div class="bg-green-50 p-6 rounded-2xl border border-green-100 inline-block shadow-sm">
@@ -192,7 +177,7 @@
                             <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Código *</label>
                             <div class="flex rounded-lg border-2 border-yellow-300 bg-yellow-50 overflow-hidden">
                                 <input type="text" id="novo-cod" class="w-full bg-transparent p-2 pl-3 font-bold focus:outline-none text-sm text-brand-dark" onkeypress="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('novo-desc').focus(); }">
-                                <button onclick="abrirCamera('novo-cod')" class="bg-brand-dark text-white px-3 hover:bg-brand-primary transition">📷</button>
+                                <button type="button" onclick="abrirCamera('novo-cod')" class="bg-brand-dark text-white px-3 hover:bg-brand-primary transition">📷</button>
                             </div>
                         </div>
                         <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Descripción *</label><input type="text" id="novo-desc" class="w-full border border-gray-300 p-2 rounded-lg text-sm"></div>
@@ -201,20 +186,14 @@
                         <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Costo (Gs)</label><input type="number" id="novo-custo" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()"></div>
                         <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Venta (Gs) *</label><input type="number" id="novo-preco" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()"><div id="info-lucro" class="h-4 mt-1 text-xs font-bold"></div></div>
                         <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Stock Inicial</label><input type="number" id="novo-qtd" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0"></div>
-                        <div class="md:col-span-3 pt-5"><button onclick="cadastrarProduto()" class="w-full bg-brand-accent text-white font-bold py-2.5 rounded-lg text-sm hover:bg-brand-accentHover transition">Guardar Producto</button></div>
+                        <div class="md:col-span-3 pt-5"><button type="button" onclick="cadastrarProduto()" class="w-full bg-brand-accent text-white font-bold py-2.5 rounded-lg text-sm hover:bg-brand-accentHover transition">Guardar Producto</button></div>
                     </div>
                 </div>
 
                 <div class="border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
                     <table class="w-full text-left bg-white min-w-[700px]">
                         <thead class="bg-brand-primary text-white">
-                            <tr>
-                                <th class="p-4 text-xs font-bold uppercase">Producto</th>
-                                <th class="p-4 text-xs font-bold uppercase">Categoría</th>
-                                <th class="p-4 text-xs font-bold uppercase text-right">Precio</th>
-                                <th class="p-4 text-xs font-bold uppercase text-center">Stock</th>
-                                <th class="p-4 text-xs font-bold uppercase text-center">Acción</th>
-                            </tr>
+                            <tr><th class="p-4 text-xs font-bold uppercase">Producto</th><th class="p-4 text-xs font-bold uppercase">Categoría</th><th class="p-4 text-xs font-bold uppercase text-right">Precio</th><th class="p-4 text-xs font-bold uppercase text-center">Stock</th><th class="p-4 text-xs font-bold uppercase text-center">Acción</th></tr>
                         </thead>
                         <tbody id="tabela-estoque" class="divide-y divide-gray-100 text-sm"></tbody>
                     </table>
@@ -229,7 +208,7 @@
                         <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Nueva Categoría</label>
                         <input type="text" id="nova-cat-nome" class="w-full border border-gray-300 p-3 rounded-lg text-sm">
                     </div>
-                    <button onclick="adicionarCategoria()" class="bg-brand-accent text-white px-6 py-3 rounded-lg font-bold hover:bg-brand-accentHover transition">Crear</button>
+                    <button type="button" onclick="adicionarCategoria()" class="bg-brand-accent text-white px-6 py-3 rounded-lg font-bold hover:bg-brand-accentHover transition">Crear</button>
                 </div>
                 <table class="w-full text-left bg-white border border-gray-200 rounded-xl overflow-hidden">
                     <thead class="bg-brand-light border-b border-gray-200">
@@ -278,13 +257,13 @@
                         <div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">RUC Emisor</label><input type="text" id="conf-ruc" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div>
                         <div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Dirección</label><input type="text" id="conf-endereco" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div>
                         <div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Contraseña (.p12)</label><input type="password" id="conf-senha-cert" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div>
-                        <button onclick="salvarConfiguracao()" class="w-full bg-brand-primary text-white font-bold py-3 rounded-lg hover:bg-brand-dark transition">Guardar Datos</button>
+                        <button type="button" onclick="salvarConfiguracao()" class="w-full bg-brand-primary text-white font-bold py-3 rounded-lg hover:bg-brand-dark transition">Guardar Datos</button>
                     </div>
                     <div class="space-y-5">
                         <div class="border-2 border-dashed border-brand-accent/30 p-6 rounded-xl text-center bg-brand-light/50">
                             <input type="file" id="arquivo-cert" accept=".p12,.pfx" class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-brand-accent file:text-white hover:file:bg-brand-accentHover cursor-pointer mx-auto">
                         </div>
-                        <button onclick="fazerUploadCertificado()" class="w-full bg-brand-primary text-white font-bold py-3 px-6 rounded-lg text-sm hover:bg-brand-dark transition">Subir Archivo</button>
+                        <button type="button" onclick="fazerUploadCertificado()" class="w-full bg-brand-primary text-white font-bold py-3 px-6 rounded-lg text-sm hover:bg-brand-dark transition">Subir Archivo</button>
                         <div id="status-cert" class="text-sm text-center p-3 rounded-lg hidden border"></div>
                     </div>
                 </div>
@@ -297,7 +276,6 @@
         let produtosCaixa = [];
         let graficoAtual = null;
 
-        // --- SISTEMA DE CÂMERA BLINDADO ---
         let html5QrCode = null;
         let campoDestinoScanner = ''; 
 
@@ -307,7 +285,6 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             
-            // Sempre cria um motor novo para evitar travamentos
             if (!html5QrCode) {
                 html5QrCode = new Html5Qrcode("reader");
             }
@@ -316,7 +293,7 @@
                 { facingMode: "environment" }, 
                 { fps: 10, qrbox: { width: 250, height: 150 } }, 
                 onScanSucesso, 
-                (erro) => { /* ignora erros de leitura parcial até acertar o código */ }
+                () => { /* Ignora falhas de foco na leitura */ }
             ).catch(err => { 
                 showToast("Error al activar cámara.", "error"); 
                 fecharCamera(); 
@@ -324,11 +301,11 @@
         }
 
         function onScanSucesso(codigoDecodificado) {
-            fecharCamera(); // Desliga na hora
+            fecharCamera();
             document.getElementById(campoDestinoScanner).value = codigoDecodificado;
             
             if (campoDestinoScanner === 'scanner-barras') {
-                verificarScanner({ key: 'Enter' }); 
+                verificarScanner({ key: 'Enter', preventDefault: function(){} }); 
             } else if (campoDestinoScanner === 'novo-cod') {
                 document.getElementById('novo-desc').focus();
             }
@@ -339,18 +316,16 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             
-            // Desliga a câmera e destroi o motor com segurança
             if (html5QrCode) {
                 try {
                     html5QrCode.stop().then(() => {
                         html5QrCode.clear();
-                        html5QrCode = null; // Zera para a próxima vez
+                        html5QrCode = null;
                     }).catch(e => { html5QrCode = null; });
                 } catch (err) { html5QrCode = null; }
             }
         }
 
-        // --- SISTEMA DE TOASTS ---
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -367,7 +342,6 @@
             }, 3000);
         }
 
-        // --- UI E NAVEGAÇÃO ---
         function toggleSidebar() { 
             document.getElementById('sidebar').classList.toggle('-translate-x-full'); 
             document.getElementById('overlay').classList.toggle('hidden'); 
@@ -398,7 +372,7 @@
                 document.getElementById('login-screen').classList.add('hidden'); 
                 document.getElementById('app-screen').classList.remove('hidden'); 
                 document.getElementById('app-screen').classList.add('flex'); 
-                document.getElementById('mobile-header').classList.remove('hidden'); // Exibe o header mobile
+                document.getElementById('mobile-header').classList.remove('hidden');
                 await carregarConfiguracao(); 
                 await carregarCategorias(); 
                 showToast("¡Bienvenido a NubePY!"); 
@@ -407,11 +381,15 @@
             } 
         }
 
-        // --- SISTEMA DE CARRINHO (AGRUPAMENTO E QUANTIDADE) ---
         let isScanning = false;
 
         async function verificarScanner(event) { 
-            if(event.key === 'Enter') { 
+            if(event && event.key === 'Enter') { 
+                // Evita que o navegador recarregue a página
+                if(event.preventDefault && typeof event.preventDefault === 'function') {
+                    event.preventDefault(); 
+                }
+
                 if(isScanning) return; 
                 
                 const input = document.getElementById('scanner-barras'); 
@@ -419,10 +397,9 @@
                 if(!codigo) return; 
                 
                 isScanning = true;
-                input.value = ''; // Limpa rápido a tela para o próximo bip
+                input.value = ''; 
                 
                 try {
-                    // Verifica se já está no carrinho
                     const indexExistente = produtosCaixa.findIndex(p => p.codigo_barras === codigo);
                     
                     if (indexExistente !== -1) {
@@ -430,22 +407,23 @@
                         atualizarInterfaceCaixa();
                         showToast(`+1 agregado.`, 'success');
                     } else {
-                        // Se não existe, busca na Nuvem (usando encodeURIComponent por segurança)
                         const res = await fetch('/buscar-produto/' + encodeURIComponent(codigo)); 
                         if(res.ok) { 
                             const produto = await res.json(); 
-                            produtosCaixa.push({ codigo_barras: codigo, descricao: produto.descricao, quantidade: 1, preco_unitario: produto.preco }); 
+                            // Correção backend: Garante que vai ler o preço sendo string ou numero
+                            const precoSeguro = parseFloat(produto.preco) || parseFloat(produto.preco_venda) || 0;
+                            produtosCaixa.push({ codigo_barras: codigo, descricao: produto.descricao, quantidade: 1, preco_unitario: precoSeguro }); 
                             atualizarInterfaceCaixa(); 
                             showToast(`✅ ${produto.descricao} agregado.`, 'success'); 
                         } else {
-                            // ERRO INTELIGENTE: Mostra o número que a câmera tentou ler
                             showToast(`⚠️ No encontrado (Cód leído: ${codigo})`, "error"); 
                         }
                     }
                 } catch(e) {
+                    console.error("Scanner error: ", e);
                     showToast("Error de conexión.", "error");
                 } finally {
-                    setTimeout(() => isScanning = false, 300); // Trava o scanner por 0.3s
+                    setTimeout(() => isScanning = false, 300);
                 }
             } 
         }
@@ -481,34 +459,42 @@
         function atualizarInterfaceCaixa() { 
             const container = document.getElementById('lista-produtos'); 
             const emptyState = document.getElementById('carrinho-vazio'); 
-            container.innerHTML = ''; 
+            let htmlContent = ''; 
             let total = 0; 
             
             if (produtosCaixa.length === 0) { 
-                emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); 
+                emptyState.classList.remove('hidden'); 
+                emptyState.classList.add('flex'); 
+                container.innerHTML = '';
             } else { 
-                emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); 
+                emptyState.classList.add('hidden'); 
+                emptyState.classList.remove('flex'); 
+                
                 produtosCaixa.forEach((p, index) => { 
-                    const subtotal = p.quantidade * p.preco_unitario; 
+                    const preco = Number(p.preco_unitario) || 0;
+                    const subtotal = p.quantidade * preco; 
                     total += subtotal; 
-                    container.innerHTML += `
+                    
+                    htmlContent += `
                     <div class="bg-white p-3 border border-gray-200 rounded-lg flex flex-col sm:flex-row justify-between shadow-sm items-start sm:items-center relative group hover:border-brand-accent transition gap-2 mt-2">
                         <div class="flex-1">
                             <span class="font-bold text-brand-dark text-sm block">${p.descricao}</span>
-                            <span class="text-xs text-gray-500">Gs. ${p.preco_unitario.toLocaleString('es-PY')} c/u</span>
+                            <span class="text-xs text-gray-500">Gs. ${preco.toLocaleString('es-PY')} c/u</span>
                         </div>
                         
                         <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                             <div class="flex items-center bg-brand-light rounded-lg border border-gray-200 shadow-sm">
-                                <button onclick="alterarQuantidade(${index}, -1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-l-lg transition text-lg leading-none">-</button>
+                                <button type="button" onclick="alterarQuantidade(${index}, -1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-l-lg transition text-lg leading-none">-</button>
                                 <span class="px-2 font-bold text-sm min-w-[2rem] text-center">${p.quantidade}</span>
-                                <button onclick="alterarQuantidade(${index}, 1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-r-lg transition text-lg leading-none">+</button>
+                                <button type="button" onclick="alterarQuantidade(${index}, 1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-r-lg transition text-lg leading-none">+</button>
                             </div>
                             <span class="font-bold text-brand-accent text-sm w-24 text-right">Gs. ${subtotal.toLocaleString('es-PY')}</span>
                         </div>
-                        <button onclick="removerItemCarrinho(${index})" class="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow-sm" title="Quitar">✕</button>
+                        <button type="button" onclick="removerItemCarrinho(${index})" class="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow-sm" title="Quitar">✕</button>
                     </div>`; 
                 }); 
+                
+                container.innerHTML = htmlContent;
             } 
             document.getElementById('valor-total-tela').innerText = total.toLocaleString('es-PY'); 
         }
@@ -543,9 +529,8 @@
             } 
         }
 
-        // --- INTEGRAÇÃO BACKEND (Restante do CRUD) ---
         async function carregarDashboard() { try { const res = await fetch('/dados-dashboard'); const dados = await res.json(); document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText = dados.total_notas; const nomes = dados.top_produtos.map(p => p.nome); const quantidades = dados.top_produtos.map(p => p.quantidade); if (nomes.length === 0) { nomes.push("Sin ventas aún"); quantidades.push(0); } const ctx = document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) graficoAtual.destroy(); graficoAtual = new Chart(ctx, { type: 'bar', data: { labels: nomes, datasets: [{ label: 'Unidades', data: quantidades, backgroundColor: '#0d9488', borderColor: '#0f766e', borderWidth: 1, borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } } }); } catch (error) {} }
-        async function carregarCategorias() { const res = await fetch('/listar-categorias'); const categorias = await res.json(); const select = document.getElementById('novo-cat'); if(select) { select.innerHTML = ''; categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); } const tbody = document.getElementById('tabela-categorias'); if(tbody) { tbody.innerHTML = ''; categorias.forEach(c => { let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">Fijo</span>` : `<button onclick="deletarCategoria(${c.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded text-sm transition">🗑️</button>`; tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4 font-bold text-brand-dark">${c.nome}</td><td class="p-4 text-center">${btnDelete}</td></tr>`; }); } }
+        async function carregarCategorias() { const res = await fetch('/listar-categorias'); const categorias = await res.json(); const select = document.getElementById('novo-cat'); if(select) { select.innerHTML = ''; categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); } const tbody = document.getElementById('tabela-categorias'); if(tbody) { tbody.innerHTML = ''; categorias.forEach(c => { let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">Fijo</span>` : `<button type="button" onclick="deletarCategoria(${c.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded text-sm transition">🗑️</button>`; tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4 font-bold text-brand-dark">${c.nome}</td><td class="p-4 text-center">${btnDelete}</td></tr>`; }); } }
         async function adicionarCategoria() { const nome = document.getElementById('nova-cat-nome').value.trim(); if(!nome) return showToast("Escriba nombre.", "info"); const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome}) }); if(res.ok) { document.getElementById('nova-cat-nome').value = ''; carregarCategorias(); showToast("Categoría creada."); } else showToast("❌ Ya existe.", "error"); }
         async function deletarCategoria(id) { if(confirm("¿Seguro?")) { await fetch(`/deletar-categoria/${id}`, {method: 'DELETE'}); carregarCategorias(); showToast("Categoría eliminada."); } }
         async function carregarConfiguracao() { const res = await fetch('/obter-configuracao'); const dados = await res.json(); if(dados) { document.getElementById('conf-nome').value = dados.nome_empresa || ''; document.getElementById('conf-ruc').value = dados.ruc || ''; document.getElementById('conf-endereco').value = dados.endereco || ''; document.getElementById('conf-senha-cert').value = dados.senha_certificado || ''; document.getElementById('ruc').value = dados.ruc || 'Falta RUC'; const status = document.getElementById('status-cert'); if(dados.caminho_certificado) { status.classList.remove('hidden'); status.classList.add('bg-green-50', 'text-green-800'); status.innerHTML = `✅ Certificado: <b>${dados.caminho_certificado.split('/').pop()}</b>`; } } }
@@ -554,11 +539,9 @@
         function calcularLucro() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const venta = parseFloat(document.getElementById('novo-preco').value) || 0; const divInfo = document.getElementById('info-lucro'); if (venta > 0 && costo >= 0) { const lucro = venta - costo; const margem = (lucro / venta) * 100; if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}%`; divInfo.className = "h-4 mt-1 text-xs font-bold text-green-600"; } else if (lucro === 0) { divInfo.innerHTML = `Sin margen`; divInfo.className = "h-4 mt-1 text-xs font-bold text-yellow-600"; } else { divInfo.innerHTML = `Pérdida`; divInfo.className = "h-4 mt-1 text-xs font-bold text-red-600"; } } else divInfo.innerHTML = ""; }
         async function cadastrarProduto() { const custo = parseFloat(document.getElementById('novo-custo').value) || 0; const preco = parseFloat(document.getElementById('novo-preco').value) || 0; const qtd = parseInt(document.getElementById('novo-qtd').value) || 0; const dados = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: custo, preco_venda: preco, quantidade: qtd }; if(!dados.codigo_barras || !dados.descricao || preco === 0) return showToast("Complete Código, Descripción y Venta.", "info"); try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; carregarEstoque(); document.getElementById('novo-cod').focus(); showToast("✅ Producto guardado."); } else showToast("❌ El código ya existe.", "error"); } catch (e) { showToast("❌ Error de red.", "error"); } }
         async function deletarProduto(codigo) { if(confirm("¿Seguro?")) { await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE' }); carregarEstoque(); showToast("Producto eliminado."); } }
-        async function carregarEstoque() { const res = await fetch('/listar-produtos'); const produtos = await res.json(); const tbody = document.getElementById('tabela-estoque'); const emptyState = document.getElementById('estoque-vazio'); tbody.innerHTML = ''; if (produtos.length === 0) { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } else { tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); produtos.forEach(p => { let corStock = p.quantidade > 5 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4"><div class="font-bold text-brand-dark text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td><td class="p-4"><span class="bg-brand-light text-brand-primary border border-brand-primary/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td><td class="p-4 text-right"><div class="font-bold text-brand-dark text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div></td><td class="p-4 text-center ${corStock} text-sm">${p.quantidade}</td><td class="p-4 text-center flex justify-center gap-2"><button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 bg-red-50 p-2 rounded transition">🗑️</button></td></tr>`; }); } }
+        async function carregarEstoque() { const res = await fetch('/listar-produtos'); const produtos = await res.json(); const tbody = document.getElementById('tabela-estoque'); const emptyState = document.getElementById('estoque-vazio'); tbody.innerHTML = ''; if (produtos.length === 0) { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } else { tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); produtos.forEach(p => { let corStock = p.quantidade > 5 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4"><div class="font-bold text-brand-dark text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td><td class="p-4"><span class="bg-brand-light text-brand-primary border border-brand-primary/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td><td class="p-4 text-right"><div class="font-bold text-brand-dark text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div></td><td class="p-4 text-center ${corStock} text-sm">${p.quantidade}</td><td class="p-4 text-center flex justify-center gap-2"><button type="button" onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 bg-red-50 p-2 rounded transition">🗑️</button></td></tr>`; }); } }
         async function carregarHistorico(termoBusca = "") { const res = await fetch(`/listar-notas?busca=${termoBusca}`); const dados = await res.json(); const tbody = document.getElementById('tabela-historico'); tbody.innerHTML = ''; dados.historico.forEach(nota => { tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4"><div class="font-bold text-brand-dark text-sm">${nota.nome_cliente}</div><div class="text-xs text-gray-400 font-mono break-all mt-1">CDC: ${nota.cdc.substring(0,25)}...</div></td><td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td></tr>`; }); }
         function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
-        
-        // CSS para a barra de loading do Toast
         document.head.insertAdjacentHTML('beforeend', `<style>@keyframes toast-progress { from { width: 100%; } to { width: 0%; } }</style>`);
     </script>
 </body>
