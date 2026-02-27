@@ -36,10 +36,12 @@
     <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white p-4 rounded-2xl w-full max-w-md shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-brand-dark flex items-center">📷 Escanear</h3>
+                <h3 class="font-bold text-brand-dark flex items-center">📷 Escanear Producto</h3>
                 <button type="button" onclick="fecharCamera()" class="text-red-500 hover:bg-red-50 p-2 rounded-full font-bold text-xl leading-none transition">&times;</button>
             </div>
-            <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-brand-accent/30 min-h-[250px] flex items-center justify-center text-white text-sm">Iniciando cámara...</div>
+            <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-brand-accent/30 min-h-[250px] flex items-center justify-center text-white text-sm">
+                Iniciando cámara...
+            </div>
             <p class="text-xs text-center text-gray-500 mt-4">Apunte la cámara trasera al código.</p>
         </div>
     </div>
@@ -99,7 +101,9 @@
                 </nav>
             </div>
             <div class="p-4 border-t border-gray-100">
-                <button type="button" onclick="window.location.reload()" class="w-full text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-3 text-sm font-bold flex items-center justify-center transition">Cerrar Sesión</button>
+                <button type="button" onclick="window.location.reload()" class="w-full text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-3 text-sm font-bold flex items-center justify-center transition">
+                    Cerrar Sesión
+                </button>
             </div>
         </div>
 
@@ -241,8 +245,7 @@
                             <input type="text" id="restock-cod" placeholder="Código o Nombre del producto..." autocomplete="off" class="w-full bg-transparent p-4 text-lg font-bold focus:outline-none text-brand-dark" oninput="filtrarRestock()" onkeypress="buscarParaRestock(event)">
                             <button type="button" onclick="abrirCamera('restock-cod')" class="bg-brand-dark text-white px-5 py-4 font-bold hover:bg-brand-primary transition">📷</button>
                         </div>
-                        <div id="restock-dropdown" class="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded-lg mt-1 hidden max-h-60 overflow-y-auto">
-                            </div>
+                        <div id="restock-dropdown" class="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded-lg mt-1 hidden max-h-60 overflow-y-auto"></div>
                     </div>
                     
                     <div id="restock-ficha" class="hidden bg-white p-6 rounded-xl border border-brand-accent/30 shadow-sm relative overflow-hidden">
@@ -387,19 +390,41 @@
     </div>
 
     <script>
-        let produtosGlobais = []; 
-        let produtosCaixa = [];
+        let productosGlobais = []; 
+        let productosCaixa = [];
         let graficoAtual = null;
         let html5QrCode = null;
         let campoDestinoScanner = ''; 
 
-        // --- CÂMERA E TOASTS ---
+        // --- SISTEMA DE TOASTS BLINDADO (100% ESPANHOL) ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-brand-accent' : (type === 'error' ? 'bg-red-500' : 'bg-brand-primary');
+            const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
+            toast.className = `${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center min-w-[300px] toast-enter relative overflow-hidden`;
+            toast.innerHTML = `<span class="text-xl mr-3">${icon}</span><p class="font-bold text-sm">${message}</p><div class="absolute bottom-0 left-0 h-1 bg-white/30 animate-[toast-progress_3s_linear_forwards]"></div>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); });
+            setTimeout(() => { 
+                toast.classList.remove('toast-enter-active'); 
+                toast.classList.add('toast-exit-active'); 
+                setTimeout(() => container.removeChild(toast), 300); 
+            }, 3000);
+        }
+
+        // --- CÂMERA ---
         function abrirCamera(idCampo) {
             campoDestinoScanner = idCampo;
             const modal = document.getElementById('camera-modal');
             modal.classList.remove('hidden'); modal.classList.add('flex');
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, () => {}).catch(err => { showToast("Error al activar cámara.", "error"); fecharCamera(); });
+            
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, () => {})
+            .catch(err => { 
+                showToast("Error al activar cámara.", "error"); 
+                fecharCamera(); 
+            });
         }
 
         function onScanSucesso(codigoDecodificado) {
@@ -424,24 +449,11 @@
             }
         }
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-brand-accent' : (type === 'error' ? 'bg-red-500' : 'bg-brand-primary');
-            const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
-            toast.className = `${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center min-w-[300px] toast-enter relative overflow-hidden`;
-            toast.innerHTML = `<span class="text-xl mr-3">${icon}</span><p class="font-bold text-sm">${message}</p><div class="absolute bottom-0 left-0 h-1 bg-white/30 animate-[toast-progress_3s_linear_forwards]"></div>`;
-            container.appendChild(toast);
-            requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); });
-            setTimeout(() => { 
-                toast.classList.remove('toast-enter-active'); 
-                toast.classList.add('toast-exit-active'); 
-                setTimeout(() => container.removeChild(toast), 300); 
-            }, 3000);
+        // --- NAVEGAÇÃO ---
+        function toggleSidebar() { 
+            document.getElementById('sidebar').classList.toggle('-translate-x-full'); 
+            document.getElementById('overlay').classList.toggle('hidden'); 
         }
-
-        // --- NAVEGAÇÃO E ATALHOS ---
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
         function toggleAcordeao(menuId, setaId) { 
             const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); 
             if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } 
@@ -485,13 +497,14 @@
                 await carregarConfiguracao(); 
                 await carregarCategorias(); 
                 showToast("¡Bienvenido a NubePY!"); 
-            } else { document.getElementById('erro-login').classList.remove('hidden'); } 
+            } else { 
+                document.getElementById('erro-login').classList.remove('hidden'); 
+            } 
         }
 
-        // --- LÓGICA DE RESTOCK (COM BUSCADOR INTELIGENTE) ---
-        let produtoRestockAtual = null;
+        // --- ENTRADA DE STOCK (RESTOCK) ---
+        let productoRestockAtual = null;
 
-        // Função que é ativada a cada letra que o lojista digita
         function filtrarRestock() {
             const input = document.getElementById('restock-cod').value.toLowerCase();
             const dropdown = document.getElementById('restock-dropdown');
@@ -502,12 +515,11 @@
                 return;
             }
 
-            // Procura no nome, no codigo de barras ou no codigo do fornecedor
-            const resultados = produtosGlobais.filter(p => 
+            const resultados = productosGlobais.filter(p => 
                 p.descricao.toLowerCase().includes(input) || 
                 p.codigo_barras.toLowerCase().includes(input) || 
                 (p.codigo_proveedor && p.codigo_proveedor.toLowerCase().includes(input))
-            ).slice(0, 10); // Mostra no maximo os 10 primeiros para não travar a tela
+            ).slice(0, 10);
 
             if (resultados.length > 0) {
                 dropdown.classList.remove('hidden');
@@ -515,7 +527,7 @@
                     const div = document.createElement('div');
                     div.className = 'p-3 hover:bg-brand-light cursor-pointer border-b border-gray-100 flex justify-between items-center transition';
                     div.innerHTML = `<span class="font-bold text-sm text-brand-dark">${p.descricao}</span> <span class="text-xs text-brand-accent font-mono bg-brand-accent/10 px-2 py-1 rounded">${p.codigo_barras}</span>`;
-                    div.onclick = () => selecionarProdutoRestock(p);
+                    div.onclick = () => seleccionarProductoRestock(p);
                     dropdown.appendChild(div);
                 });
             } else {
@@ -523,11 +535,10 @@
             }
         }
 
-        // Função chamada quando ele clica no item da lista
-        function selecionarProdutoRestock(prod) {
+        function seleccionarProductoRestock(prod) {
             document.getElementById('restock-dropdown').classList.add('hidden');
             document.getElementById('restock-cod').value = prod.descricao; 
-            produtoRestockAtual = prod;
+            productoRestockAtual = prod;
             document.getElementById('restock-ficha').classList.remove('hidden');
             document.getElementById('restock-desc').innerText = prod.descricao;
             document.getElementById('restock-atual').innerText = prod.quantidade;
@@ -535,7 +546,6 @@
             document.getElementById('restock-add').focus();
         }
 
-        // Mantém a função antiga para quem bipa a câmera ou usa a pistola e aperta Enter
         function buscarParaRestock(event) { 
             if(event && event.key === 'Enter') { 
                 if(event.preventDefault) event.preventDefault(); 
@@ -543,134 +553,227 @@
                 const cod = document.getElementById('restock-cod').value.trim().toLowerCase(); 
                 if(!cod) return; 
                 
-                // Se der Enter direto, tenta achar o exato
-                const prod = produtosGlobais.find(p => p.codigo_barras.toLowerCase() === cod || (p.codigo_proveedor && p.codigo_proveedor.toLowerCase() === cod)); 
+                const prod = productosGlobais.find(p => p.codigo_barras.toLowerCase() === cod || (p.codigo_proveedor && p.codigo_proveedor.toLowerCase() === cod)); 
                 
                 if(prod) { 
-                    selecionarProdutoRestock(prod);
+                    seleccionarProductoRestock(prod);
                     showToast("Producto encontrado.", "info"); 
                 } else { 
                     document.getElementById('restock-ficha').classList.add('hidden'); 
-                    produtoRestockAtual = null; 
-                    showToast(`⚠️ No encontrado (Cód: ${cod})`, "error"); 
+                    productoRestockAtual = null; 
+                    showToast("⚠️ Producto no encontrado.", "error"); 
                 } 
             } 
         }
 
         async function salvarRestock() { 
-            if(!produtoRestockAtual) return; 
+            if(!productoRestockAtual) return; 
             const add = parseInt(document.getElementById('restock-add').value) || 0; 
             if(add <= 0) return showToast("Ingrese una cantidad válida.", "info"); 
             
             const payload = { 
-                codigo_barras: produtoRestockAtual.codigo_barras, 
-                descricao: produtoRestockAtual.descricao, 
-                categoria: produtoRestockAtual.categoria, 
-                subcategoria: produtoRestockAtual.subcategoria || "-", 
-                preco_custo: produtoRestockAtual.preco_custo, 
-                preco_venda: produtoRestockAtual.preco_venda, 
-                quantidade: produtoRestockAtual.quantidade + add, 
-                codigo_proveedor: produtoRestockAtual.codigo_proveedor || "" 
+                codigo_barras: productoRestockAtual.codigo_barras, 
+                descricao: productoRestockAtual.descricao, 
+                categoria: productoRestockAtual.categoria, 
+                subcategoria: productoRestockAtual.subcategoria || "-", 
+                preco_custo: productoRestockAtual.preco_custo, 
+                preco_venda: productoRestockAtual.preco_venda, 
+                quantidade: productoRestockAtual.quantidade + add, 
+                codigo_proveedor: productoRestockAtual.codigo_proveedor || "" 
             }; 
             
-            const btn = document.activeElement; const oldText = btn.innerText; btn.innerText = "⏳ Guardando..."; 
+            const btn = document.activeElement; 
+            const oldText = btn.innerText; 
+            btn.innerText = "⏳ Guardando..."; 
+            
             try { 
-                const res = await fetch('/cadastrar-produto', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); 
+                const res = await fetch('/cadastrar-produto', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(payload) 
+                }); 
                 if(res.ok) { 
                     showToast("✅ Stock actualizado con éxito."); 
                     document.getElementById('restock-cod').value = ''; 
                     document.getElementById('restock-add').value = ''; 
                     document.getElementById('restock-ficha').classList.add('hidden'); 
-                    produtoRestockAtual = null; 
+                    productoRestockAtual = null; 
                     document.getElementById('restock-cod').focus(); 
                     carregarEstoque(); 
                 } else { 
-                    showToast("Error al guardar.", "error"); 
+                    showToast("❌ Error al guardar en el servidor.", "error"); 
                 } 
             } catch(e) { 
-                showToast("Error de red.", "error"); 
+                showToast("❌ Error de conexión con el servidor.", "error"); 
             } finally { 
                 btn.innerText = oldText; 
             } 
         }
 
-        // --- CARRINHO POS ---
+        // --- PUNTO DE VENTA (CARRINHO) ---
         let isScanning = false;
         async function verificarScanner(event) { 
             if(event && event.key === 'Enter') { 
                 if(event.preventDefault) event.preventDefault(); 
                 if(isScanning) return; 
-                const input = document.getElementById('scanner-barras'); const codigo = input.value.trim(); 
+                
+                const input = document.getElementById('scanner-barras'); 
+                const codigo = input.value.trim(); 
                 if(!codigo) return; 
-                isScanning = true; input.value = ''; 
+                
+                isScanning = true; 
+                input.value = ''; 
+                
                 try {
-                    const indexExistente = produtosCaixa.findIndex(p => p.codigo_barras === codigo);
+                    const indexExistente = productosCaixa.findIndex(p => p.codigo_barras === codigo);
                     if (indexExistente !== -1) {
-                        produtosCaixa[indexExistente].quantidade += 1; atualizarInterfaceCaixa(); showToast(`+1 agregado.`, 'success');
+                        productosCaixa[indexExistente].quantidade += 1; 
+                        atualizarInterfaceCaixa(); 
+                        showToast(`+1 agregado al carrito.`, 'success');
                     } else {
                         const res = await fetch('/buscar-produto/' + encodeURIComponent(codigo)); 
                         if(res.ok) { 
-                            const produto = await res.json(); 
-                            const precoSeguro = parseFloat(produto.preco) || parseFloat(produto.preco_venda) || 0;
-                            produtosCaixa.push({ codigo_barras: codigo, descricao: produto.descricao, quantidade: 1, preco_unitario: precoSeguro }); 
-                            atualizarInterfaceCaixa(); showToast(`✅ ${produto.descricao} agregado.`, 'success'); 
-                        } else { showToast(`⚠️ No encontrado (Cód: ${codigo})`, "error"); }
+                            const producto = await res.json(); 
+                            const precoSeguro = parseFloat(producto.preco) || parseFloat(producto.preco_venda) || 0;
+                            productosCaixa.push({ codigo_barras: codigo, descricao: producto.descricao, quantidade: 1, preco_unitario: precoSeguro }); 
+                            atualizarInterfaceCaixa(); 
+                            showToast(`✅ Producto agregado.`, 'success'); 
+                        } else { 
+                            showToast("⚠️ Producto no encontrado.", "error"); 
+                        }
                     }
-                } catch(e) { showToast("Error de conexión.", "error"); } finally { setTimeout(() => isScanning = false, 300); }
+                } catch(e) { 
+                    showToast("❌ Error de conexión con el servidor.", "error"); 
+                } finally { 
+                    setTimeout(() => isScanning = false, 300); 
+                }
             } 
         }
 
         function adicionarManual() { 
-            const desc = document.getElementById('manual-desc').value.trim(); const qtd = parseInt(document.getElementById('manual-qtd').value) || 1; const preco = parseFloat(document.getElementById('manual-preco').value) || 0; 
+            const desc = document.getElementById('manual-desc').value.trim(); 
+            const qtd = parseInt(document.getElementById('manual-qtd').value) || 1; 
+            const preco = parseFloat(document.getElementById('manual-preco').value) || 0; 
+            
             if(!desc || preco <= 0) return showToast("Complete descripción y precio.", "info"); 
-            const indexExistente = produtosCaixa.findIndex(p => p.descricao === desc && p.preco_unitario === preco);
-            if (indexExistente !== -1) produtosCaixa[indexExistente].quantidade += qtd;
-            else produtosCaixa.push({ codigo_barras: null, descricao: desc, quantidade: qtd, preco_unitario: preco }); 
-            atualizarInterfaceCaixa(); document.getElementById('manual-desc').value = ''; document.getElementById('manual-qtd').value = '1'; document.getElementById('manual-preco').value = ''; 
+            
+            const indexExistente = productosCaixa.findIndex(p => p.descricao === desc && p.preco_unitario === preco);
+            if (indexExistente !== -1) {
+                productosCaixa[indexExistente].quantidade += qtd;
+            } else {
+                productosCaixa.push({ codigo_barras: null, descricao: desc, quantidade: qtd, preco_unitario: preco }); 
+            }
+            
+            atualizarInterfaceCaixa(); 
+            document.getElementById('manual-desc').value = ''; 
+            document.getElementById('manual-qtd').value = '1'; 
+            document.getElementById('manual-preco').value = ''; 
         }
 
-        function alterarQuantidade(index, delta) { produtosCaixa[index].quantidade += delta; if (produtosCaixa[index].quantidade <= 0) removerItemCarrinho(index); else atualizarInterfaceCaixa(); }
+        function alterarQuantidade(index, delta) { 
+            productosCaixa[index].quantidade += delta; 
+            if (productosCaixa[index].quantidade <= 0) {
+                removerItemCarrinho(index); 
+            } else {
+                atualizarInterfaceCaixa(); 
+            }
+        }
 
-        function atualizarInterfaceCaixa() { 
-            const container = document.getElementById('lista-produtos'); const emptyState = document.getElementById('carrinho-vazio'); let htmlContent = ''; let total = 0; 
-            if (produtosCaixa.length === 0) { emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); container.innerHTML = ''; } 
-            else { 
-                emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); 
-                produtosCaixa.forEach((p, index) => { 
-                    const preco = Number(p.preco_unitario) || 0; const subtotal = p.quantidade * preco; total += subtotal; 
+        function actualizarInterfaceCaixa() { 
+            const container = document.getElementById('lista-produtos'); 
+            const emptyState = document.getElementById('carrinho-vazio'); 
+            let htmlContent = ''; 
+            let total = 0; 
+            
+            if (productosCaixa.length === 0) { 
+                emptyState.classList.remove('hidden'); 
+                emptyState.classList.add('flex'); 
+                container.innerHTML = ''; 
+            } else { 
+                emptyState.classList.add('hidden'); 
+                emptyState.classList.remove('flex'); 
+                productosCaixa.forEach((p, index) => { 
+                    const preco = Number(p.preco_unitario) || 0; 
+                    const subtotal = p.quantidade * preco; 
+                    total += subtotal; 
                     htmlContent += `
                     <div class="bg-white p-3 border border-gray-200 rounded-lg flex flex-col sm:flex-row justify-between shadow-sm items-start sm:items-center relative group hover:border-brand-accent transition gap-2 mt-2">
-                        <div class="flex-1"><span class="font-bold text-brand-dark text-sm block">${p.descricao}</span><span class="text-xs text-gray-500">Gs. ${preco.toLocaleString('es-PY')} c/u</span></div>
+                        <div class="flex-1">
+                            <span class="font-bold text-brand-dark text-sm block">${p.descricao}</span>
+                            <span class="text-xs text-gray-500">Gs. ${preco.toLocaleString('es-PY')} c/u</span>
+                        </div>
                         <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                            <div class="flex items-center bg-brand-light rounded-lg border border-gray-200 shadow-sm"><button type="button" onclick="alterarQuantidade(${index}, -1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-l-lg transition text-lg leading-none">-</button><span class="px-2 font-bold text-sm min-w-[2rem] text-center">${p.quantidade}</span><button type="button" onclick="alterarQuantidade(${index}, 1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-r-lg transition text-lg leading-none">+</button></div>
+                            <div class="flex items-center bg-brand-light rounded-lg border border-gray-200 shadow-sm">
+                                <button type="button" onclick="alterarQuantidade(${index}, -1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-l-lg transition text-lg leading-none">-</button>
+                                <span class="px-2 font-bold text-sm min-w-[2rem] text-center">${p.quantidade}</span>
+                                <button type="button" onclick="alterarQuantidade(${index}, 1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-r-lg transition text-lg leading-none">+</button>
+                            </div>
                             <span class="font-bold text-brand-accent text-sm w-24 text-right">Gs. ${subtotal.toLocaleString('es-PY')}</span>
                         </div>
                         <button type="button" onclick="removerItemCarrinho(${index})" class="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow-sm" title="Quitar">✕</button>
                     </div>`; 
-                }); container.innerHTML = htmlContent;
+                }); 
+                container.innerHTML = htmlContent; 
             } 
             document.getElementById('valor-total-tela').innerText = total.toLocaleString('es-PY'); 
         }
 
-        function removerItemCarrinho(index) { produtosCaixa.splice(index, 1); atualizarInterfaceCaixa(); }
-
-        async function emitirNota() { 
-            if(produtosCaixa.length === 0) return showToast("El carrito está vacío.", "info"); 
-            const total = produtosCaixa.reduce((acc, p) => acc + (p.quantidade * p.preco_unitario), 0); 
-            const btn = document.getElementById('btn-emitir'); btn.innerHTML = '⏳ Procesando SIFEN...'; btn.disabled = true; 
-            try { 
-                const res = await fetch('/emitir-nota', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: total, itens: produtosCaixa }) }); 
-                if (!res.ok) { const errData = await res.json(); throw new Error(errData.detail || "Error interno del servidor"); } 
-                const dados = await res.json(); btn.innerHTML = '🚀 Emitir Factura Electrónica'; btn.disabled = false; 
-                if (dados.cdc) { 
-                    document.getElementById('resultado').classList.remove('hidden'); document.getElementById('qrcode-img').src = dados.link_qrcode; document.getElementById('btn-pdf').href = dados.link_pdf; 
-                    produtosCaixa = []; atualizarInterfaceCaixa(); showToast("✅ Factura emitida y guardada.", "success"); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); 
-                    carregarEstoque(); 
-                } else { throw new Error("Respuesta inválida."); } 
-            } catch(e) { btn.disabled = false; btn.innerHTML = '🚀 Emitir Factura Electrónica'; showToast("❌ " + e.message, "error"); } 
+        function removerItemCarrinho(index) { 
+            productosCaixa.splice(index, 1); 
+            actualizarInterfaceCaixa(); 
         }
 
-        // --- BACKEND CRUD (Cierre, Dashboard, Config, etc) ---
+        async function emitirNota() { 
+            if(productosCaixa.length === 0) return showToast("El carrito está vacío.", "info"); 
+            
+            const total = productosCaixa.reduce((acc, p) => acc + (p.quantidade * p.preco_unitario), 0); 
+            const btn = document.getElementById('btn-emitir'); 
+            btn.innerHTML = '⏳ Procesando SIFEN...'; 
+            btn.disabled = true; 
+            
+            try { 
+                const res = await fetch('/emitir-nota', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ 
+                        ruc_emissor: document.getElementById('ruc').value, 
+                        nome_cliente: document.getElementById('cliente').value || "Consumidor Final", 
+                        valor_total: total, 
+                        itens: productosCaixa 
+                    }) 
+                }); 
+                
+                if (!res.ok) { 
+                    showToast("❌ Error en el servidor de facturación.", "error");
+                    btn.disabled = false; 
+                    btn.innerHTML = '🚀 Emitir Factura Electrónica';
+                    return;
+                } 
+                
+                const dados = await res.json(); 
+                btn.innerHTML = '🚀 Emitir Factura Electrónica'; 
+                btn.disabled = false; 
+                
+                if (dados.cdc) { 
+                    document.getElementById('resultado').classList.remove('hidden'); 
+                    document.getElementById('qrcode-img').src = dados.link_qrcode; 
+                    document.getElementById('btn-pdf').href = dados.link_pdf; 
+                    productosCaixa = []; 
+                    actualizarInterfaceCaixa(); 
+                    showToast("✅ Factura emitida y guardada.", "success"); 
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); 
+                    carregarEstoque(); 
+                } else { 
+                    showToast("❌ Respuesta inválida de la SET.", "error"); 
+                } 
+            } catch(e) { 
+                btn.disabled = false; 
+                btn.innerHTML = '🚀 Emitir Factura Electrónica'; 
+                showToast("❌ Error de conexión al emitir.", "error"); 
+            } 
+        }
+
+        // --- INTEGRAÇÃO COM BACKEND ---
         async function carregarCierreCaja() {
             try {
                 const res = await fetch('/cierre-caja');
@@ -699,69 +802,279 @@
                         });
                     }
                 }
+            } catch(e) { showToast("❌ Error al cargar cierre de caja.", "error"); }
+        }
+
+        async function carregarDashboard() { 
+            try { 
+                const res = await fetch('/dados-dashboard'); 
+                const dados = await res.json(); 
+                document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY'); 
+                document.getElementById('dash-notas').innerText = dados.total_notas; 
+                
+                const nomes = dados.top_produtos.map(p => p.nome); 
+                const quantidades = dados.top_produtos.map(p => p.quantidade); 
+                if (nomes.length === 0) { nomes.push("Sin ventas aún"); cantidades.push(0); } 
+                
+                const ctx = document.getElementById('grafico-produtos').getContext('2d'); 
+                if(graficoAtual) graficoAtual.destroy(); 
+                graficoAtual = new Chart(ctx, { 
+                    type: 'bar', 
+                    data: { labels: nomes, datasets: [{ label: 'Unidades', data: quantidades, backgroundColor: '#0d9488', borderColor: '#0f766e', borderWidth: 1, borderRadius: 8 }] }, 
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } } 
+                }); 
+            } catch (error) { console.error("Error Dashboard"); } 
+        }
+
+        async function carregarCategorias() { 
+            try {
+                const res = await fetch('/listar-categorias'); 
+                const categorias = await res.json(); 
+                const select = document.getElementById('novo-cat'); 
+                if(select) { 
+                    select.innerHTML = ''; 
+                    categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); 
+                } 
+                const tbody = document.getElementById('tabela-categorias'); 
+                if(tbody) { 
+                    tbody.innerHTML = ''; 
+                    categorias.forEach(c => { 
+                        let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">Fijo</span>` : `<button type="button" onclick="deletarCategoria(${c.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded text-sm transition">🗑️</button>`; 
+                        tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4 font-bold text-brand-dark">${c.nome}</td><td class="p-4 text-center">${btnDelete}</td></tr>`; 
+                    }); 
+                } 
             } catch(e) { console.error(e); }
         }
 
-        async function carregarDashboard() { try { const res = await fetch('/dados-dashboard'); const dados = await res.json(); document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText = dados.total_notas; const nomes = dados.top_produtos.map(p => p.nome); const quantidades = dados.top_produtos.map(p => p.quantidade); if (nomes.length === 0) { nomes.push("Sin ventas aún"); quantidades.push(0); } const ctx = document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) graficoAtual.destroy(); graficoAtual = new Chart(ctx, { type: 'bar', data: { labels: nomes, datasets: [{ label: 'Unidades', data: quantidades, backgroundColor: '#0d9488', borderColor: '#0f766e', borderWidth: 1, borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } } }); } catch (error) {} }
-        async function carregarCategorias() { const res = await fetch('/listar-categorias'); const categorias = await res.json(); const select = document.getElementById('novo-cat'); if(select) { select.innerHTML = ''; categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); } const tbody = document.getElementById('tabela-categorias'); if(tbody) { tbody.innerHTML = ''; categorias.forEach(c => { let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">Fijo</span>` : `<button type="button" onclick="deletarCategoria(${c.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded text-sm transition">🗑️</button>`; tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4 font-bold text-brand-dark">${c.nome}</td><td class="p-4 text-center">${btnDelete}</td></tr>`; }); } }
-        async function adicionarCategoria() { const nome = document.getElementById('nova-cat-nome').value.trim(); if(!nome) return showToast("Escriba nombre.", "info"); const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome}) }); if(res.ok) { document.getElementById('nova-cat-nome').value = ''; carregarCategorias(); showToast("Categoría creada."); } else showToast("❌ Ya existe.", "error"); }
-        async function deletarCategoria(id) { if(confirm("¿Seguro?")) { await fetch(`/deletar-categoria/${id}`, {method: 'DELETE'}); carregarCategorias(); showToast("Categoría eliminada."); } }
-        async function carregarConfiguracao() { const res = await fetch('/obter-configuracao'); const dados = await res.json(); if(dados) { document.getElementById('conf-nome').value = dados.nome_empresa || ''; document.getElementById('conf-ruc').value = dados.ruc || ''; document.getElementById('conf-endereco').value = dados.endereco || ''; document.getElementById('conf-senha-cert').value = dados.senha_certificado || ''; document.getElementById('ruc').value = dados.ruc || 'Falta RUC'; const status = document.getElementById('status-cert'); if(dados.caminho_certificado) { status.classList.remove('hidden'); status.classList.add('bg-green-50', 'text-green-800'); status.innerHTML = `✅ Certificado: <b>${dados.caminho_certificado.split('/').pop()}</b>`; } } }
-        async function salvarConfiguracao() { const formData = new FormData(); formData.append('nome_empresa', document.getElementById('conf-nome').value); formData.append('ruc', document.getElementById('conf-ruc').value); formData.append('endereco', document.getElementById('conf-endereco').value); formData.append('senha_certificado', document.getElementById('conf-senha-cert').value); const res = await fetch('/salvar-configuracao', { method: 'POST', body: formData }); if(res.ok) { showToast("✅ Datos guardados."); carregarConfiguracao(); } }
-        async function fazerUploadCertificado() { const arquivoInput = document.getElementById('arquivo-cert'); if(arquivoInput.files.length === 0) return showToast("Seleccione archivo", "info"); const formData = new FormData(); formData.append('arquivo', arquivoInput.files[0]); const res = await fetch('/upload-certificado', { method: 'POST', body: formData }); if(res.ok) { showToast("✅ Certificado subido."); arquivoInput.value = ''; carregarConfiguracao(); } else showToast("❌ Error.", "error"); }
-        
+        async function adicionarCategoria() { 
+            const nome = document.getElementById('nova-cat-nome').value.trim(); 
+            if(!nome) return showToast("Escriba el nombre de la categoría.", "info"); 
+            try {
+                const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome}) }); 
+                if(res.ok) { 
+                    document.getElementById('nova-cat-nome').value = ''; 
+                    carregarCategorias(); 
+                    showToast("✅ Categoría creada exitosamente."); 
+                } else { 
+                    showToast("❌ La categoría ya existe.", "error"); 
+                } 
+            } catch(e) {
+                showToast("❌ Error de conexión al crear categoría.", "error"); 
+            }
+        }
+
+        async function deletarCategoria(id) { 
+            if(confirm("¿Seguro que desea eliminar esta categoría?")) { 
+                try {
+                    await fetch(`/deletar-categoria/${id}`, {method: 'DELETE'}); 
+                    carregarCategorias(); 
+                    showToast("✅ Categoría eliminada."); 
+                } catch(e) {
+                    showToast("❌ Error de conexión al eliminar.", "error");
+                }
+            } 
+        }
+
+        async function carregarConfiguracao() { 
+            try {
+                const res = await fetch('/obter-configuracao'); 
+                const dados = await res.json(); 
+                if(dados) { 
+                    document.getElementById('conf-nome').value = dados.nome_empresa || ''; 
+                    document.getElementById('conf-ruc').value = dados.ruc || ''; 
+                    document.getElementById('conf-endereco').value = dados.endereco || ''; 
+                    document.getElementById('conf-senha-cert').value = dados.senha_certificado || ''; 
+                    document.getElementById('ruc').value = dados.ruc || 'Falta RUC'; 
+                    const status = document.getElementById('status-cert'); 
+                    if(dados.caminho_certificado) { 
+                        status.classList.remove('hidden'); 
+                        status.classList.add('bg-green-50', 'text-green-800'); 
+                        status.innerHTML = `✅ Certificado Activo: <b>${dados.caminho_certificado.split('/').pop()}</b>`; 
+                    } 
+                } 
+            } catch(e) { console.error(e); }
+        }
+
+        async function salvarConfiguracao() { 
+            const formData = new FormData(); 
+            formData.append('nome_empresa', document.getElementById('conf-nome').value); 
+            formData.append('ruc', document.getElementById('conf-ruc').value); 
+            formData.append('endereco', document.getElementById('conf-endereco').value); 
+            formData.append('senha_certificado', document.getElementById('conf-senha-cert').value); 
+            try {
+                const res = await fetch('/salvar-configuracao', { method: 'POST', body: formData }); 
+                if(res.ok) { 
+                    showToast("✅ Datos fiscales guardados."); 
+                    carregarConfiguracao(); 
+                } else {
+                    showToast("❌ Error al guardar datos.", "error"); 
+                }
+            } catch(e) {
+                showToast("❌ Error de conexión al guardar.", "error"); 
+            }
+        }
+
+        async function fazerUploadCertificado() { 
+            const archivoInput = document.getElementById('arquivo-cert'); 
+            if(archivoInput.files.length === 0) return showToast("Seleccione un archivo válido.", "info"); 
+            
+            const formData = new FormData(); 
+            formData.append('arquivo', archivoInput.files[0]); 
+            
+            try {
+                const res = await fetch('/upload-certificado', { method: 'POST', body: formData }); 
+                if(res.ok) { 
+                    showToast("✅ Certificado subido exitosamente."); 
+                    archivoInput.value = ''; 
+                    carregarConfiguracao(); 
+                } else { 
+                    showToast("❌ Error al subir el archivo.", "error"); 
+                } 
+            } catch(e) {
+                showToast("❌ Error de red al subir certificado.", "error"); 
+            }
+        }
+
         function calcularLucro() { 
             const costo = parseFloat(document.getElementById('novo-custo').value) || 0; 
             const venta = parseFloat(document.getElementById('novo-preco').value) || 0; 
             const divInfo = document.getElementById('info-lucro'); 
+            
             if (venta > 0 && costo >= 0) { 
-                const lucro = venta - costo; const margem = (lucro / venta) * 100; 
-                if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}%`; divInfo.className = "h-4 mt-1 text-xs font-bold text-green-600"; } 
-                else if (lucro === 0) { divInfo.innerHTML = `Sin margen`; divInfo.className = "h-4 mt-1 text-xs font-bold text-yellow-600"; } 
-                else { divInfo.innerHTML = `Pérdida`; divInfo.className = "h-4 mt-1 text-xs font-bold text-red-600"; } 
-            } else divInfo.innerHTML = ""; 
+                const lucro = venta - costo; 
+                const margem = (lucro / venta) * 100; 
+                if (lucro > 0) { 
+                    divInfo.innerHTML = `GP: ${margem.toFixed(1)}%`; 
+                    divInfo.className = "h-4 mt-1 text-xs font-bold text-green-600"; 
+                } else if (lucro === 0) { 
+                    divInfo.innerHTML = `Sin margen`; 
+                    divInfo.className = "h-4 mt-1 text-xs font-bold text-yellow-600"; 
+                } else { 
+                    divInfo.innerHTML = `Pérdida`; 
+                    divInfo.className = "h-4 mt-1 text-xs font-bold text-red-600"; 
+                } 
+            } else {
+                divInfo.innerHTML = ""; 
+            }
         }
 
         async function cadastrarProduto() { 
-            const custo = parseFloat(document.getElementById('novo-custo').value) || 0; const preco = parseFloat(document.getElementById('novo-preco').value) || 0; const qtd = parseInt(document.getElementById('novo-qtd').value) || 0; 
-            const dados = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: custo, preco_venda: preco, quantidade: qtd, codigo_proveedor: document.getElementById('novo-prov').value.trim() }; 
-            if(!dados.codigo_barras || !dados.descricao || preco === 0) return showToast("Complete Código Barra, Descripción y Venta.", "info"); 
+            const costo = parseFloat(document.getElementById('novo-custo').value) || 0; 
+            const precio = parseFloat(document.getElementById('novo-preco').value) || 0; 
+            const cantidad = parseInt(document.getElementById('novo-qtd').value) || 0; 
+            
+            const datos = { 
+                codigo_barras: document.getElementById('novo-cod').value.trim(), 
+                descricao: document.getElementById('novo-desc').value.trim(), 
+                categoria: document.getElementById('novo-cat').value, 
+                subcategoria: document.getElementById('novo-subcat').value.trim() || "-", 
+                preco_custo: costo, 
+                preco_venda: precio, 
+                quantidade: cantidad, 
+                codigo_proveedor: document.getElementById('novo-prov').value.trim() 
+            }; 
+            
+            if(!datos.codigo_barras || !datos.descricao || precio === 0) {
+                return showToast("Complete Código, Descripción y Precio de Venta.", "info"); 
+            }
+            
             try { 
-                const res = await fetch('/cadastrar-produto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) }); 
-                if (res.ok) { ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; carregarEstoque(); document.getElementById('novo-cod').focus(); showToast("✅ Producto guardado."); } else showToast("❌ El código ya existe.", "error"); 
-            } catch (e) { showToast("❌ Error de red.", "error"); } 
-        }
-
-        async function deletarProduto(codigo) { if(confirm("¿Seguro?")) { await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE' }); carregarEstoque(); showToast("Producto eliminado."); } }
-        
-        async function carregarEstoque() { 
-            const res = await fetch('/listar-produtos'); 
-            produtosGlobais = await res.json(); 
-            const tbody = document.getElementById('tabela-estoque'); const emptyState = document.getElementById('estoque-vazio'); tbody.innerHTML = ''; 
-            if (produtosGlobais.length === 0) { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } 
-            else { 
-                tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); 
-                produtosGlobais.forEach(p => { 
-                    let corStock = p.quantidade > 5 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; 
-                    let prov = p.codigo_proveedor ? `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-200">${p.codigo_proveedor}</span>` : `<span class="text-gray-300">-</span>`; 
-                    tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4"><div class="font-bold text-brand-dark text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td><td class="p-4"><span class="bg-brand-light text-brand-primary border border-brand-primary/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td><td class="p-4">${prov}</td><td class="p-4 text-right"><div class="font-bold text-brand-dark text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-400 mt-1">Costo: Gs. ${p.preco_custo.toLocaleString('es-PY')}</div></td><td class="p-4 text-center ${corStock} text-lg">${p.quantidade}</td><td class="p-4 text-center flex justify-center gap-2"><button type="button" onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 bg-red-50 p-2 rounded transition">🗑️</button></td></tr>`; 
+                const res = await fetch('/cadastrar-produto', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(datos) 
                 }); 
+                
+                if (res.ok) { 
+                    ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => document.getElementById(id).value = ''); 
+                    document.getElementById('info-lucro').innerHTML = ''; 
+                    carregarEstoque(); 
+                    document.getElementById('novo-cod').focus(); 
+                    showToast("✅ Producto guardado exitosamente."); 
+                } else { 
+                    showToast("❌ El código de barras ya existe.", "error"); 
+                } 
+            } catch (e) { 
+                showToast("❌ Error de red al guardar producto.", "error"); 
             } 
         }
 
-        async function carregarHistorico(termoBusca = "") { 
-            const res = await fetch(`/listar-notas?busca=${termoBusca}`); const dados = await res.json(); 
-            const tbody = document.getElementById('tabela-historico'); tbody.innerHTML = ''; 
-            dados.historico.forEach(nota => { 
-                const dataFormatada = new Date(nota.data_emissao).toLocaleString('es-PY', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}); 
-                let btns = `<span class="text-xs text-gray-400">Sin archivo</span>`; 
-                if(nota.link_pdf && nota.link_pdf !== "") { 
-                    btns = `<div class="flex gap-2 justify-center"><a href="${nota.link_pdf}" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-brand-dark font-bold px-3 py-1.5 rounded-lg border border-gray-300 text-xs flex items-center shadow-sm transition">📄 PDF</a><a href="https://ekuatia.set.gov.py/consultas/qr?nId=${nota.cdc}" target="_blank" class="bg-brand-light hover:bg-brand-primary hover:text-white text-brand-primary font-bold px-3 py-1.5 rounded-lg border border-brand-primary/20 text-xs flex items-center shadow-sm transition">🔗 QR SIFEN</a></div>`; 
-                } 
-                tbody.innerHTML += `<tr class="hover:bg-brand-light transition border-b border-gray-50"><td class="p-4"><div class="text-xs font-bold text-gray-500 mb-1">${dataFormatada}</div><div class="text-[10px] text-gray-400 font-mono break-all">${nota.cdc.substring(0,30)}...</div></td><td class="p-4 font-bold text-brand-dark text-sm">${nota.nome_cliente}</td><td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td><td class="p-4 text-center">${btns}</td></tr>`; 
-            }); 
+        async function deletarProduto(codigo) { 
+            if(confirm("¿Seguro que desea eliminar este producto?")) { 
+                try {
+                    await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE' }); 
+                    carregarEstoque(); 
+                    showToast("✅ Producto eliminado."); 
+                } catch(e) {
+                    showToast("❌ Error al eliminar producto.", "error"); 
+                }
+            } 
         }
+        
+        async function carregarEstoque() { 
+            try {
+                const res = await fetch('/listar-produtos'); 
+                productosGlobais = await res.json(); 
+                const tbody = document.getElementById('tabela-estoque'); 
+                const emptyState = document.getElementById('estoque-vazio'); 
+                tbody.innerHTML = ''; 
+                
+                if (productosGlobais.length === 0) { 
+                    tbody.closest('table').classList.add('hidden'); 
+                    emptyState.classList.remove('hidden'); 
+                    emptyState.classList.add('flex'); 
+                } else { 
+                    tbody.closest('table').classList.remove('hidden'); 
+                    emptyState.classList.add('hidden'); 
+                    emptyState.classList.remove('flex'); 
+                    
+                    productosGlobais.forEach(p => { 
+                        let corStock = p.quantidade > 5 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; 
+                        let prov = p.codigo_proveedor ? `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-200">${p.codigo_proveedor}</span>` : `<span class="text-gray-300">-</span>`; 
+                        tbody.innerHTML += `
+                        <tr class="hover:bg-brand-light transition border-b border-gray-50">
+                            <td class="p-4"><div class="font-bold text-brand-dark text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td>
+                            <td class="p-4"><span class="bg-brand-light text-brand-primary border border-brand-primary/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td>
+                            <td class="p-4">${prov}</td>
+                            <td class="p-4 text-right"><div class="font-bold text-brand-dark text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-400 mt-1">Costo: Gs. ${p.preco_custo.toLocaleString('es-PY')}</div></td>
+                            <td class="p-4 text-center ${corStock} text-lg">${p.quantidade}</td>
+                            <td class="p-4 text-center flex justify-center gap-2"><button type="button" onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 bg-red-50 hover:bg-red-100 p-2 rounded transition" title="Eliminar">🗑️</button></td>
+                        </tr>`; 
+                    }); 
+                } 
+            } catch(e) { console.error(e); }
+        }
+
+        async function carregarHistorico(termoBusca = "") { 
+            try {
+                const res = await fetch(`/listar-notas?busca=${termoBusca}`); 
+                const datos = await res.json(); 
+                const tbody = document.getElementById('tabela-historico'); 
+                tbody.innerHTML = ''; 
+                
+                datos.historico.forEach(nota => { 
+                    const fechaFormatada = new Date(nota.data_emissao).toLocaleString('es-PY', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}); 
+                    let btns = `<span class="text-xs text-gray-400">Sin archivo</span>`; 
+                    if(nota.link_pdf && nota.link_pdf !== "") { 
+                        btns = `
+                        <div class="flex gap-2 justify-center">
+                            <a href="${nota.link_pdf}" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-brand-dark font-bold px-3 py-1.5 rounded-lg border border-gray-300 text-xs flex items-center shadow-sm transition">📄 PDF</a>
+                            <a href="https://ekuatia.set.gov.py/consultas/qr?nId=${nota.cdc}" target="_blank" class="bg-brand-light hover:bg-brand-primary hover:text-white text-brand-primary font-bold px-3 py-1.5 rounded-lg border border-brand-primary/20 text-xs flex items-center shadow-sm transition">🔗 QR SIFEN</a>
+                        </div>`; 
+                    } 
+                    tbody.innerHTML += `
+                    <tr class="hover:bg-brand-light transition border-b border-gray-50">
+                        <td class="p-4"><div class="text-xs font-bold text-gray-500 mb-1">${fechaFormatada}</div><div class="text-[10px] text-gray-400 font-mono break-all">${nota.cdc.substring(0,30)}...</div></td>
+                        <td class="p-4 font-bold text-brand-dark text-sm">${nota.nome_cliente}</td>
+                        <td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td>
+                        <td class="p-4 text-center">${btns}</td>
+                    </tr>`; 
+                }); 
+            } catch(e) { console.error(e); }
+        }
+        
         function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
+        
         document.head.insertAdjacentHTML('beforeend', `<style>@keyframes toast-progress { from { width: 100%; } to { width: 0%; } }</style>`);
     </script>
 </body>
