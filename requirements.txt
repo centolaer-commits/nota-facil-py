@@ -7,3 +7,4 @@ signxml
 lxml
 python-multipart
 fpdf
+psycopg2-binary
