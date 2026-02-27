@@ -24,6 +24,7 @@ class ProdutoNovo(BaseModel):
     preco_custo: float
     preco_venda: float
     quantidade: int
+    codigo_proveedor: Optional[str] = "" # NOVO: Código do fornecedor
 
 class ItemNota(BaseModel):
     codigo_barras: Optional[str] = None
@@ -37,11 +38,10 @@ class DadosNota(BaseModel):
     valor_total: float
     itens: List[ItemNota]
 
-# NOVO: Modelo para a Categoria
 class CategoriaNova(BaseModel):
     nome: str
 
-# --- ROTAS DE CATEGORIAS (NOVO) ---
+# --- ROTAS DE CATEGORIAS ---
 @app.post("/cadastrar-categoria")
 def cadastrar_categoria(cat: CategoriaNova):
     sucesso = banco_dados.cadastrar_categoria(cat.nome.strip())
@@ -76,16 +76,17 @@ def upload_certificado(arquivo: UploadFile = File(...)):
     banco_dados.salvar_caminho_certificado(caminho_destino)
     return {"mensaje": "Certificado digital subido"}
 
-
 # --- ROTAS DE ESTOQUE E VENDAS ---
 @app.get("/dados-dashboard")
 def dados_dashboard():
     return banco_dados.obter_dados_dashboard()
+
 @app.post("/cadastrar-produto")
 def cadastrar_produto(produto: ProdutoNovo):
     banco_dados.cadastrar_produto(
         produto.codigo_barras, produto.descricao, produto.categoria, 
-        produto.subcategoria, produto.preco_custo, produto.preco_venda, produto.quantidade
+        produto.subcategoria, produto.preco_custo, produto.preco_venda, 
+        produto.quantidade, produto.codigo_proveedor # NOVO: Salva o código do fornecedor
     )
     return {"mensaje": "Producto guardado con éxito"}
 
@@ -108,12 +109,19 @@ def deletar_produto(codigo_barras: str):
 def emitir_nota(dados: DadosNota):
     xml_bruto, cdc_real = construir_xml_sifen(dados)
     xml_final_assinado = assinar_documento(xml_bruto)
-    banco_dados.salvar_nota(dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens)
+    
+    # NOVO: Gera os links e envia para o banco de dados guardar
+    link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
+    link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
+    
+    banco_dados.salvar_nota(dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode)
+    
     gerar_pdf_nota(dados, cdc_real)
+    
     return {
         "mensaje": "Factura generada", "cdc": cdc_real,
-        "link_qrcode": f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}",
-        "link_pdf": f"/baixar-pdf/{cdc_real[:10]}"
+        "link_qrcode": link_qrcode,
+        "link_pdf": link_pdf
     }
 
 @app.get("/baixar-pdf/{id_nota}")
@@ -126,6 +134,11 @@ def baixar_pdf(id_nota: str):
 def listar_notas(busca: Optional[str] = ""):
     historico = banco_dados.listar_todas_notas(busca)
     return {"total": len(historico), "historico": historico}
+
+# NOVO: Rota do Fechamento de Caixa
+@app.get("/cierre-caja")
+def api_cierre_caja():
+    return banco_dados.obter_fechamento_caixa()
 
 @app.get("/painel")
 def abrir_painel():

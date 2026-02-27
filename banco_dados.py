@@ -6,14 +6,13 @@ import psycopg2
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_conexao():
-    # Conecta no banco de dados na Nuvem
     return psycopg2.connect(DATABASE_URL)
 
 def inicializar_banco():
     conexao = get_conexao()
     cursor = conexao.cursor()
 
-    # 1. Tabela de Notas Fiscais
+    # 1. Criação Base
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS notas (
             id SERIAL PRIMARY KEY,
@@ -26,7 +25,6 @@ def inicializar_banco():
         )
     ''')
 
-    # 2. Tabela de Produtos
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS produtos (
             codigo_barras TEXT PRIMARY KEY,
@@ -39,7 +37,6 @@ def inicializar_banco():
         )
     ''')
 
-    # 3. Tabela de Configuração da Empresa
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS empresa (
             id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -52,7 +49,6 @@ def inicializar_banco():
     ''')
     cursor.execute('INSERT INTO empresa (id, nome_empresa, ruc) VALUES (1, \'Mi Empresa S.A.\', \'80012345-6\') ON CONFLICT (id) DO NOTHING')
 
-    # 4. Tabela de Categorias
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS categorias (
             id SERIAL PRIMARY KEY,
@@ -61,11 +57,19 @@ def inicializar_banco():
     ''')
     cursor.execute('INSERT INTO categorias (nome) VALUES (\'General\') ON CONFLICT (nome) DO NOTHING')
 
+    # --- MIGRATIONS (Atualização Segura de Tabelas Existentes) ---
+    # Adiciona as novas colunas sem apagar os dados do usuário
+    try:
+        cursor.execute('ALTER TABLE produtos ADD COLUMN IF NOT EXISTS codigo_proveedor TEXT DEFAULT \'\'')
+        cursor.execute('ALTER TABLE notas ADD COLUMN IF NOT EXISTS link_pdf TEXT DEFAULT \'\'')
+        cursor.execute('ALTER TABLE notas ADD COLUMN IF NOT EXISTS link_qrcode TEXT DEFAULT \'\'')
+    except Exception as e:
+        print("Aviso na migração:", e)
+
     conexao.commit()
     cursor.close()
     conexao.close()
 
-# Inicia o banco automaticamente se a senha estiver configurada
 if DATABASE_URL:
     inicializar_banco()
 
@@ -121,31 +125,33 @@ def salvar_caminho_certificado(caminho):
     conexao.commit()
     conexao.close()
 
-# --- FUNÇÕES DE ESTOQUE ---
-def cadastrar_produto(codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade):
+# --- FUNÇÕES DE ESTOQUE (Com Código do Fornecedor) ---
+def cadastrar_produto(codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor=""):
     conexao = get_conexao()
     cursor = conexao.cursor()
     cursor.execute('''
-        INSERT INTO produtos (codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO produtos (codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (codigo_barras) DO UPDATE SET
         descricao = EXCLUDED.descricao,
         categoria = EXCLUDED.categoria,
         subcategoria = EXCLUDED.subcategoria,
         preco_custo = EXCLUDED.preco_custo,
         preco_venda = EXCLUDED.preco_venda,
-        quantidade = EXCLUDED.quantidade
-    ''', (codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade))
+        quantidade = EXCLUDED.quantidade,
+        codigo_proveedor = EXCLUDED.codigo_proveedor
+    ''', (codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor))
     conexao.commit()
     conexao.close()
 
 def listar_produtos():
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute('SELECT * FROM produtos')
+    # Puxando o codigo_proveedor também (índice 7)
+    cursor.execute('SELECT codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor FROM produtos')
     linhas = cursor.fetchall()
     conexao.close()
-    return [{"codigo_barras": l[0], "descricao": l[1], "categoria": l[2], "subcategoria": l[3], "preco_custo": l[4], "preco_venda": l[5], "quantidade": l[6]} for l in linhas]
+    return [{"codigo_barras": l[0], "descricao": l[1], "categoria": l[2], "subcategoria": l[3], "preco_custo": l[4], "preco_venda": l[5], "quantidade": l[6], "codigo_proveedor": l[7]} for l in linhas]
 
 def buscar_produto_por_codigo(codigo_barras):
     conexao = get_conexao()
@@ -153,7 +159,7 @@ def buscar_produto_por_codigo(codigo_barras):
     cursor.execute('SELECT * FROM produtos WHERE codigo_barras = %s', (codigo_barras,))
     l = cursor.fetchone()
     conexao.close()
-    if l: return {"descricao": l[1], "preco_venda": l[5]}
+    if l: return {"descricao": l[1], "preco_venda": l[5], "codigo_proveedor": l[7]}
     return None
 
 def atualizar_estoque(codigo_barras, quantidade_vendida):
@@ -170,16 +176,33 @@ def deletar_produto(codigo_barras):
     conexao.commit()
     conexao.close()
 
-# --- FUNÇÕES DE VENDAS E DASHBOARD ---
-def salvar_nota(ruc, cliente, valor, cdc, itens):
-    itens_json = json.dumps([item.dict() for item in itens])
+# --- FUNÇÕES DE VENDAS E DASHBOARD (Com Custos e PDFs) ---
+def salvar_nota(ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode=""):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute('INSERT INTO notas (ruc_emissor, nome_cliente, valor_total, cdc, itens) VALUES (%s, %s, %s, %s, %s)',
-                   (ruc, cliente, valor, cdc, itens_json))
+    
+    itens_com_custo = []
+    
     for item in itens:
-        if hasattr(item, 'codigo_barras') and item.codigo_barras:
-            cursor.execute('UPDATE produtos SET quantidade = quantidade - %s WHERE codigo_barras = %s', (item.quantidade, item.codigo_barras))
+        # Puxa o item da API (seja um objeto Pydantic ou dict)
+        item_dict = item.dict() if hasattr(item, 'dict') else item
+        
+        # O pulo do gato: Gravar o Custo Exato do dia da venda para calcular o GP depois
+        if item_dict.get('codigo_barras'):
+            cursor.execute('SELECT preco_custo FROM produtos WHERE codigo_barras = %s', (item_dict['codigo_barras'],))
+            row = cursor.fetchone()
+            item_dict['preco_custo'] = row[0] if row else 0
+            # Dá baixa no estoque
+            cursor.execute('UPDATE produtos SET quantidade = quantidade - %s WHERE codigo_barras = %s', (item_dict.get('quantidade', 0), item_dict['codigo_barras']))
+        else:
+            item_dict['preco_custo'] = 0 # Itens manuais
+            
+        itens_com_custo.append(item_dict)
+
+    itens_json = json.dumps(itens_com_custo)
+    
+    cursor.execute('INSERT INTO notas (ruc_emissor, nome_cliente, valor_total, cdc, itens, link_pdf, link_qrcode) VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                   (ruc, cliente, valor, cdc, itens_json, link_pdf, link_qrcode))
     conexao.commit()
     conexao.close()
 
@@ -187,13 +210,12 @@ def listar_todas_notas(busca=""):
     conexao = get_conexao()
     cursor = conexao.cursor()
     if busca: 
-        # No Postgres usamos ILIKE para ignorar letras maiúsculas/minúsculas na busca
-        cursor.execute("SELECT * FROM notas WHERE nome_cliente ILIKE %s OR cdc ILIKE %s ORDER BY id DESC", (f"%{busca}%", f"%{busca}%"))
+        cursor.execute("SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao FROM notas WHERE nome_cliente ILIKE %s OR cdc ILIKE %s ORDER BY id DESC", (f"%{busca}%", f"%{busca}%"))
     else: 
-        cursor.execute('SELECT * FROM notas ORDER BY id DESC')
+        cursor.execute('SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao FROM notas ORDER BY id DESC')
     linhas = cursor.fetchall()
     conexao.close()
-    return [{"id": l[0], "nome_cliente": l[2], "valor_total": l[3], "cdc": l[4]} for l in linhas]
+    return [{"id": l[0], "nome_cliente": l[1], "valor_total": l[2], "cdc": l[3], "link_pdf": l[4], "data_emissao": l[5]} for l in linhas]
 
 def obter_dados_dashboard():
     conexao = get_conexao()
@@ -212,10 +234,7 @@ def obter_dados_dashboard():
         for item in itens:
             nome = item.get("descricao", "Manual / Otros")
             qtd = item.get("quantidade", 0)
-            if nome in produtos_vendidos:
-                produtos_vendidos[nome] += qtd
-            else:
-                produtos_vendidos[nome] = qtd
+            produtos_vendidos[nome] = produtos_vendidos.get(nome, 0) + qtd
                 
     top_produtos = sorted(produtos_vendidos.items(), key=lambda x: x[1], reverse=True)[:5]
     
@@ -223,4 +242,40 @@ def obter_dados_dashboard():
         "total_vendas": total_vendas,
         "total_notas": total_notas,
         "top_produtos": [{"nome": p[0], "quantidade": p[1]} for p in top_produtos]
+    }
+
+# --- NOVA FUNÇÃO: CIERRE DE CAJA (Fechamento Diário e Gross Profit) ---
+def obter_fechamento_caixa():
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    
+    # Puxa só as vendas de HOJE
+    cursor.execute("SELECT valor_total, itens FROM notas WHERE DATE(data_emissao) = CURRENT_DATE")
+    notas_hoje = cursor.fetchall()
+    
+    total_vendas_hoje = 0
+    lucro_bruto_hoje = 0
+    total_notas_hoje = len(notas_hoje)
+    
+    for nota in notas_hoje:
+        total_vendas_hoje += nota[0]
+        itens = json.loads(nota[1])
+        for item in itens:
+            preco_venda = item.get('preco_unitario', 0)
+            preco_custo = item.get('preco_custo', 0)
+            qtd = item.get('quantidade', 0)
+            lucro_bruto_hoje += (preco_venda - preco_custo) * qtd
+            
+    # Contabiliza quantos itens ainda temos na loja
+    cursor.execute("SELECT SUM(quantidade) FROM produtos WHERE quantidade > 0")
+    estoque_db = cursor.fetchone()[0]
+    estoque_restante = estoque_db if estoque_db else 0
+    
+    conexao.close()
+    
+    return {
+        "vendas_hoje": total_vendas_hoje,
+        "lucro_bruto": lucro_bruto_hoje,
+        "notas_emitidas": total_notas_hoje,
+        "estoque_restante": estoque_restante
     }
