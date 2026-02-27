@@ -36,7 +36,7 @@
         .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 300ms ease-in; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans h-screen overflow-hidden flex flex-col md:flex-row text-brand-dark">
+<body class="bg-gray-50 font-sans h-[100dvh] overflow-hidden flex flex-col md:flex-row text-brand-dark">
 
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
 
@@ -113,7 +113,7 @@
 
         <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-brand-dark bg-opacity-50 z-20 hidden md:hidden backdrop-blur-sm"></div>
 
-        <div class="flex-1 p-4 md:p-8 overflow-y-auto w-full absolute md:relative inset-0 md:inset-auto h-full">
+        <div class="flex-1 p-4 md:p-8 pb-32 md:pb-8 overflow-y-auto w-full h-full">
             
             <div id="tela-pos" class="max-w-5xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela">
                 <header class="mb-6">
