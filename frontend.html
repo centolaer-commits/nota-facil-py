@@ -104,7 +104,12 @@
                 <div class="bg-blue-50 p-4 md:p-6 rounded-lg border border-blue-100 mb-6 shadow-sm">
                     <h3 class="font-bold text-blue-800 mb-4 border-b border-blue-200 pb-2 text-sm md:text-base">➕ Añadir Producto</h3>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 items-start">
-                        <div class="md:col-span-1"><label class="text-xs font-bold text-gray-600">Código *</label><input type="text" id="novo-cod" class="w-full border p-2 rounded"></div>
+                        
+                        <div class="md:col-span-1">
+                            <label class="text-xs font-bold text-gray-600">Código *</label>
+                            <input type="text" id="novo-cod" placeholder="|||| Escanear..." class="w-full border-2 border-yellow-400 bg-yellow-50 p-2 rounded font-bold focus:outline-none focus:border-blue-500" onkeypress="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('novo-desc').focus(); }">
+                        </div>
+                        
                         <div class="md:col-span-3"><label class="text-xs font-bold text-gray-600">Descripción *</label><input type="text" id="novo-desc" class="w-full border p-2 rounded"></div>
                         <div class="md:col-span-2">
                             <label class="text-xs font-bold text-gray-600">Categoría</label>
@@ -141,7 +146,6 @@
 
             <div id="tela-dashboard" class="max-w-5xl mx-auto bg-white p-4 md:p-6 rounded-lg shadow-md section-tela hidden">
                 <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">📈 Dashboard e Indicadores</h1>
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 md:mb-8">
                     <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-6 rounded-xl shadow-lg text-white">
                         <h3 class="text-sm font-semibold uppercase tracking-wider opacity-80">Ingresos Totales</h3>
@@ -152,7 +156,6 @@
                         <p class="text-3xl md:text-4xl font-extrabold mt-2"><span id="dash-notas">0</span></p>
                     </div>
                 </div>
-
                 <div class="bg-white p-4 md:p-6 border rounded-xl shadow-sm">
                     <h3 class="font-bold text-gray-700 mb-4 text-center text-lg">Top 5 Productos Más Vendidos</h3>
                     <div class="relative h-64 md:h-80 w-full">
@@ -199,20 +202,10 @@
 
     <script>
         let produtosCaixa = [];
-        let graficoAtual = null; // Variável para controlar o desenho do gráfico
+        let graficoAtual = null;
 
-        // --- SISTEMA DE MENUS E TELAS ---
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
-            document.getElementById('overlay').classList.toggle('hidden');
-        }
-
-        function toggleAcordeao(menuId, setaId) {
-            const menu = document.getElementById(menuId);
-            const seta = document.getElementById(setaId);
-            if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } 
-            else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; }
-        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
+        function toggleAcordeao(menuId, setaId) { const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; } }
 
         function mudarTela(telaId, elementoBotao) {
             document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden'));
@@ -221,90 +214,25 @@
             if(elementoBotao) elementoBotao.classList.add('menu-ativo');
             if(window.innerWidth < 768) toggleSidebar();
 
-            if(telaId === 'inventario') carregarEstoque();
+            if(telaId === 'inventario') { carregarEstoque(); document.getElementById('novo-cod').focus(); } // Foca automaticamente no campo de scanner
             if(telaId === 'reportes') carregarHistorico();
             if(telaId === 'config') carregarConfiguracao();
             if(telaId === 'categorias') carregarCategorias();
-            if(telaId === 'dashboard') carregarDashboard(); // Aciona a inteligência visual
+            if(telaId === 'dashboard') carregarDashboard(); 
             if(telaId === 'pos') document.getElementById('scanner-barras').focus();
         }
 
-        async function fazerLogin() {
-            if(document.getElementById('senha').value === 'admin123') {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
-                document.getElementById('app-screen').classList.add('flex');
-                document.getElementById('mobile-header').classList.remove('hidden');
-                document.getElementById('scanner-barras').focus();
-                
-                await carregarConfiguracao();
-                await carregarCategorias();
-            } else { document.getElementById('erro-login').classList.remove('hidden'); }
-        }
+        async function fazerLogin() { if(document.getElementById('senha').value === 'admin123') { document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); document.getElementById('scanner-barras').focus(); await carregarConfiguracao(); await carregarCategorias(); } else { document.getElementById('erro-login').classList.remove('hidden'); } }
 
-        // --- MÓDULO: DASHBOARD INTELIGENTE ---
-        async function carregarDashboard() {
-            try {
-                const res = await fetch('/dados-dashboard');
-                const dados = await res.json();
-                
-                // 1. Atualiza os Cartões de Resumo
-                document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY');
-                document.getElementById('dash-notas').innerText = dados.total_notas;
-
-                // 2. Prepara os dados para o gráfico
-                const nomes = dados.top_produtos.map(p => p.nome);
-                const quantidades = dados.top_produtos.map(p => p.quantidade);
-
-                // Se não houver vendas, exibe aviso
-                if (nomes.length === 0) {
-                    nomes.push("Sin ventas"); quantidades.push(0);
-                }
-
-                const ctx = document.getElementById('grafico-produtos').getContext('2d');
-                
-                // 3. Apaga o gráfico antigo se ele existir (para não criar gráficos fantasmas)
-                if(graficoAtual) { graficoAtual.destroy(); }
-
-                // 4. Desenha o novo Gráfico de Barras com Chart.js
-                graficoAtual = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: nomes,
-                        datasets: [{
-                            label: 'Cantidad Vendida (Unidades)',
-                            data: quantidades,
-                            backgroundColor: 'rgba(37, 99, 235, 0.8)', // Azul do botão principal
-                            borderColor: 'rgba(30, 64, 175, 1)',
-                            borderWidth: 1,
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } }, // Esconde legenda desnecessária
-                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } // Apenas números inteiros no eixo Y
-                    }
-                });
-            } catch (error) { console.error("Error al cargar el dashboard:", error); }
-        }
-
-        // --- MÓDULO: CATEGORIAS INTELIGENTES ---
-        async function carregarCategorias() {
-            const res = await fetch('/listar-categorias'); const categorias = await res.json();
-            const select = document.getElementById('novo-cat'); if(select) { select.innerHTML = ''; categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); }
-            const tbody = document.getElementById('tabela-categorias'); if(tbody) { tbody.innerHTML = ''; categorias.forEach(c => { let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-400">Fijo</span>` : `<button onclick="deletarCategoria(${c.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded">🗑️</button>`; tbody.innerHTML += `<tr><td class="p-3 font-semibold text-gray-700">${c.nome}</td><td class="p-3 text-center">${btnDelete}</td></tr>`; }); }
-        }
+        async function carregarDashboard() { try { const res = await fetch('/dados-dashboard'); const dados = await res.json(); document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText = dados.total_notas; const nomes = dados.top_produtos.map(p => p.nome); const quantidades = dados.top_produtos.map(p => p.quantidade); if (nomes.length === 0) { nomes.push("Sin ventas"); quantidades.push(0); } const ctx = document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) { graficoAtual.destroy(); } graficoAtual = new Chart(ctx, { type: 'bar', data: { labels: nomes, datasets: [{ label: 'Cantidad Vendida (Unidades)', data: quantidades, backgroundColor: 'rgba(37, 99, 235, 0.8)', borderColor: 'rgba(30, 64, 175, 1)', borderWidth: 1, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } }); } catch (error) {} }
+        async function carregarCategorias() { const res = await fetch('/listar-categorias'); const categorias = await res.json(); const select = document.getElementById('novo-cat'); if(select) { select.innerHTML = ''; categorias.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); } const tbody = document.getElementById('tabela-categorias'); if(tbody) { tbody.innerHTML = ''; categorias.forEach(c => { let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-400">Fijo</span>` : `<button onclick="deletarCategoria(${c.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded">🗑️</button>`; tbody.innerHTML += `<tr><td class="p-3 font-semibold text-gray-700">${c.nome}</td><td class="p-3 text-center">${btnDelete}</td></tr>`; }); } }
         async function adicionarCategoria() { const nome = document.getElementById('nova-cat-nome').value.trim(); if(!nome) return alert("Escriba un nombre."); const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome}) }); if(res.ok) { document.getElementById('nova-cat-nome').value = ''; carregarCategorias(); } else alert("❌ Ya existe."); }
         async function deletarCategoria(id) { if(confirm("¿Seguro?")) { await fetch(`/deletar-categoria/${id}`, {method: 'DELETE'}); carregarCategorias(); } }
-
-        // --- OUTRAS FUNÇÕES (Mantidas Intactas) ---
         async function carregarConfiguracao() { const res = await fetch('/obter-configuracao'); const dados = await res.json(); if(dados) { document.getElementById('conf-nome').value = dados.nome_empresa || ''; document.getElementById('conf-ruc').value = dados.ruc || ''; document.getElementById('conf-endereco').value = dados.endereco || ''; document.getElementById('conf-senha-cert').value = dados.senha_certificado || ''; document.getElementById('ruc').value = dados.ruc || 'Falta configurar RUC'; const status = document.getElementById('status-cert'); if(dados.caminho_certificado) { status.classList.remove('hidden'); status.classList.add('bg-green-100', 'text-green-800'); status.innerHTML = `✅ Certificado actual: <b>${dados.caminho_certificado.split('/').pop()}</b>`; } } }
         async function salvarConfiguracao() { const formData = new FormData(); formData.append('nome_empresa', document.getElementById('conf-nome').value); formData.append('ruc', document.getElementById('conf-ruc').value); formData.append('endereco', document.getElementById('conf-endereco').value); formData.append('senha_certificado', document.getElementById('conf-senha-cert').value); const res = await fetch('/salvar-configuracao', { method: 'POST', body: formData }); if(res.ok) { alert("✅ Datos guardados."); carregarConfiguracao(); } }
         async function fazerUploadCertificado() { const arquivoInput = document.getElementById('arquivo-cert'); if(arquivoInput.files.length === 0) return alert("Seleccione un .p12"); const formData = new FormData(); formData.append('arquivo', arquivoInput.files[0]); const res = await fetch('/upload-certificado', { method: 'POST', body: formData }); if(res.ok) { alert("✅ Certificado subido."); arquivoInput.value = ''; carregarConfiguracao(); } else alert("❌ Error."); }
         function calcularLucro() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const venta = parseFloat(document.getElementById('novo-preco').value) || 0; const divInfo = document.getElementById('info-lucro'); if (venta > 0 && costo >= 0) { const lucro = venta - costo; const margem = (lucro / venta) * 100; if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}%`; divInfo.className = "text-xs text-green-600 mt-1 font-bold"; } else if (lucro === 0) { divInfo.innerHTML = `0%`; divInfo.className = "text-xs text-yellow-600 mt-1 font-bold"; } else { divInfo.innerHTML = `Pérdida`; divInfo.className = "text-xs text-red-600 mt-1 font-bold"; } } else divInfo.innerHTML = ""; }
-        async function cadastrarProduto() { const custo = parseFloat(document.getElementById('novo-custo').value) || 0; const preco = parseFloat(document.getElementById('novo-preco').value) || 0; const qtd = parseInt(document.getElementById('novo-qtd').value) || 0; const dados = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: custo, preco_venda: preco, quantidade: qtd }; if(!dados.codigo_barras || !dados.descricao || preco === 0) return alert("⚠️ Complete Código, Descripción y Venta."); try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; carregarEstoque(); } else alert("❌ Código ya registrado."); } catch (e) { alert("❌ Error de red."); } }
+        async function cadastrarProduto() { const custo = parseFloat(document.getElementById('novo-custo').value) || 0; const preco = parseFloat(document.getElementById('novo-preco').value) || 0; const qtd = parseInt(document.getElementById('novo-qtd').value) || 0; const dados = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: custo, preco_venda: preco, quantidade: qtd }; if(!dados.codigo_barras || !dados.descricao || preco === 0) return alert("⚠️ Complete Código, Descripción y Venta."); try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; carregarEstoque(); document.getElementById('novo-cod').focus(); } else alert("❌ Código ya registrado."); } catch (e) { alert("❌ Error de red."); } }
         async function deletarProduto(codigo) { if(confirm("¿Seguro?")) { await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE' }); carregarEstoque(); } }
         async function carregarEstoque() { const res = await fetch('/listar-produtos'); const produtos = await res.json(); const tbody = document.getElementById('tabela-estoque'); tbody.innerHTML = ''; produtos.forEach(p => { let corStock = p.quantidade > 5 ? 'text-green-600' : 'text-red-600 font-bold'; let lucro = p.preco_venda - p.preco_custo; let margem = p.preco_venda > 0 ? ((lucro / p.preco_venda) * 100).toFixed(1) : 0; let corLucro = lucro >= 0 ? 'text-green-600' : 'text-red-600'; tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="p-2 md:p-3"><div class="font-bold text-gray-800">${p.descricao}</div><div class="text-xs text-gray-500">Cód: ${p.codigo_barras}</div></td><td class="p-2 md:p-3"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full whitespace-nowrap">${p.categoria}</span><div class="text-xs text-gray-500 mt-1">${p.subcategoria}</div></td><td class="p-2 md:p-3 text-right"><div class="font-semibold text-gray-800">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-xs text-gray-500 font-bold ${corLucro}">${margem}%</div></td><td class="p-2 md:p-3 text-center ${corStock}">${p.quantidade}</td><td class="p-2 md:p-3 text-center"><button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded">🗑️</button></td></tr>`; }); }
         async function verificarScanner(event) { if(event.key === 'Enter') { const input = document.getElementById('scanner-barras'); const codigo = input.value.trim(); if(!codigo) return; try { const res = await fetch(`/buscar-produto/${codigo}`); if(res.ok) { const produto = await res.json(); produtosCaixa.push({ codigo_barras: codigo, descricao: produto.descricao, quantidade: 1, preco_unitario: produto.preco }); atualizarInterfaceCaixa(); } else alert("⚠️ Producto no encontrado."); } catch(e) {} input.value = ''; } }
