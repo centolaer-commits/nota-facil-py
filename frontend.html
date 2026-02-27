@@ -39,7 +39,9 @@
                 <h3 class="font-bold text-brand-dark flex items-center">📷 Escanear</h3>
                 <button type="button" onclick="fecharCamera()" class="text-red-500 hover:bg-red-50 p-2 rounded-full font-bold text-xl leading-none transition">&times;</button>
             </div>
-            <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-brand-accent/30 min-h-[250px] flex items-center justify-center text-white text-sm">Iniciando cámara...</div>
+            <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-brand-accent/30 min-h-[250px] flex items-center justify-center text-white text-sm">
+                Iniciando cámara...
+            </div>
             <p class="text-xs text-center text-gray-500 mt-4">Apunte la cámara trasera al código.</p>
         </div>
     </div>
@@ -127,9 +129,9 @@
                     <div class="absolute top-0 left-0 w-1 h-full bg-brand-accent"></div>
                     
                     <div class="flex items-center mb-4 bg-yellow-50 rounded-lg border border-yellow-200 overflow-hidden">
-                        <span class="text-xl pl-3 py-3">🔎</span>
-                        <input type="text" id="scanner-barras" placeholder="Escanear Código..." class="w-full bg-transparent p-3 text-base sm:text-lg font-bold focus:outline-none text-brand-dark min-w-0" onkeypress="verificarScanner(event)">
-                        <button type="button" onclick="abrirCamera('scanner-barras')" class="bg-brand-dark text-white px-4 sm:px-5 py-3 sm:py-4 font-bold hover:bg-brand-primary transition shadow-lg">📷</button>
+                        <span class="text-xl pl-3 py-3 shrink-0">🔎</span>
+                        <input type="text" id="scanner-barras" placeholder="Escanear producto..." class="w-full flex-1 bg-transparent p-3 text-sm sm:text-lg font-bold focus:outline-none text-brand-dark min-w-0 truncate" onkeypress="verificarScanner(event)">
+                        <button type="button" onclick="abrirCamera('scanner-barras')" class="bg-brand-dark text-white px-4 py-3 sm:px-5 sm:py-4 font-bold hover:bg-brand-primary transition shrink-0 shadow-lg">📷</button>
                     </div>
                     
                     <div id="carrinho-vazio" class="flex flex-col items-center justify-center h-24 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 mb-4">
@@ -140,13 +142,10 @@
                     
                     <div class="bg-brand-light p-3 rounded-lg border border-gray-200">
                          <p class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-2">Agregar Item Manualmente</p>
-                        <div class="flex flex-col md:flex-row gap-2">
-                            <input type="text" id="manual-desc" placeholder="Descripción..." class="border-gray-300 border p-2 rounded-lg w-full md:w-1/2 text-sm focus:ring-2 focus:ring-brand-accent outline-none">
-                            <div class="flex gap-2 w-full md:w-1/2">
-                                <input type="number" id="manual-qtd" placeholder="Cant." value="1" class="border-gray-300 border p-2 rounded-lg w-1/3 text-sm text-center">
-                                <input type="number" id="manual-preco" placeholder="Precio (Gs)" class="border-gray-300 border p-2 rounded-lg w-2/3 text-sm">
-                                <button type="button" onclick="adicionarManual()" class="bg-brand-dark text-white px-4 rounded-lg font-bold hover:bg-brand-primary transition">+</button>
-                            </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                            <div class="sm:col-span-2"><input type="text" id="manual-desc" placeholder="Descripción..." class="border-gray-300 border p-2 rounded-lg w-full text-sm focus:ring-2 focus:ring-brand-accent outline-none"></div>
+                            <div><input type="number" id="manual-qtd" placeholder="Cant." value="1" class="border-gray-300 border p-2 rounded-lg w-full text-sm text-center"></div>
+                            <div class="flex gap-2"><input type="number" id="manual-preco" placeholder="Precio (Gs)" class="border-gray-300 border p-2 rounded-lg w-full text-sm"><button type="button" onclick="adicionarManual()" class="bg-brand-dark text-white px-4 rounded-lg font-bold hover:bg-brand-primary transition">+</button></div>
                         </div>
                     </div>
                 </div>
@@ -176,8 +175,8 @@
                         <div class="md:col-span-3">
                             <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Código Barra *</label>
                             <div class="flex rounded-lg border-2 border-yellow-300 bg-yellow-50 overflow-hidden">
-                                <input type="text" id="novo-cod" class="w-full bg-transparent p-2 pl-3 font-bold focus:outline-none text-sm text-brand-dark min-w-0" onkeypress="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('novo-desc').focus(); }">
-                                <button type="button" onclick="abrirCamera('novo-cod')" class="bg-brand-dark text-white px-3 hover:bg-brand-primary transition">📷</button>
+                                <input type="text" id="novo-cod" class="w-full flex-1 bg-transparent p-2 pl-3 font-bold focus:outline-none text-sm text-brand-dark min-w-0 truncate" onkeypress="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('novo-desc').focus(); }">
+                                <button type="button" onclick="abrirCamera('novo-cod')" class="bg-brand-dark text-white px-3 hover:bg-brand-primary transition shrink-0">📷</button>
                             </div>
                         </div>
                         <div class="md:col-span-3">
@@ -239,9 +238,9 @@
                     
                     <div class="relative w-full mb-6">
                         <div class="flex items-center bg-yellow-50 rounded-lg border-2 border-yellow-300 overflow-hidden">
-                            <span class="text-xl pl-3 py-3">🔎</span>
-                            <input type="text" id="restock-cod" placeholder="Buscar código o nombre..." autocomplete="off" class="w-full bg-transparent p-3 sm:p-4 text-base sm:text-lg font-bold focus:outline-none text-brand-dark min-w-0" oninput="filtrarRestock()" onkeypress="buscarParaRestock(event)">
-                            <button type="button" onclick="abrirCamera('restock-cod')" class="bg-brand-dark text-white px-4 sm:px-5 py-3 sm:py-4 font-bold hover:bg-brand-primary transition">📷</button>
+                            <span class="text-lg sm:text-xl pl-3 py-3 shrink-0">🔎</span>
+                            <input type="text" id="restock-cod" placeholder="Buscar producto..." autocomplete="off" class="w-full flex-1 bg-transparent p-3 sm:p-4 text-sm sm:text-lg font-bold focus:outline-none text-brand-dark min-w-0 truncate" oninput="filtrarRestock()" onkeypress="buscarParaRestock(event)">
+                            <button type="button" onclick="abrirCamera('restock-cod')" class="bg-brand-dark text-white px-4 py-3 sm:px-5 sm:py-4 font-bold hover:bg-brand-primary transition shrink-0">📷</button>
                         </div>
                         <div id="restock-dropdown" class="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded-lg mt-1 hidden max-h-60 overflow-y-auto"></div>
                     </div>
@@ -251,12 +250,14 @@
                         <h3 id="restock-desc" class="text-xl font-bold text-brand-dark mb-1">Nombre</h3>
                         <p class="text-sm text-gray-500 mb-6">Stock actual: <span id="restock-atual" class="font-bold text-brand-primary text-lg">0</span> unid.</p>
                         
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 sm:gap-4">
-                            <div class="flex-1">
-                                <label class="text-xs font-bold text-green-600 uppercase mb-1 block text-center sm:text-left">Cantidad Recibida (+)</label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-bold text-green-600 uppercase mb-1 block">Cantidad Recibida (+)</label>
                                 <input type="number" id="restock-add" class="w-full border-2 border-green-300 p-3 rounded-lg text-lg font-bold focus:ring-2 focus:ring-green-500 outline-none text-center bg-green-50" placeholder="Ej: 50" onkeypress="if(event.key === 'Enter') salvarRestock()">
                             </div>
-                            <button type="button" onclick="salvarRestock()" class="w-full sm:w-auto bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 shadow-md transition">💾 Guardar Ingreso</button>
+                            <div class="md:col-span-1">
+                                <button type="button" onclick="salvarRestock()" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 shadow-md transition whitespace-nowrap">💾 Guardar Ingreso</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -282,13 +283,13 @@
             <div id="tela-dashboard" class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
                 <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Dashboard</h1></header>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div onclick="abrirCierreCaja()" class="bg-gradient-to-br from-brand-dark to-brand-primary p-6 rounded-2xl shadow-md text-white cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group">
+                    <div onclick="mudarTela('cierre', null)" class="bg-gradient-to-br from-brand-dark to-brand-primary p-6 rounded-2xl shadow-md text-white cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group">
                         <div class="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-2xl">→</span></div>
                         <h3 class="text-sm font-medium uppercase tracking-wider opacity-90 mb-3">Ingresos Totales</h3>
                         <p class="text-4xl font-extrabold">Gs. <span id="dash-vendas">0</span></p>
                         <p class="text-xs mt-3 opacity-70 group-hover:opacity-100 transition-opacity flex items-center">📊 Ver Cierre de Caja y Gross Profit</p>
                     </div>
-                    <div onclick="abrirReportes()" class="bg-gradient-to-br from-brand-accent to-brand-accentHover p-6 rounded-2xl shadow-md text-white cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group">
+                    <div onclick="mudarTela('reportes', null)" class="bg-gradient-to-br from-brand-accent to-brand-accentHover p-6 rounded-2xl shadow-md text-white cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group">
                          <div class="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-2xl">→</span></div>
                         <h3 class="text-sm font-medium uppercase tracking-wider opacity-90 mb-3">Facturas Emitidas</h3>
                         <p class="text-4xl font-extrabold"><span id="dash-notas">0</span></p>
@@ -303,12 +304,12 @@
 
             <div id="tela-cierre" class="max-w-5xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
                 <header class="mb-8 border-b border-gray-100 pb-4">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex justify-between items-center">
                         <div>
                             <h1 class="text-3xl font-extrabold text-brand-dark">Cierre de Caja</h1>
-                            <p class="text-sm text-brand-primary">Resumen financiero y stock de los productos vendidos hoy.</p>
+                            <p class="text-sm text-brand-primary">Resumen financiero y stock de ventas de hoy.</p>
                         </div>
-                        <button onclick="mudarTela('dashboard', null)" class="text-gray-500 hover:text-brand-dark transition font-bold text-sm bg-gray-100 px-4 py-2 rounded-lg whitespace-nowrap">← Volver al Dashboard</button>
+                        <button onclick="mudarTela('dashboard', null)" class="text-brand-accent hover:text-brand-dark transition font-bold text-sm bg-brand-light px-4 py-2 rounded-lg">← Volver</button>
                     </div>
                 </header>
 
@@ -344,9 +345,9 @@
             </div>
 
             <div id="tela-reportes" class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
-                <header class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <header class="mb-6 flex justify-between items-center">
                     <h1 class="text-2xl font-bold text-brand-dark">Historial SIFEN</h1>
-                    <button onclick="mudarTela('dashboard', null)" class="text-gray-500 hover:text-brand-dark transition font-bold text-sm bg-gray-100 px-4 py-2 rounded-lg whitespace-nowrap">← Volver al Dashboard</button>
+                    <button onclick="mudarTela('dashboard', null)" class="text-brand-accent hover:text-brand-dark transition font-bold text-sm bg-brand-light px-4 py-2 rounded-lg">← Volver</button>
                 </header>
                 <div class="flex gap-3 mb-6 bg-brand-light p-4 rounded-xl border border-gray-200">
                     <input type="text" id="busca" placeholder="Buscar por cliente o CDC..." class="w-full border border-gray-300 p-3 rounded-lg text-sm" onkeyup="buscarNotas()">
@@ -394,7 +395,6 @@
         let html5QrCode = null;
         let campoDestinoScanner = ''; 
 
-        // --- SISTEMA DE TOASTS BLINDADO (100% ESPANHOL) ---
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -411,7 +411,6 @@
             }, 3000);
         }
 
-        // --- CÂMERA ---
         function abrirCamera(idCampo) {
             campoDestinoScanner = idCampo;
             const modal = document.getElementById('camera-modal');
@@ -447,7 +446,6 @@
             }
         }
 
-        // --- NAVEGAÇÃO ---
         function toggleSidebar() { 
             document.getElementById('sidebar').classList.toggle('-translate-x-full'); 
             document.getElementById('overlay').classList.toggle('hidden'); 
@@ -466,7 +464,24 @@
                 document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); 
                 elementoBotao.classList.add('menu-ativo'); 
             }
-            if(window.innerWidth < 768) toggleSidebar(); 
+
+            // Oculta menu no celular
+            if(window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full'); 
+                document.getElementById('overlay').classList.add('hidden'); 
+            }
+
+            // MUDANÇA: Oculta a Sidebar inteira para as telas de Relatório
+            const sidebar = document.getElementById('sidebar');
+            const mobileHeader = document.getElementById('mobile-header');
+            
+            if (telaId === 'cierre' || telaId === 'reportes') {
+                sidebar.style.display = 'none';
+                mobileHeader.style.display = 'none';
+            } else {
+                sidebar.style.display = ''; 
+                mobileHeader.style.display = '';
+            }
             
             if(telaId === 'inventario' || telaId === 'restock') carregarEstoque(); 
             if(telaId === 'restock') {
@@ -482,9 +497,6 @@
             if(telaId === 'dashboard') carregarDashboard(); 
             if(telaId === 'pos') document.getElementById('scanner-barras').focus(); 
         }
-
-        function abrirReportes() { mudarTela('reportes', null); }
-        function abrirCierreCaja() { mudarTela('cierre', null); }
         
         async function fazerLogin() { 
             if(document.getElementById('senha').value === 'admin123') { 
@@ -500,7 +512,6 @@
             } 
         }
 
-        // --- ENTRADA DE STOCK (RESTOCK) ---
         let productoRestockAtual = null;
 
         function filtrarRestock() {
@@ -608,7 +619,6 @@
             } 
         }
 
-        // --- PUNTO DE VENTA (CARRINHO) ---
         let isScanning = false;
         async function verificarScanner(event) { 
             if(event && event.key === 'Enter') { 
@@ -771,7 +781,6 @@
             } 
         }
 
-        // --- INTEGRAÇÃO COM BACKEND ---
         async function carregarCierreCaja() {
             try {
                 const res = await fetch('/cierre-caja');
