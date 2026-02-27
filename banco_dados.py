@@ -2,7 +2,6 @@ import os
 import json
 import psycopg2
 
-# Puxa a senha secreta que você configurou no Render
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_conexao():
@@ -12,7 +11,6 @@ def inicializar_banco():
     conexao = get_conexao()
     cursor = conexao.cursor()
 
-    # 1. Criação Base
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS notas (
             id SERIAL PRIMARY KEY,
@@ -57,8 +55,6 @@ def inicializar_banco():
     ''')
     cursor.execute('INSERT INTO categorias (nome) VALUES (\'General\') ON CONFLICT (nome) DO NOTHING')
 
-    # --- MIGRATIONS (Atualização Segura de Tabelas Existentes) ---
-    # Adiciona as novas colunas sem apagar os dados do usuário
     try:
         cursor.execute('ALTER TABLE produtos ADD COLUMN IF NOT EXISTS codigo_proveedor TEXT DEFAULT \'\'')
         cursor.execute('ALTER TABLE notas ADD COLUMN IF NOT EXISTS link_pdf TEXT DEFAULT \'\'')
@@ -125,7 +121,7 @@ def salvar_caminho_certificado(caminho):
     conexao.commit()
     conexao.close()
 
-# --- FUNÇÕES DE ESTOQUE (Com Código do Fornecedor) ---
+# --- FUNÇÕES DE ESTOQUE ---
 def cadastrar_produto(codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor=""):
     conexao = get_conexao()
     cursor = conexao.cursor()
@@ -147,7 +143,6 @@ def cadastrar_produto(codigo_barras, descricao, categoria, subcategoria, preco_c
 def listar_produtos():
     conexao = get_conexao()
     cursor = conexao.cursor()
-    # Puxando o codigo_proveedor também (índice 7)
     cursor.execute('SELECT codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor FROM produtos')
     linhas = cursor.fetchall()
     conexao.close()
@@ -176,7 +171,7 @@ def deletar_produto(codigo_barras):
     conexao.commit()
     conexao.close()
 
-# --- FUNÇÕES DE VENDAS E DASHBOARD (Com Custos e PDFs) ---
+# --- FUNÇÕES DE VENDAS E DASHBOARD ---
 def salvar_nota(ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode=""):
     conexao = get_conexao()
     cursor = conexao.cursor()
@@ -184,18 +179,15 @@ def salvar_nota(ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode=""):
     itens_com_custo = []
     
     for item in itens:
-        # Puxa o item da API (seja um objeto Pydantic ou dict)
         item_dict = item.dict() if hasattr(item, 'dict') else item
         
-        # O pulo do gato: Gravar o Custo Exato do dia da venda para calcular o GP depois
         if item_dict.get('codigo_barras'):
             cursor.execute('SELECT preco_custo FROM produtos WHERE codigo_barras = %s', (item_dict['codigo_barras'],))
             row = cursor.fetchone()
             item_dict['preco_custo'] = row[0] if row else 0
-            # Dá baixa no estoque
             cursor.execute('UPDATE produtos SET quantidade = quantidade - %s WHERE codigo_barras = %s', (item_dict.get('quantidade', 0), item_dict['codigo_barras']))
         else:
-            item_dict['preco_custo'] = 0 # Itens manuais
+            item_dict['preco_custo'] = 0 
             
         itens_com_custo.append(item_dict)
 
@@ -244,18 +236,20 @@ def obter_dados_dashboard():
         "top_produtos": [{"nome": p[0], "quantidade": p[1]} for p in top_produtos]
     }
 
-# --- NOVA FUNÇÃO: CIERRE DE CAJA (Fechamento Diário e Gross Profit) ---
+# --- NOVO: CIERRE DE CAJA DETALHADO ITEM A ITEM ---
 def obter_fechamento_caixa():
     conexao = get_conexao()
     cursor = conexao.cursor()
     
-    # Puxa só as vendas de HOJE
     cursor.execute("SELECT valor_total, itens FROM notas WHERE DATE(data_emissao) = CURRENT_DATE")
     notas_hoje = cursor.fetchall()
     
     total_vendas_hoje = 0
     lucro_bruto_hoje = 0
     total_notas_hoje = len(notas_hoje)
+    
+    # Agrupador inteligente de itens
+    itens_agrupados = {}
     
     for nota in notas_hoje:
         total_vendas_hoje += nota[0]
@@ -266,10 +260,32 @@ def obter_fechamento_caixa():
             qtd = item.get('quantidade', 0)
             lucro_bruto_hoje += (preco_venda - preco_custo) * qtd
             
-    # Contabiliza quantos itens ainda temos na loja
-    cursor.execute("SELECT SUM(quantidade) FROM produtos WHERE quantidade > 0")
-    estoque_db = cursor.fetchone()[0]
-    estoque_restante = estoque_db if estoque_db else 0
+            # Agrupa para o relatório
+            cod = item.get('codigo_barras')
+            desc = item.get('descricao', 'Manual / Otros')
+            chave = cod if cod else desc
+            
+            if chave not in itens_agrupados:
+                itens_agrupados[chave] = {
+                    "codigo_barras": cod,
+                    "descricao": desc,
+                    "vendidos": 0,
+                    "estoque_restante": 0
+                }
+            itens_agrupados[chave]["vendidos"] += qtd
+            
+    # Busca o estoque restante ATUAL apenas para os itens que foram vendidos hoje
+    lista_detalhada = list(itens_agrupados.values())
+    for item in lista_detalhada:
+        if item["codigo_barras"]:
+            cursor.execute("SELECT quantidade FROM produtos WHERE codigo_barras = %s", (item["codigo_barras"],))
+            row = cursor.fetchone()
+            item["estoque_restante"] = row[0] if row else 0
+        else:
+            item["estoque_restante"] = "-" # Itens manuais não tem estoque
+
+    # Ordena para os mais vendidos aparecerem no topo da tabela
+    lista_detalhada.sort(key=lambda x: x["vendidos"], reverse=True)
     
     conexao.close()
     
@@ -277,5 +293,5 @@ def obter_fechamento_caixa():
         "vendas_hoje": total_vendas_hoje,
         "lucro_bruto": lucro_bruto_hoje,
         "notas_emitidas": total_notas_hoje,
-        "estoque_restante": estoque_restante
+        "detalhes_itens": lista_detalhada
     }
