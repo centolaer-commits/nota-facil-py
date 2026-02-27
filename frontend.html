@@ -9,7 +9,15 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     
     <script>
-        tailwind.config = { theme: { extend: { colors: { brand: { dark: '#1e293b', primary: '#334155', accent: '#0d9488', accentHover: '#0f766e', light: '#f1f5f9' } } } } }
+        tailwind.config = {
+            theme: {
+                extend: { 
+                    colors: { 
+                        brand: { dark: '#1e293b', primary: '#334155', accent: '#0d9488', accentHover: '#0f766e', light: '#f1f5f9' } 
+                    } 
+                }
+            }
+        }
     </script>
     <style>
         .menu-ativo { background-color: #f1f5f9; border-left-color: #0d9488; color: #0f766e; font-weight: 600; }
@@ -38,7 +46,9 @@
 
     <div id="login-screen" class="fixed inset-0 bg-brand-dark flex items-center justify-center z-50 px-4">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center">
-            <div class="flex items-center justify-center mb-6 text-brand-accent"><h1 class="text-3xl font-bold text-brand-dark">NubePY</h1></div>
+            <div class="flex items-center justify-center mb-6 text-brand-accent">
+                <h1 class="text-3xl font-bold text-brand-dark">NubePY</h1>
+            </div>
             <p class="text-brand-primary mb-6 text-sm">Acceso al Sistema</p>
             <input type="password" id="senha" placeholder="Contraseña (admin123)" class="w-full border-gray-300 border p-3 rounded-lg mb-4 text-center focus:ring-2 focus:ring-brand-accent outline-none">
             <button type="button" onclick="fazerLogin()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-lg hover:bg-brand-accentHover shadow-md transition">Ingresar</button>
@@ -56,14 +66,22 @@
         <div id="sidebar" class="absolute md:relative inset-y-0 left-0 w-64 bg-white border-r border-gray-200 shadow-sm flex flex-col justify-between z-30 transform -translate-x-full md:translate-x-0 transition duration-300 ease-in-out h-full font-medium text-brand-primary">
             <div class="overflow-y-auto">
                 <div class="p-6 flex items-center border-b border-gray-100 hidden md:flex bg-brand-light">
-                    <div><h2 class="text-xl font-extrabold text-brand-dark leading-none">NubePY</h2><p class="text-[10px] text-brand-accent uppercase tracking-wider font-bold mt-1">Facturación SIFEN</p></div>
+                    <div>
+                        <h2 class="text-xl font-extrabold text-brand-dark leading-none">NubePY</h2>
+                        <p class="text-[10px] text-brand-accent uppercase tracking-wider font-bold mt-1">Facturación SIFEN</p>
+                    </div>
                 </div>
                 
                 <nav class="mt-4 flex flex-col p-2 space-y-1">
-                    <button type="button" onclick="mudarTela('pos', this)" class="nav-btn menu-ativo border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center"><span class="mr-3 text-lg">🛒</span> Punto de Venta</button>
+                    <button type="button" onclick="mudarTela('pos', this)" class="nav-btn menu-ativo border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center">
+                        <span class="mr-3 text-lg">🛒</span> Punto de Venta
+                    </button>
                     
                     <div class="mt-2">
-                        <button type="button" onclick="toggleAcordeao('menu-inv', 'seta-inv')" class="w-full p-3 rounded-r-lg text-left hover:bg-brand-light transition flex justify-between items-center border-l-4 border-transparent group"><div class="flex items-center"><span class="mr-3 text-lg">📦</span> Inventario</div> <span id="seta-inv" class="text-xs text-gray-400 group-hover:text-brand-accent">▼</span></button>
+                        <button type="button" onclick="toggleAcordeao('menu-inv', 'seta-inv')" class="w-full p-3 rounded-r-lg text-left hover:bg-brand-light transition flex justify-between items-center border-l-4 border-transparent group">
+                            <div class="flex items-center"><span class="mr-3 text-lg">📦</span> Inventario</div> 
+                            <span id="seta-inv" class="text-xs text-gray-400 group-hover:text-brand-accent">▼</span>
+                        </button>
                         <div id="menu-inv" class="hidden flex-col pl-4 mt-1 space-y-1">
                             <button type="button" onclick="mudarTela('inventario', this)" class="nav-btn border-l-2 border-gray-200 w-full p-2 pl-4 text-sm text-left hover:bg-brand-light hover:border-brand-accent transition rounded-r-lg">Productos</button>
                             <button type="button" onclick="mudarTela('restock', this)" class="nav-btn border-l-2 border-gray-200 w-full p-2 pl-4 text-sm text-left hover:bg-brand-light hover:border-brand-accent transition rounded-r-lg text-brand-accent font-bold">Entrada de Stock</button>
@@ -75,10 +93,14 @@
                         <span class="mr-3 text-lg">📊</span> Dashboard
                     </button>
 
-                    <button type="button" onclick="mudarTela('config', this)" class="nav-btn border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center mt-2"><span class="mr-3 text-lg">⚙️</span> Ajustes</button>
+                    <button type="button" onclick="mudarTela('config', this)" class="nav-btn border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center mt-2">
+                        <span class="mr-3 text-lg">⚙️</span> Ajustes
+                    </button>
                 </nav>
             </div>
-            <div class="p-4 border-t border-gray-100"><button type="button" onclick="window.location.reload()" class="w-full text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-3 text-sm font-bold flex items-center justify-center transition">Cerrar Sesión</button></div>
+            <div class="p-4 border-t border-gray-100">
+                <button type="button" onclick="window.location.reload()" class="w-full text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-3 text-sm font-bold flex items-center justify-center transition">Cerrar Sesión</button>
+            </div>
         </div>
 
         <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-brand-dark bg-opacity-50 z-20 hidden md:hidden backdrop-blur-sm"></div>
@@ -87,19 +109,33 @@
             
             <div id="tela-pos" class="max-w-5xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela">
                 <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Punto de Venta</h1></header>
+                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-brand-light rounded-xl border border-gray-200">
-                    <div class="md:col-span-1"><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Emisor</label><input type="text" id="ruc" class="w-full border-gray-300 border p-2 rounded-lg bg-gray-100 text-sm font-semibold text-gray-500" readonly></div>
-                    <div class="md:col-span-2"><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Cliente</label><input type="text" id="cliente" class="w-full border-gray-300 border p-2 rounded-lg text-sm focus:ring-2 focus:ring-brand-accent outline-none" placeholder="Nombre o RUC del Cliente"></div>
+                    <div class="md:col-span-1">
+                        <label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Emisor</label>
+                        <input type="text" id="ruc" class="w-full border-gray-300 border p-2 rounded-lg bg-gray-100 text-sm font-semibold text-gray-500" readonly>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Cliente</label>
+                        <input type="text" id="cliente" class="w-full border-gray-300 border p-2 rounded-lg text-sm focus:ring-2 focus:ring-brand-accent outline-none" placeholder="Nombre o RUC del Cliente">
+                    </div>
                 </div>
+
                 <div class="border border-gray-200 p-4 rounded-xl bg-white shadow-sm mb-6 relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full bg-brand-accent"></div>
+                    
                     <div class="flex items-center mb-4 bg-yellow-50 rounded-lg border border-yellow-200 overflow-hidden">
                         <span class="text-xl pl-3 py-3">🔎</span>
                         <input type="text" id="scanner-barras" placeholder="Escanear Código..." class="w-full bg-transparent p-3 text-lg font-bold focus:outline-none text-brand-dark" onkeypress="verificarScanner(event)">
                         <button type="button" onclick="abrirCamera('scanner-barras')" class="bg-brand-dark text-white px-5 py-4 font-bold hover:bg-brand-primary transition shadow-lg">📷</button>
                     </div>
-                    <div id="carrinho-vazio" class="flex flex-col items-center justify-center h-24 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 mb-4"><p class="text-sm font-medium">El carrito está vacío</p></div>
+                    
+                    <div id="carrinho-vazio" class="flex flex-col items-center justify-center h-24 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 mb-4">
+                        <p class="text-sm font-medium">El carrito está vacío</p>
+                    </div>
+                    
                     <div id="lista-produtos" class="space-y-2 mb-4 max-h-64 overflow-y-auto pr-2"></div>
+                    
                     <div class="bg-brand-light p-3 rounded-lg border border-gray-200">
                          <p class="text-xs font-bold text-brand-primary uppercase tracking-wider mb-2">Agregar Item Manualmente</p>
                         <div class="flex flex-col md:flex-row gap-2">
@@ -112,11 +148,14 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="flex justify-between items-end mb-6 p-4 bg-brand-light rounded-xl border border-brand-accent/20">
                     <div><p class="text-sm text-brand-primary font-medium">Total a Pagar</p></div>
                     <div class="text-3xl font-extrabold text-brand-accent">Gs. <span id="valor-total-tela">0</span></div>
                 </div>
+                
                 <button type="button" onclick="emitirNota()" id="btn-emitir" class="w-full bg-brand-accent text-white font-bold py-4 text-lg rounded-xl hover:bg-brand-accentHover shadow-md transition">🚀 Emitir Factura Electrónica</button>
+                
                 <div id="resultado" class="mt-6 hidden text-center border-t border-gray-100 pt-6">
                     <div class="bg-green-50 p-6 rounded-2xl border border-green-100 inline-block shadow-sm">
                         <h2 class="text-xl font-bold text-green-700 mb-4">✅ ¡Factura Aprobada!</h2>
@@ -128,40 +167,94 @@
 
             <div id="tela-inventario" class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
                 <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Inventario</h1></header>
+                
                 <div class="bg-brand-light p-6 rounded-xl border border-gray-200 mb-8">
                     <h3 class="font-bold text-brand-dark mb-4">➕ Nuevo Producto</h3>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Código Barra *</label><div class="flex rounded-lg border-2 border-yellow-300 bg-yellow-50 overflow-hidden"><input type="text" id="novo-cod" class="w-full bg-transparent p-2 pl-3 font-bold focus:outline-none text-sm text-brand-dark" onkeypress="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('novo-desc').focus(); }"><button type="button" onclick="abrirCamera('novo-cod')" class="bg-brand-dark text-white px-3 hover:bg-brand-primary transition">📷</button></div></div>
-                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Descripción *</label><input type="text" id="novo-desc" class="w-full border border-gray-300 p-2 rounded-lg text-sm"></div>
-                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Categoría</label><select id="novo-cat" class="w-full border border-gray-300 p-2 rounded-lg text-sm bg-white"></select></div>
-                        <div class="md:col-span-3"><label class="text-xs font-bold text-blue-600 uppercase block mb-1">Cód. Proveedor</label><input type="text" id="novo-prov" class="w-full border border-gray-300 p-2 rounded-lg text-sm focus:border-blue-500" placeholder="Ej: REF-991"></div>
-                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Costo (Gs)</label><input type="number" id="novo-custo" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()"></div>
-                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Venta (Gs) *</label><input type="number" id="novo-preco" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()"><div id="info-lucro" class="h-4 mt-1 text-xs font-bold"></div></div>
-                        <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Stock Inicial</label><input type="number" id="novo-qtd" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0"></div>
-                        <div class="md:col-span-3 pt-5"><button type="button" onclick="cadastrarProduto()" class="w-full bg-brand-accent text-white font-bold py-2.5 rounded-lg text-sm hover:bg-brand-accentHover transition">Guardar Producto</button></div>
+                        <div class="md:col-span-3">
+                            <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Código Barra *</label>
+                            <div class="flex rounded-lg border-2 border-yellow-300 bg-yellow-50 overflow-hidden">
+                                <input type="text" id="novo-cod" class="w-full bg-transparent p-2 pl-3 font-bold focus:outline-none text-sm text-brand-dark" onkeypress="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('novo-desc').focus(); }">
+                                <button type="button" onclick="abrirCamera('novo-cod')" class="bg-brand-dark text-white px-3 hover:bg-brand-primary transition">📷</button>
+                            </div>
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Descripción *</label>
+                            <input type="text" id="novo-desc" class="w-full border border-gray-300 p-2 rounded-lg text-sm">
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Categoría</label>
+                            <select id="novo-cat" class="w-full border border-gray-300 p-2 rounded-lg text-sm bg-white"></select>
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="text-xs font-bold text-blue-600 uppercase block mb-1">Cód. Proveedor</label>
+                            <input type="text" id="novo-prov" class="w-full border border-gray-300 p-2 rounded-lg text-sm focus:border-blue-500" placeholder="Ej: REF-991">
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Costo (Gs)</label>
+                            <input type="number" id="novo-custo" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()">
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Venta (Gs) *</label>
+                            <input type="number" id="novo-preco" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()">
+                            <div id="info-lucro" class="h-4 mt-1 text-xs font-bold"></div>
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Stock Inicial</label>
+                            <input type="number" id="novo-qtd" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0">
+                        </div>
+                        <div class="md:col-span-3 pt-5">
+                            <button type="button" onclick="cadastrarProduto()" class="w-full bg-brand-accent text-white font-bold py-2.5 rounded-lg text-sm hover:bg-brand-accentHover transition">Guardar Producto</button>
+                        </div>
                     </div>
                 </div>
+                
                 <div class="border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
                     <table class="w-full text-left bg-white min-w-[800px]">
-                        <thead class="bg-brand-primary text-white"><tr><th class="p-4 text-xs font-bold uppercase">Producto</th><th class="p-4 text-xs font-bold uppercase">Categoría</th><th class="p-4 text-xs font-bold uppercase">Cód. Prov.</th><th class="p-4 text-xs font-bold uppercase text-right">Precio</th><th class="p-4 text-xs font-bold uppercase text-center">Stock</th><th class="p-4 text-xs font-bold uppercase text-center">Acción</th></tr></thead>
+                        <thead class="bg-brand-primary text-white">
+                            <tr>
+                                <th class="p-4 text-xs font-bold uppercase">Producto</th>
+                                <th class="p-4 text-xs font-bold uppercase">Categoría</th>
+                                <th class="p-4 text-xs font-bold uppercase">Cód. Prov.</th>
+                                <th class="p-4 text-xs font-bold uppercase text-right">Precio</th>
+                                <th class="p-4 text-xs font-bold uppercase text-center">Stock</th>
+                                <th class="p-4 text-xs font-bold uppercase text-center">Acción</th>
+                            </tr>
+                        </thead>
                         <tbody id="tabela-estoque" class="divide-y divide-gray-100 text-sm"></tbody>
                     </table>
                 </div>
             </div>
 
             <div id="tela-restock" class="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
-                <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Entrada de Stock Rápida</h1></header>
+                <header class="mb-6">
+                    <h1 class="text-2xl font-bold text-brand-dark">Entrada de Stock Rápida</h1>
+                    <p class="text-sm text-brand-primary">Agregue mercadería recibida a productos existentes.</p>
+                </header>
+                
                 <div class="border border-gray-200 p-6 rounded-xl bg-brand-light shadow-inner mb-6">
-                    <label class="text-sm font-bold text-brand-dark block mb-2">Escanear Producto o Proveedor</label>
-                    <div class="flex items-center bg-yellow-50 rounded-lg border-2 border-yellow-300 overflow-hidden mb-6">
-                        <span class="text-xl pl-3 py-3">🔎</span><input type="text" id="restock-cod" placeholder="Código de Barras o Proveedor..." class="w-full bg-transparent p-4 text-lg font-bold focus:outline-none text-brand-dark" onkeypress="buscarParaRestock(event)"><button type="button" onclick="abrirCamera('restock-cod')" class="bg-brand-dark text-white px-5 py-4 font-bold hover:bg-brand-primary transition">📷</button>
+                    <label class="text-sm font-bold text-brand-dark block mb-2">Escanear o Buscar por Nombre</label>
+                    
+                    <div class="relative w-full mb-6">
+                        <div class="flex items-center bg-yellow-50 rounded-lg border-2 border-yellow-300 overflow-hidden">
+                            <span class="text-xl pl-3 py-3">🔎</span>
+                            <input type="text" id="restock-cod" placeholder="Código o Nombre del producto..." autocomplete="off" class="w-full bg-transparent p-4 text-lg font-bold focus:outline-none text-brand-dark" oninput="filtrarRestock()" onkeypress="buscarParaRestock(event)">
+                            <button type="button" onclick="abrirCamera('restock-cod')" class="bg-brand-dark text-white px-5 py-4 font-bold hover:bg-brand-primary transition">📷</button>
+                        </div>
+                        <div id="restock-dropdown" class="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded-lg mt-1 hidden max-h-60 overflow-y-auto">
+                            </div>
                     </div>
+                    
                     <div id="restock-ficha" class="hidden bg-white p-6 rounded-xl border border-brand-accent/30 shadow-sm relative overflow-hidden">
                         <div class="absolute left-0 top-0 w-2 h-full bg-brand-accent"></div>
                         <h3 id="restock-desc" class="text-xl font-bold text-brand-dark mb-1">Nombre</h3>
                         <p class="text-sm text-gray-500 mb-6">Stock actual: <span id="restock-atual" class="font-bold text-brand-primary text-lg">0</span> unid.</p>
+                        
                         <div class="flex items-end gap-4">
-                            <div class="flex-1"><label class="text-xs font-bold text-green-600 uppercase mb-1 block">Cantidad Recibida (+)</label><input type="number" id="restock-add" class="w-full border-2 border-green-300 p-3 rounded-lg text-lg font-bold focus:ring-2 focus:ring-green-500 outline-none text-center bg-green-50" placeholder="Ej: 50" onkeypress="if(event.key === 'Enter') salvarRestock()"></div>
+                            <div class="flex-1">
+                                <label class="text-xs font-bold text-green-600 uppercase mb-1 block">Cantidad Recibida (+)</label>
+                                <input type="number" id="restock-add" class="w-full border-2 border-green-300 p-3 rounded-lg text-lg font-bold focus:ring-2 focus:ring-green-500 outline-none text-center bg-green-50" placeholder="Ej: 50" onkeypress="if(event.key === 'Enter') salvarRestock()">
+                            </div>
                             <button type="button" onclick="salvarRestock()" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 shadow-md transition whitespace-nowrap">💾 Guardar Ingreso</button>
                         </div>
                     </div>
@@ -171,9 +264,18 @@
             <div id="tela-categorias" class="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
                 <header class="mb-6"><h1 class="text-2xl font-bold text-brand-dark">Categorías</h1></header>
                 <div class="flex gap-3 mb-8 bg-brand-light p-5 rounded-xl border border-gray-200 items-end">
-                    <div class="flex-1"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Nueva Categoría</label><input type="text" id="nova-cat-nome" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div><button type="button" onclick="adicionarCategoria()" class="bg-brand-accent text-white px-6 py-3 rounded-lg font-bold">Crear</button>
+                    <div class="flex-1">
+                        <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Nueva Categoría</label>
+                        <input type="text" id="nova-cat-nome" class="w-full border border-gray-300 p-3 rounded-lg text-sm">
+                    </div>
+                    <button type="button" onclick="adicionarCategoria()" class="bg-brand-accent text-white px-6 py-3 rounded-lg font-bold hover:bg-brand-accentHover transition">Crear</button>
                 </div>
-                <table class="w-full text-left bg-white border border-gray-200 rounded-xl overflow-hidden"><thead class="bg-brand-light border-b border-gray-200"><tr><th class="p-4 text-xs font-bold uppercase text-brand-primary">Nombre</th><th class="p-4 text-xs font-bold uppercase text-center text-brand-primary w-24">Acción</th></tr></thead><tbody id="tabela-categorias" class="divide-y divide-gray-100 text-sm"></tbody></table>
+                <table class="w-full text-left bg-white border border-gray-200 rounded-xl overflow-hidden">
+                    <thead class="bg-brand-light border-b border-gray-200">
+                        <tr><th class="p-4 text-xs font-bold uppercase text-brand-primary">Nombre</th><th class="p-4 text-xs font-bold uppercase text-center text-brand-primary w-24">Acción</th></tr>
+                    </thead>
+                    <tbody id="tabela-categorias" class="divide-y divide-gray-100 text-sm"></tbody>
+                </table>
             </div>
 
             <div id="tela-dashboard" class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
@@ -192,7 +294,10 @@
                         <p class="text-xs mt-3 opacity-70 group-hover:opacity-100 transition-opacity flex items-center">📄 Ver historial y reimprimir SIFEN</p>
                     </div>
                 </div>
-                <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm"><h3 class="font-bold text-brand-dark mb-6">Top 5 Productos Más Vendidos</h3><div class="relative h-80 w-full"><canvas id="grafico-produtos"></canvas></div></div>
+                <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
+                    <h3 class="font-bold text-brand-dark mb-6">Top 5 Productos Más Vendidos</h3>
+                    <div class="relative h-80 w-full"><canvas id="grafico-produtos"></canvas></div>
+                </div>
             </div>
 
             <div id="tela-cierre" class="max-w-5xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
@@ -242,18 +347,38 @@
                     <h1 class="text-2xl font-bold text-brand-dark">Historial SIFEN</h1>
                     <button onclick="mudarTela('dashboard', null)" class="text-gray-500 hover:text-brand-dark transition font-bold text-sm bg-gray-100 px-4 py-2 rounded-lg">← Volver al Dashboard</button>
                 </header>
-                <div class="flex gap-3 mb-6 bg-brand-light p-4 rounded-xl border border-gray-200"><input type="text" id="busca" placeholder="Buscar por cliente o CDC..." class="w-full border border-gray-300 p-3 rounded-lg text-sm" onkeyup="buscarNotas()"></div>
-                <table class="w-full text-left min-w-[800px] border border-gray-200 rounded-xl overflow-hidden"><thead class="bg-brand-primary text-white"><tr><th class="p-4 text-xs font-bold uppercase">Fecha / CDC</th><th class="p-4 text-xs font-bold uppercase">Cliente</th><th class="p-4 text-xs font-bold uppercase text-right">Total (Gs)</th><th class="p-4 text-xs font-bold uppercase text-center">Acciones</th></tr></thead><tbody id="tabela-historico" class="divide-y divide-gray-100 text-sm bg-white"></tbody></table>
+                <div class="flex gap-3 mb-6 bg-brand-light p-4 rounded-xl border border-gray-200">
+                    <input type="text" id="busca" placeholder="Buscar por cliente o CDC..." class="w-full border border-gray-300 p-3 rounded-lg text-sm" onkeyup="buscarNotas()">
+                </div>
+                <table class="w-full text-left min-w-[800px] border border-gray-200 rounded-xl overflow-hidden">
+                    <thead class="bg-brand-primary text-white">
+                        <tr>
+                            <th class="p-4 text-xs font-bold uppercase">Fecha / CDC</th>
+                            <th class="p-4 text-xs font-bold uppercase">Cliente</th>
+                            <th class="p-4 text-xs font-bold uppercase text-right">Total (Gs)</th>
+                            <th class="p-4 text-xs font-bold uppercase text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-historico" class="divide-y divide-gray-100 text-sm bg-white"></tbody>
+                </table>
             </div>
 
             <div id="tela-config" class="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
                 <header class="mb-8 border-b border-gray-100 pb-4"><h1 class="text-2xl font-bold text-brand-dark">Ajustes</h1></header>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="space-y-5 md:border-r md:border-gray-100 md:pr-8">
-                        <div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Nombre Empresa</label><input type="text" id="conf-nome" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div><div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">RUC Emisor</label><input type="text" id="conf-ruc" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div><div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Dirección</label><input type="text" id="conf-endereco" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div><div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Contraseña (.p12)</label><input type="password" id="conf-senha-cert" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div><button type="button" onclick="salvarConfiguracao()" class="w-full bg-brand-primary text-white font-bold py-3 rounded-lg hover:bg-brand-dark transition">Guardar Datos</button>
+                        <div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Nombre Empresa</label><input type="text" id="conf-nome" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div>
+                        <div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">RUC Emisor</label><input type="text" id="conf-ruc" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div>
+                        <div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Dirección</label><input type="text" id="conf-endereco" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div>
+                        <div><label class="text-xs font-bold text-brand-primary uppercase mb-1 block">Contraseña (.p12)</label><input type="password" id="conf-senha-cert" class="w-full border border-gray-300 p-3 rounded-lg text-sm"></div>
+                        <button type="button" onclick="salvarConfiguracao()" class="w-full bg-brand-primary text-white font-bold py-3 rounded-lg hover:bg-brand-dark transition">Guardar Datos</button>
                     </div>
                     <div class="space-y-5">
-                        <div class="border-2 border-dashed border-brand-accent/30 p-6 rounded-xl text-center bg-brand-light/50"><input type="file" id="arquivo-cert" accept=".p12,.pfx" class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-brand-accent file:text-white hover:file:bg-brand-accentHover cursor-pointer mx-auto"></div><button type="button" onclick="fazerUploadCertificado()" class="w-full bg-brand-primary text-white font-bold py-3 px-6 rounded-lg text-sm hover:bg-brand-dark transition">Subir Archivo</button><div id="status-cert" class="text-sm text-center p-3 rounded-lg hidden border"></div>
+                        <div class="border-2 border-dashed border-brand-accent/30 p-6 rounded-xl text-center bg-brand-light/50">
+                            <input type="file" id="arquivo-cert" accept=".p12,.pfx" class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-brand-accent file:text-white hover:file:bg-brand-accentHover cursor-pointer mx-auto">
+                        </div>
+                        <button type="button" onclick="fazerUploadCertificado()" class="w-full bg-brand-primary text-white font-bold py-3 px-6 rounded-lg text-sm hover:bg-brand-dark transition">Subir Archivo</button>
+                        <div id="status-cert" class="text-sm text-center p-3 rounded-lg hidden border"></div>
                     </div>
                 </div>
             </div>
@@ -269,14 +394,59 @@
         let campoDestinoScanner = ''; 
 
         // --- CÂMERA E TOASTS ---
-        function abrirCamera(idCampo) { campoDestinoScanner = idCampo; const modal = document.getElementById('camera-modal'); modal.classList.remove('hidden'); modal.classList.add('flex'); if (!html5QrCode) html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, () => {}).catch(err => { showToast("Error al activar cámara.", "error"); fecharCamera(); }); }
-        function onScanSucesso(codigoDecodificado) { fecharCamera(); document.getElementById(campoDestinoScanner).value = codigoDecodificado; if (campoDestinoScanner === 'scanner-barras') { verificarScanner({ key: 'Enter', preventDefault: function(){} }); } else if (campoDestinoScanner === 'novo-cod') { document.getElementById('novo-desc').focus(); } else if (campoDestinoScanner === 'restock-cod') { buscarParaRestock({ key: 'Enter', preventDefault: function(){} }); } }
-        function fecharCamera() { const modal = document.getElementById('camera-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); if (html5QrCode) { try { html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(e => { html5QrCode = null; }); } catch (err) { html5QrCode = null; } } }
-        function showToast(message, type = 'success') { const container = document.getElementById('toast-container'); const toast = document.createElement('div'); const bgColor = type === 'success' ? 'bg-brand-accent' : (type === 'error' ? 'bg-red-500' : 'bg-brand-primary'); const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️'); toast.className = `${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center min-w-[300px] toast-enter relative overflow-hidden`; toast.innerHTML = `<span class="text-xl mr-3">${icon}</span><p class="font-bold text-sm">${message}</p><div class="absolute bottom-0 left-0 h-1 bg-white/30 animate-[toast-progress_3s_linear_forwards]"></div>`; container.appendChild(toast); requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); }); setTimeout(() => { toast.classList.remove('toast-enter-active'); toast.classList.add('toast-exit-active'); setTimeout(() => container.removeChild(toast), 300); }, 3000); }
+        function abrirCamera(idCampo) {
+            campoDestinoScanner = idCampo;
+            const modal = document.getElementById('camera-modal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, () => {}).catch(err => { showToast("Error al activar cámara.", "error"); fecharCamera(); });
+        }
+
+        function onScanSucesso(codigoDecodificado) {
+            fecharCamera();
+            document.getElementById(campoDestinoScanner).value = codigoDecodificado;
+            if (campoDestinoScanner === 'scanner-barras') {
+                verificarScanner({ key: 'Enter', preventDefault: function(){} }); 
+            } else if (campoDestinoScanner === 'novo-cod') {
+                document.getElementById('novo-desc').focus();
+            } else if (campoDestinoScanner === 'restock-cod') {
+                buscarParaRestock({ key: 'Enter', preventDefault: function(){} });
+            }
+        }
+
+        function fecharCamera() {
+            const modal = document.getElementById('camera-modal');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+            if (html5QrCode) {
+                try {
+                    html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(e => { html5QrCode = null; });
+                } catch (err) { html5QrCode = null; }
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-brand-accent' : (type === 'error' ? 'bg-red-500' : 'bg-brand-primary');
+            const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
+            toast.className = `${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center min-w-[300px] toast-enter relative overflow-hidden`;
+            toast.innerHTML = `<span class="text-xl mr-3">${icon}</span><p class="font-bold text-sm">${message}</p><div class="absolute bottom-0 left-0 h-1 bg-white/30 animate-[toast-progress_3s_linear_forwards]"></div>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); });
+            setTimeout(() => { 
+                toast.classList.remove('toast-enter-active'); 
+                toast.classList.add('toast-exit-active'); 
+                setTimeout(() => container.removeChild(toast), 300); 
+            }, 3000);
+        }
 
         // --- NAVEGAÇÃO E ATALHOS ---
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
-        function toggleAcordeao(menuId, setaId) { const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; } }
+        function toggleAcordeao(menuId, setaId) { 
+            const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); 
+            if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } 
+            else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; } 
+        }
         
         function mudarTela(telaId, elementoBotao) { 
             document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden')); 
@@ -289,7 +459,12 @@
             if(window.innerWidth < 768) toggleSidebar(); 
             
             if(telaId === 'inventario' || telaId === 'restock') carregarEstoque(); 
-            if(telaId === 'restock') document.getElementById('restock-cod').focus();
+            if(telaId === 'restock') {
+                document.getElementById('restock-cod').value = '';
+                document.getElementById('restock-dropdown').classList.add('hidden');
+                document.getElementById('restock-ficha').classList.add('hidden');
+                document.getElementById('restock-cod').focus();
+            }
             if(telaId === 'reportes') carregarHistorico(); 
             if(telaId === 'cierre') carregarCierreCaja();
             if(telaId === 'config') carregarConfiguracao(); 
@@ -298,27 +473,204 @@
             if(telaId === 'pos') document.getElementById('scanner-barras').focus(); 
         }
 
-        // Atalhos de Drill-Down do Dashboard
         function abrirReportes() { mudarTela('reportes', null); }
         function abrirCierreCaja() { mudarTela('cierre', null); }
         
-        async function fazerLogin() { if(document.getElementById('senha').value === 'admin123') { document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); await carregarConfiguracao(); await carregarCategorias(); showToast("¡Bienvenido a NubePY!"); } else { document.getElementById('erro-login').classList.remove('hidden'); } }
+        async function fazerLogin() { 
+            if(document.getElementById('senha').value === 'admin123') { 
+                document.getElementById('login-screen').classList.add('hidden'); 
+                document.getElementById('app-screen').classList.remove('hidden'); 
+                document.getElementById('app-screen').classList.add('flex'); 
+                document.getElementById('mobile-header').classList.remove('hidden');
+                await carregarConfiguracao(); 
+                await carregarCategorias(); 
+                showToast("¡Bienvenido a NubePY!"); 
+            } else { document.getElementById('erro-login').classList.remove('hidden'); } 
+        }
 
-        // --- RESTOCK E CARRINHO (Mantidos intactos) ---
+        // --- LÓGICA DE RESTOCK (COM BUSCADOR INTELIGENTE) ---
         let produtoRestockAtual = null;
-        function buscarParaRestock(event) { if(event && event.key === 'Enter') { if(event.preventDefault) event.preventDefault(); const cod = document.getElementById('restock-cod').value.trim(); if(!cod) return; const prod = produtosGlobais.find(p => p.codigo_barras === cod || p.codigo_proveedor === cod); if(prod) { produtoRestockAtual = prod; document.getElementById('restock-ficha').classList.remove('hidden'); document.getElementById('restock-desc').innerText = prod.descricao; document.getElementById('restock-atual').innerText = prod.quantidade; document.getElementById('restock-add').focus(); showToast("Producto encontrado.", "info"); } else { document.getElementById('restock-ficha').classList.add('hidden'); produtoRestockAtual = null; showToast(`⚠️ No encontrado (Cód: ${cod})`, "error"); } } }
-        async function salvarRestock() { if(!produtoRestockAtual) return; const add = parseInt(document.getElementById('restock-add').value) || 0; if(add <= 0) return showToast("Ingrese una cantidad válida.", "info"); const payload = { codigo_barras: produtoRestockAtual.codigo_barras, descricao: produtoRestockAtual.descricao, categoria: produtoRestockAtual.categoria, subcategoria: produtoRestockAtual.subcategoria || "-", preco_custo: produtoRestockAtual.preco_custo, preco_venda: produtoRestockAtual.preco_venda, quantidade: produtoRestockAtual.quantidade + add, codigo_proveedor: produtoRestockAtual.codigo_proveedor || "" }; const btn = document.activeElement; const oldText = btn.innerText; btn.innerText = "⏳ Guardando..."; try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); if(res.ok) { showToast("✅ Stock actualizado con éxito."); document.getElementById('restock-cod').value = ''; document.getElementById('restock-add').value = ''; document.getElementById('restock-ficha').classList.add('hidden'); produtoRestockAtual = null; document.getElementById('restock-cod').focus(); carregarEstoque(); } else { showToast("Error al guardar.", "error"); } } catch(e) { showToast("Error de red.", "error"); } finally { btn.innerText = oldText; } }
 
+        // Função que é ativada a cada letra que o lojista digita
+        function filtrarRestock() {
+            const input = document.getElementById('restock-cod').value.toLowerCase();
+            const dropdown = document.getElementById('restock-dropdown');
+            dropdown.innerHTML = '';
+
+            if (input.length < 2) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            // Procura no nome, no codigo de barras ou no codigo do fornecedor
+            const resultados = produtosGlobais.filter(p => 
+                p.descricao.toLowerCase().includes(input) || 
+                p.codigo_barras.toLowerCase().includes(input) || 
+                (p.codigo_proveedor && p.codigo_proveedor.toLowerCase().includes(input))
+            ).slice(0, 10); // Mostra no maximo os 10 primeiros para não travar a tela
+
+            if (resultados.length > 0) {
+                dropdown.classList.remove('hidden');
+                resultados.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 hover:bg-brand-light cursor-pointer border-b border-gray-100 flex justify-between items-center transition';
+                    div.innerHTML = `<span class="font-bold text-sm text-brand-dark">${p.descricao}</span> <span class="text-xs text-brand-accent font-mono bg-brand-accent/10 px-2 py-1 rounded">${p.codigo_barras}</span>`;
+                    div.onclick = () => selecionarProdutoRestock(p);
+                    dropdown.appendChild(div);
+                });
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        }
+
+        // Função chamada quando ele clica no item da lista
+        function selecionarProdutoRestock(prod) {
+            document.getElementById('restock-dropdown').classList.add('hidden');
+            document.getElementById('restock-cod').value = prod.descricao; 
+            produtoRestockAtual = prod;
+            document.getElementById('restock-ficha').classList.remove('hidden');
+            document.getElementById('restock-desc').innerText = prod.descricao;
+            document.getElementById('restock-atual').innerText = prod.quantidade;
+            document.getElementById('restock-add').value = '';
+            document.getElementById('restock-add').focus();
+        }
+
+        // Mantém a função antiga para quem bipa a câmera ou usa a pistola e aperta Enter
+        function buscarParaRestock(event) { 
+            if(event && event.key === 'Enter') { 
+                if(event.preventDefault) event.preventDefault(); 
+                
+                const cod = document.getElementById('restock-cod').value.trim().toLowerCase(); 
+                if(!cod) return; 
+                
+                // Se der Enter direto, tenta achar o exato
+                const prod = produtosGlobais.find(p => p.codigo_barras.toLowerCase() === cod || (p.codigo_proveedor && p.codigo_proveedor.toLowerCase() === cod)); 
+                
+                if(prod) { 
+                    selecionarProdutoRestock(prod);
+                    showToast("Producto encontrado.", "info"); 
+                } else { 
+                    document.getElementById('restock-ficha').classList.add('hidden'); 
+                    produtoRestockAtual = null; 
+                    showToast(`⚠️ No encontrado (Cód: ${cod})`, "error"); 
+                } 
+            } 
+        }
+
+        async function salvarRestock() { 
+            if(!produtoRestockAtual) return; 
+            const add = parseInt(document.getElementById('restock-add').value) || 0; 
+            if(add <= 0) return showToast("Ingrese una cantidad válida.", "info"); 
+            
+            const payload = { 
+                codigo_barras: produtoRestockAtual.codigo_barras, 
+                descricao: produtoRestockAtual.descricao, 
+                categoria: produtoRestockAtual.categoria, 
+                subcategoria: produtoRestockAtual.subcategoria || "-", 
+                preco_custo: produtoRestockAtual.preco_custo, 
+                preco_venda: produtoRestockAtual.preco_venda, 
+                quantidade: produtoRestockAtual.quantidade + add, 
+                codigo_proveedor: produtoRestockAtual.codigo_proveedor || "" 
+            }; 
+            
+            const btn = document.activeElement; const oldText = btn.innerText; btn.innerText = "⏳ Guardando..."; 
+            try { 
+                const res = await fetch('/cadastrar-produto', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); 
+                if(res.ok) { 
+                    showToast("✅ Stock actualizado con éxito."); 
+                    document.getElementById('restock-cod').value = ''; 
+                    document.getElementById('restock-add').value = ''; 
+                    document.getElementById('restock-ficha').classList.add('hidden'); 
+                    produtoRestockAtual = null; 
+                    document.getElementById('restock-cod').focus(); 
+                    carregarEstoque(); 
+                } else { 
+                    showToast("Error al guardar.", "error"); 
+                } 
+            } catch(e) { 
+                showToast("Error de red.", "error"); 
+            } finally { 
+                btn.innerText = oldText; 
+            } 
+        }
+
+        // --- CARRINHO POS ---
         let isScanning = false;
-        async function verificarScanner(event) { if(event && event.key === 'Enter') { if(event.preventDefault) event.preventDefault(); if(isScanning) return; const input = document.getElementById('scanner-barras'); const codigo = input.value.trim(); if(!codigo) return; isScanning = true; input.value = ''; try { const indexExistente = produtosCaixa.findIndex(p => p.codigo_barras === codigo); if (indexExistente !== -1) { produtosCaixa[indexExistente].quantidade += 1; atualizarInterfaceCaixa(); showToast(`+1 agregado.`, 'success'); } else { const res = await fetch('/buscar-produto/' + encodeURIComponent(codigo)); if(res.ok) { const produto = await res.json(); const precoSeguro = parseFloat(produto.preco) || parseFloat(produto.preco_venda) || 0; produtosCaixa.push({ codigo_barras: codigo, descricao: produto.descricao, quantidade: 1, preco_unitario: precoSeguro }); atualizarInterfaceCaixa(); showToast(`✅ ${produto.descricao} agregado.`, 'success'); } else { showToast(`⚠️ No encontrado (Cód: ${codigo})`, "error"); } } } catch(e) { showToast("Error de conexión.", "error"); } finally { setTimeout(() => isScanning = false, 300); } } }
-        function adicionarManual() { const desc = document.getElementById('manual-desc').value.trim(); const qtd = parseInt(document.getElementById('manual-qtd').value) || 1; const preco = parseFloat(document.getElementById('manual-preco').value) || 0; if(!desc || preco <= 0) return showToast("Complete descripción y precio.", "info"); const indexExistente = produtosCaixa.findIndex(p => p.descricao === desc && p.preco_unitario === preco); if (indexExistente !== -1) produtosCaixa[indexExistente].quantidade += qtd; else produtosCaixa.push({ codigo_barras: null, descricao: desc, quantidade: qtd, preco_unitario: preco }); atualizarInterfaceCaixa(); document.getElementById('manual-desc').value = ''; document.getElementById('manual-qtd').value = '1'; document.getElementById('manual-preco').value = ''; }
+        async function verificarScanner(event) { 
+            if(event && event.key === 'Enter') { 
+                if(event.preventDefault) event.preventDefault(); 
+                if(isScanning) return; 
+                const input = document.getElementById('scanner-barras'); const codigo = input.value.trim(); 
+                if(!codigo) return; 
+                isScanning = true; input.value = ''; 
+                try {
+                    const indexExistente = produtosCaixa.findIndex(p => p.codigo_barras === codigo);
+                    if (indexExistente !== -1) {
+                        produtosCaixa[indexExistente].quantidade += 1; atualizarInterfaceCaixa(); showToast(`+1 agregado.`, 'success');
+                    } else {
+                        const res = await fetch('/buscar-produto/' + encodeURIComponent(codigo)); 
+                        if(res.ok) { 
+                            const produto = await res.json(); 
+                            const precoSeguro = parseFloat(produto.preco) || parseFloat(produto.preco_venda) || 0;
+                            produtosCaixa.push({ codigo_barras: codigo, descricao: produto.descricao, quantidade: 1, preco_unitario: precoSeguro }); 
+                            atualizarInterfaceCaixa(); showToast(`✅ ${produto.descricao} agregado.`, 'success'); 
+                        } else { showToast(`⚠️ No encontrado (Cód: ${codigo})`, "error"); }
+                    }
+                } catch(e) { showToast("Error de conexión.", "error"); } finally { setTimeout(() => isScanning = false, 300); }
+            } 
+        }
+
+        function adicionarManual() { 
+            const desc = document.getElementById('manual-desc').value.trim(); const qtd = parseInt(document.getElementById('manual-qtd').value) || 1; const preco = parseFloat(document.getElementById('manual-preco').value) || 0; 
+            if(!desc || preco <= 0) return showToast("Complete descripción y precio.", "info"); 
+            const indexExistente = produtosCaixa.findIndex(p => p.descricao === desc && p.preco_unitario === preco);
+            if (indexExistente !== -1) produtosCaixa[indexExistente].quantidade += qtd;
+            else produtosCaixa.push({ codigo_barras: null, descricao: desc, quantidade: qtd, preco_unitario: preco }); 
+            atualizarInterfaceCaixa(); document.getElementById('manual-desc').value = ''; document.getElementById('manual-qtd').value = '1'; document.getElementById('manual-preco').value = ''; 
+        }
+
         function alterarQuantidade(index, delta) { produtosCaixa[index].quantidade += delta; if (produtosCaixa[index].quantidade <= 0) removerItemCarrinho(index); else atualizarInterfaceCaixa(); }
-        function atualizarInterfaceCaixa() { const container = document.getElementById('lista-produtos'); const emptyState = document.getElementById('carrinho-vazio'); let htmlContent = ''; let total = 0; if (produtosCaixa.length === 0) { emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); container.innerHTML = ''; } else { emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); produtosCaixa.forEach((p, index) => { const preco = Number(p.preco_unitario) || 0; const subtotal = p.quantidade * preco; total += subtotal; htmlContent += `<div class="bg-white p-3 border border-gray-200 rounded-lg flex flex-col sm:flex-row justify-between shadow-sm items-start sm:items-center relative group hover:border-brand-accent transition gap-2 mt-2"><div class="flex-1"><span class="font-bold text-brand-dark text-sm block">${p.descricao}</span><span class="text-xs text-gray-500">Gs. ${preco.toLocaleString('es-PY')} c/u</span></div><div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end"><div class="flex items-center bg-brand-light rounded-lg border border-gray-200 shadow-sm"><button type="button" onclick="alterarQuantidade(${index}, -1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-l-lg transition text-lg leading-none">-</button><span class="px-2 font-bold text-sm min-w-[2rem] text-center">${p.quantidade}</span><button type="button" onclick="alterarQuantidade(${index}, 1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-r-lg transition text-lg leading-none">+</button></div><span class="font-bold text-brand-accent text-sm w-24 text-right">Gs. ${subtotal.toLocaleString('es-PY')}</span></div><button type="button" onclick="removerItemCarrinho(${index})" class="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow-sm" title="Quitar">✕</button></div>`; }); container.innerHTML = htmlContent; } document.getElementById('valor-total-tela').innerText = total.toLocaleString('es-PY'); }
+
+        function atualizarInterfaceCaixa() { 
+            const container = document.getElementById('lista-produtos'); const emptyState = document.getElementById('carrinho-vazio'); let htmlContent = ''; let total = 0; 
+            if (produtosCaixa.length === 0) { emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); container.innerHTML = ''; } 
+            else { 
+                emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); 
+                produtosCaixa.forEach((p, index) => { 
+                    const preco = Number(p.preco_unitario) || 0; const subtotal = p.quantidade * preco; total += subtotal; 
+                    htmlContent += `
+                    <div class="bg-white p-3 border border-gray-200 rounded-lg flex flex-col sm:flex-row justify-between shadow-sm items-start sm:items-center relative group hover:border-brand-accent transition gap-2 mt-2">
+                        <div class="flex-1"><span class="font-bold text-brand-dark text-sm block">${p.descricao}</span><span class="text-xs text-gray-500">Gs. ${preco.toLocaleString('es-PY')} c/u</span></div>
+                        <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                            <div class="flex items-center bg-brand-light rounded-lg border border-gray-200 shadow-sm"><button type="button" onclick="alterarQuantidade(${index}, -1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-l-lg transition text-lg leading-none">-</button><span class="px-2 font-bold text-sm min-w-[2rem] text-center">${p.quantidade}</span><button type="button" onclick="alterarQuantidade(${index}, 1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-r-lg transition text-lg leading-none">+</button></div>
+                            <span class="font-bold text-brand-accent text-sm w-24 text-right">Gs. ${subtotal.toLocaleString('es-PY')}</span>
+                        </div>
+                        <button type="button" onclick="removerItemCarrinho(${index})" class="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow-sm" title="Quitar">✕</button>
+                    </div>`; 
+                }); container.innerHTML = htmlContent;
+            } 
+            document.getElementById('valor-total-tela').innerText = total.toLocaleString('es-PY'); 
+        }
+
         function removerItemCarrinho(index) { produtosCaixa.splice(index, 1); atualizarInterfaceCaixa(); }
 
-        async function emitirNota() { if(produtosCaixa.length === 0) return showToast("El carrito está vacío.", "info"); const total = produtosCaixa.reduce((acc, p) => acc + (p.quantidade * p.preco_unitario), 0); const btn = document.getElementById('btn-emitir'); btn.innerHTML = '⏳ Procesando SIFEN...'; btn.disabled = true; try { const res = await fetch('/emitir-nota', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: total, itens: produtosCaixa }) }); if (!res.ok) { const errData = await res.json(); throw new Error(errData.detail || "Error interno del servidor"); } const dados = await res.json(); btn.innerHTML = '🚀 Emitir Factura Electrónica'; btn.disabled = false; if (dados.cdc) { document.getElementById('resultado').classList.remove('hidden'); document.getElementById('qrcode-img').src = dados.link_qrcode; document.getElementById('btn-pdf').href = dados.link_pdf; produtosCaixa = []; atualizarInterfaceCaixa(); showToast("✅ Factura emitida y guardada.", "success"); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); carregarEstoque(); } else { throw new Error("Respuesta inválida."); } } catch(e) { btn.disabled = false; btn.innerHTML = '🚀 Emitir Factura Electrónica'; showToast("❌ " + e.message, "error"); } }
+        async function emitirNota() { 
+            if(produtosCaixa.length === 0) return showToast("El carrito está vacío.", "info"); 
+            const total = produtosCaixa.reduce((acc, p) => acc + (p.quantidade * p.preco_unitario), 0); 
+            const btn = document.getElementById('btn-emitir'); btn.innerHTML = '⏳ Procesando SIFEN...'; btn.disabled = true; 
+            try { 
+                const res = await fetch('/emitir-nota', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: total, itens: produtosCaixa }) }); 
+                if (!res.ok) { const errData = await res.json(); throw new Error(errData.detail || "Error interno del servidor"); } 
+                const dados = await res.json(); btn.innerHTML = '🚀 Emitir Factura Electrónica'; btn.disabled = false; 
+                if (dados.cdc) { 
+                    document.getElementById('resultado').classList.remove('hidden'); document.getElementById('qrcode-img').src = dados.link_qrcode; document.getElementById('btn-pdf').href = dados.link_pdf; 
+                    produtosCaixa = []; atualizarInterfaceCaixa(); showToast("✅ Factura emitida y guardada.", "success"); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); 
+                    carregarEstoque(); 
+                } else { throw new Error("Respuesta inválida."); } 
+            } catch(e) { btn.disabled = false; btn.innerHTML = '🚀 Emitir Factura Electrónica'; showToast("❌ " + e.message, "error"); } 
+        }
 
-        // --- BACKEND (Cierre de Caja Novo) ---
+        // --- BACKEND CRUD (Cierre, Dashboard, Config, etc) ---
         async function carregarCierreCaja() {
             try {
                 const res = await fetch('/cierre-caja');
@@ -357,11 +709,58 @@
         async function carregarConfiguracao() { const res = await fetch('/obter-configuracao'); const dados = await res.json(); if(dados) { document.getElementById('conf-nome').value = dados.nome_empresa || ''; document.getElementById('conf-ruc').value = dados.ruc || ''; document.getElementById('conf-endereco').value = dados.endereco || ''; document.getElementById('conf-senha-cert').value = dados.senha_certificado || ''; document.getElementById('ruc').value = dados.ruc || 'Falta RUC'; const status = document.getElementById('status-cert'); if(dados.caminho_certificado) { status.classList.remove('hidden'); status.classList.add('bg-green-50', 'text-green-800'); status.innerHTML = `✅ Certificado: <b>${dados.caminho_certificado.split('/').pop()}</b>`; } } }
         async function salvarConfiguracao() { const formData = new FormData(); formData.append('nome_empresa', document.getElementById('conf-nome').value); formData.append('ruc', document.getElementById('conf-ruc').value); formData.append('endereco', document.getElementById('conf-endereco').value); formData.append('senha_certificado', document.getElementById('conf-senha-cert').value); const res = await fetch('/salvar-configuracao', { method: 'POST', body: formData }); if(res.ok) { showToast("✅ Datos guardados."); carregarConfiguracao(); } }
         async function fazerUploadCertificado() { const arquivoInput = document.getElementById('arquivo-cert'); if(arquivoInput.files.length === 0) return showToast("Seleccione archivo", "info"); const formData = new FormData(); formData.append('arquivo', arquivoInput.files[0]); const res = await fetch('/upload-certificado', { method: 'POST', body: formData }); if(res.ok) { showToast("✅ Certificado subido."); arquivoInput.value = ''; carregarConfiguracao(); } else showToast("❌ Error.", "error"); }
-        function calcularLucro() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const venta = parseFloat(document.getElementById('novo-preco').value) || 0; const divInfo = document.getElementById('info-lucro'); if (venta > 0 && costo >= 0) { const lucro = venta - costo; const margem = (lucro / venta) * 100; if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}%`; divInfo.className = "h-4 mt-1 text-xs font-bold text-green-600"; } else if (lucro === 0) { divInfo.innerHTML = `Sin margen`; divInfo.className = "h-4 mt-1 text-xs font-bold text-yellow-600"; } else { divInfo.innerHTML = `Pérdida`; divInfo.className = "h-4 mt-1 text-xs font-bold text-red-600"; } } else divInfo.innerHTML = ""; }
-        async function cadastrarProduto() { const custo = parseFloat(document.getElementById('novo-custo').value) || 0; const preco = parseFloat(document.getElementById('novo-preco').value) || 0; const qtd = parseInt(document.getElementById('novo-qtd').value) || 0; const dados = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: custo, preco_venda: preco, quantidade: qtd, codigo_proveedor: document.getElementById('novo-prov').value.trim() }; if(!dados.codigo_barras || !dados.descricao || preco === 0) return showToast("Complete Código Barra, Descripción y Venta.", "info"); try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; carregarEstoque(); document.getElementById('novo-cod').focus(); showToast("✅ Producto guardado."); } else showToast("❌ El código ya existe.", "error"); } catch (e) { showToast("❌ Error de red.", "error"); } }
+        
+        function calcularLucro() { 
+            const costo = parseFloat(document.getElementById('novo-custo').value) || 0; 
+            const venta = parseFloat(document.getElementById('novo-preco').value) || 0; 
+            const divInfo = document.getElementById('info-lucro'); 
+            if (venta > 0 && costo >= 0) { 
+                const lucro = venta - costo; const margem = (lucro / venta) * 100; 
+                if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}%`; divInfo.className = "h-4 mt-1 text-xs font-bold text-green-600"; } 
+                else if (lucro === 0) { divInfo.innerHTML = `Sin margen`; divInfo.className = "h-4 mt-1 text-xs font-bold text-yellow-600"; } 
+                else { divInfo.innerHTML = `Pérdida`; divInfo.className = "h-4 mt-1 text-xs font-bold text-red-600"; } 
+            } else divInfo.innerHTML = ""; 
+        }
+
+        async function cadastrarProduto() { 
+            const custo = parseFloat(document.getElementById('novo-custo').value) || 0; const preco = parseFloat(document.getElementById('novo-preco').value) || 0; const qtd = parseInt(document.getElementById('novo-qtd').value) || 0; 
+            const dados = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: custo, preco_venda: preco, quantidade: qtd, codigo_proveedor: document.getElementById('novo-prov').value.trim() }; 
+            if(!dados.codigo_barras || !dados.descricao || preco === 0) return showToast("Complete Código Barra, Descripción y Venta.", "info"); 
+            try { 
+                const res = await fetch('/cadastrar-produto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) }); 
+                if (res.ok) { ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; carregarEstoque(); document.getElementById('novo-cod').focus(); showToast("✅ Producto guardado."); } else showToast("❌ El código ya existe.", "error"); 
+            } catch (e) { showToast("❌ Error de red.", "error"); } 
+        }
+
         async function deletarProduto(codigo) { if(confirm("¿Seguro?")) { await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE' }); carregarEstoque(); showToast("Producto eliminado."); } }
-        async function carregarEstoque() { const res = await fetch('/listar-produtos'); produtosGlobais = await res.json(); const tbody = document.getElementById('tabela-estoque'); const emptyState = document.getElementById('estoque-vazio'); tbody.innerHTML = ''; if (produtosGlobais.length === 0) { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } else { tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); produtosGlobais.forEach(p => { let corStock = p.quantidade > 5 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; let prov = p.codigo_proveedor ? `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-200">${p.codigo_proveedor}</span>` : `<span class="text-gray-300">-</span>`; tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4"><div class="font-bold text-brand-dark text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td><td class="p-4"><span class="bg-brand-light text-brand-primary border border-brand-primary/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td><td class="p-4">${prov}</td><td class="p-4 text-right"><div class="font-bold text-brand-dark text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-400 mt-1">Costo: Gs. ${p.preco_custo.toLocaleString('es-PY')}</div></td><td class="p-4 text-center ${corStock} text-lg">${p.quantidade}</td><td class="p-4 text-center flex justify-center gap-2"><button type="button" onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 bg-red-50 p-2 rounded transition">🗑️</button></td></tr>`; }); } }
-        async function carregarHistorico(termoBusca = "") { const res = await fetch(`/listar-notas?busca=${termoBusca}`); const dados = await res.json(); const tbody = document.getElementById('tabela-historico'); tbody.innerHTML = ''; dados.historico.forEach(nota => { const dataFormatada = new Date(nota.data_emissao).toLocaleString('es-PY', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}); let btns = `<span class="text-xs text-gray-400">Sin archivo</span>`; if(nota.link_pdf && nota.link_pdf !== "") { btns = `<div class="flex gap-2 justify-center"><a href="${nota.link_pdf}" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-brand-dark font-bold px-3 py-1.5 rounded-lg border border-gray-300 text-xs flex items-center shadow-sm transition">📄 PDF</a><a href="https://ekuatia.set.gov.py/consultas/qr?nId=${nota.cdc}" target="_blank" class="bg-brand-light hover:bg-brand-primary hover:text-white text-brand-primary font-bold px-3 py-1.5 rounded-lg border border-brand-primary/20 text-xs flex items-center shadow-sm transition">🔗 QR SIFEN</a></div>`; } tbody.innerHTML += `<tr class="hover:bg-brand-light transition border-b border-gray-50"><td class="p-4"><div class="text-xs font-bold text-gray-500 mb-1">${dataFormatada}</div><div class="text-[10px] text-gray-400 font-mono break-all">${nota.cdc.substring(0,30)}...</div></td><td class="p-4 font-bold text-brand-dark text-sm">${nota.nome_cliente}</td><td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td><td class="p-4 text-center">${btns}</td></tr>`; }); }
+        
+        async function carregarEstoque() { 
+            const res = await fetch('/listar-produtos'); 
+            produtosGlobais = await res.json(); 
+            const tbody = document.getElementById('tabela-estoque'); const emptyState = document.getElementById('estoque-vazio'); tbody.innerHTML = ''; 
+            if (produtosGlobais.length === 0) { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } 
+            else { 
+                tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); 
+                produtosGlobais.forEach(p => { 
+                    let corStock = p.quantidade > 5 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'; 
+                    let prov = p.codigo_proveedor ? `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-200">${p.codigo_proveedor}</span>` : `<span class="text-gray-300">-</span>`; 
+                    tbody.innerHTML += `<tr class="hover:bg-brand-light transition"><td class="p-4"><div class="font-bold text-brand-dark text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td><td class="p-4"><span class="bg-brand-light text-brand-primary border border-brand-primary/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td><td class="p-4">${prov}</td><td class="p-4 text-right"><div class="font-bold text-brand-dark text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-400 mt-1">Costo: Gs. ${p.preco_custo.toLocaleString('es-PY')}</div></td><td class="p-4 text-center ${corStock} text-lg">${p.quantidade}</td><td class="p-4 text-center flex justify-center gap-2"><button type="button" onclick="deletarProduto('${p.codigo_barras}')" class="text-red-500 bg-red-50 p-2 rounded transition">🗑️</button></td></tr>`; 
+                }); 
+            } 
+        }
+
+        async function carregarHistorico(termoBusca = "") { 
+            const res = await fetch(`/listar-notas?busca=${termoBusca}`); const dados = await res.json(); 
+            const tbody = document.getElementById('tabela-historico'); tbody.innerHTML = ''; 
+            dados.historico.forEach(nota => { 
+                const dataFormatada = new Date(nota.data_emissao).toLocaleString('es-PY', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}); 
+                let btns = `<span class="text-xs text-gray-400">Sin archivo</span>`; 
+                if(nota.link_pdf && nota.link_pdf !== "") { 
+                    btns = `<div class="flex gap-2 justify-center"><a href="${nota.link_pdf}" target="_blank" class="bg-gray-100 hover:bg-gray-200 text-brand-dark font-bold px-3 py-1.5 rounded-lg border border-gray-300 text-xs flex items-center shadow-sm transition">📄 PDF</a><a href="https://ekuatia.set.gov.py/consultas/qr?nId=${nota.cdc}" target="_blank" class="bg-brand-light hover:bg-brand-primary hover:text-white text-brand-primary font-bold px-3 py-1.5 rounded-lg border border-brand-primary/20 text-xs flex items-center shadow-sm transition">🔗 QR SIFEN</a></div>`; 
+                } 
+                tbody.innerHTML += `<tr class="hover:bg-brand-light transition border-b border-gray-50"><td class="p-4"><div class="text-xs font-bold text-gray-500 mb-1">${dataFormatada}</div><div class="text-[10px] text-gray-400 font-mono break-all">${nota.cdc.substring(0,30)}...</div></td><td class="p-4 font-bold text-brand-dark text-sm">${nota.nome_cliente}</td><td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td><td class="p-4 text-center">${btns}</td></tr>`; 
+            }); 
+        }
         function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
         document.head.insertAdjacentHTML('beforeend', `<style>@keyframes toast-progress { from { width: 100%; } to { width: 0%; } }</style>`);
     </script>
