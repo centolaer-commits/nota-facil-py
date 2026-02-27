@@ -36,12 +36,10 @@
     <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white p-4 rounded-2xl w-full max-w-md shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-brand-dark flex items-center">📷 Escanear Producto</h3>
+                <h3 class="font-bold text-brand-dark flex items-center">📷 Escanear</h3>
                 <button type="button" onclick="fecharCamera()" class="text-red-500 hover:bg-red-50 p-2 rounded-full font-bold text-xl leading-none transition">&times;</button>
             </div>
-            <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-brand-accent/30 min-h-[250px] flex items-center justify-center text-white text-sm">
-                Iniciando cámara...
-            </div>
+            <div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-brand-accent/30 min-h-[250px] flex items-center justify-center text-white text-sm">Iniciando cámara...</div>
             <p class="text-xs text-center text-gray-500 mt-4">Apunte la cámara trasera al código.</p>
         </div>
     </div>
@@ -130,8 +128,8 @@
                     
                     <div class="flex items-center mb-4 bg-yellow-50 rounded-lg border border-yellow-200 overflow-hidden">
                         <span class="text-xl pl-3 py-3">🔎</span>
-                        <input type="text" id="scanner-barras" placeholder="Escanear Código..." class="w-full bg-transparent p-3 text-lg font-bold focus:outline-none text-brand-dark" onkeypress="verificarScanner(event)">
-                        <button type="button" onclick="abrirCamera('scanner-barras')" class="bg-brand-dark text-white px-5 py-4 font-bold hover:bg-brand-primary transition shadow-lg">📷</button>
+                        <input type="text" id="scanner-barras" placeholder="Escanear Código..." class="w-full bg-transparent p-3 text-base sm:text-lg font-bold focus:outline-none text-brand-dark min-w-0" onkeypress="verificarScanner(event)">
+                        <button type="button" onclick="abrirCamera('scanner-barras')" class="bg-brand-dark text-white px-4 sm:px-5 py-3 sm:py-4 font-bold hover:bg-brand-primary transition shadow-lg">📷</button>
                     </div>
                     
                     <div id="carrinho-vazio" class="flex flex-col items-center justify-center h-24 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50 mb-4">
@@ -178,7 +176,7 @@
                         <div class="md:col-span-3">
                             <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Código Barra *</label>
                             <div class="flex rounded-lg border-2 border-yellow-300 bg-yellow-50 overflow-hidden">
-                                <input type="text" id="novo-cod" class="w-full bg-transparent p-2 pl-3 font-bold focus:outline-none text-sm text-brand-dark" onkeypress="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('novo-desc').focus(); }">
+                                <input type="text" id="novo-cod" class="w-full bg-transparent p-2 pl-3 font-bold focus:outline-none text-sm text-brand-dark min-w-0" onkeypress="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('novo-desc').focus(); }">
                                 <button type="button" onclick="abrirCamera('novo-cod')" class="bg-brand-dark text-white px-3 hover:bg-brand-primary transition">📷</button>
                             </div>
                         </div>
@@ -236,29 +234,29 @@
                     <p class="text-sm text-brand-primary">Agregue mercadería recibida a productos existentes.</p>
                 </header>
                 
-                <div class="border border-gray-200 p-6 rounded-xl bg-brand-light shadow-inner mb-6">
+                <div class="border border-gray-200 p-4 sm:p-6 rounded-xl bg-brand-light shadow-inner mb-6">
                     <label class="text-sm font-bold text-brand-dark block mb-2">Escanear o Buscar por Nombre</label>
                     
                     <div class="relative w-full mb-6">
                         <div class="flex items-center bg-yellow-50 rounded-lg border-2 border-yellow-300 overflow-hidden">
                             <span class="text-xl pl-3 py-3">🔎</span>
-                            <input type="text" id="restock-cod" placeholder="Código o Nombre del producto..." autocomplete="off" class="w-full bg-transparent p-4 text-lg font-bold focus:outline-none text-brand-dark" oninput="filtrarRestock()" onkeypress="buscarParaRestock(event)">
-                            <button type="button" onclick="abrirCamera('restock-cod')" class="bg-brand-dark text-white px-5 py-4 font-bold hover:bg-brand-primary transition">📷</button>
+                            <input type="text" id="restock-cod" placeholder="Buscar código o nombre..." autocomplete="off" class="w-full bg-transparent p-3 sm:p-4 text-base sm:text-lg font-bold focus:outline-none text-brand-dark min-w-0" oninput="filtrarRestock()" onkeypress="buscarParaRestock(event)">
+                            <button type="button" onclick="abrirCamera('restock-cod')" class="bg-brand-dark text-white px-4 sm:px-5 py-3 sm:py-4 font-bold hover:bg-brand-primary transition">📷</button>
                         </div>
                         <div id="restock-dropdown" class="absolute z-50 w-full bg-white border border-gray-200 shadow-xl rounded-lg mt-1 hidden max-h-60 overflow-y-auto"></div>
                     </div>
                     
-                    <div id="restock-ficha" class="hidden bg-white p-6 rounded-xl border border-brand-accent/30 shadow-sm relative overflow-hidden">
+                    <div id="restock-ficha" class="hidden bg-white p-4 sm:p-6 rounded-xl border border-brand-accent/30 shadow-sm relative overflow-hidden">
                         <div class="absolute left-0 top-0 w-2 h-full bg-brand-accent"></div>
                         <h3 id="restock-desc" class="text-xl font-bold text-brand-dark mb-1">Nombre</h3>
                         <p class="text-sm text-gray-500 mb-6">Stock actual: <span id="restock-atual" class="font-bold text-brand-primary text-lg">0</span> unid.</p>
                         
-                        <div class="flex items-end gap-4">
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 sm:gap-4">
                             <div class="flex-1">
-                                <label class="text-xs font-bold text-green-600 uppercase mb-1 block">Cantidad Recibida (+)</label>
+                                <label class="text-xs font-bold text-green-600 uppercase mb-1 block text-center sm:text-left">Cantidad Recibida (+)</label>
                                 <input type="number" id="restock-add" class="w-full border-2 border-green-300 p-3 rounded-lg text-lg font-bold focus:ring-2 focus:ring-green-500 outline-none text-center bg-green-50" placeholder="Ej: 50" onkeypress="if(event.key === 'Enter') salvarRestock()">
                             </div>
-                            <button type="button" onclick="salvarRestock()" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 shadow-md transition whitespace-nowrap">💾 Guardar Ingreso</button>
+                            <button type="button" onclick="salvarRestock()" class="w-full sm:w-auto bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 shadow-md transition">💾 Guardar Ingreso</button>
                         </div>
                     </div>
                 </div>
@@ -305,12 +303,12 @@
 
             <div id="tela-cierre" class="max-w-5xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
                 <header class="mb-8 border-b border-gray-100 pb-4">
-                    <div class="flex justify-between items-center">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <h1 class="text-3xl font-extrabold text-brand-dark">Cierre de Caja</h1>
                             <p class="text-sm text-brand-primary">Resumen financiero y stock de los productos vendidos hoy.</p>
                         </div>
-                        <button onclick="mudarTela('dashboard', null)" class="text-gray-500 hover:text-brand-dark transition font-bold text-sm bg-gray-100 px-4 py-2 rounded-lg">← Volver al Dashboard</button>
+                        <button onclick="mudarTela('dashboard', null)" class="text-gray-500 hover:text-brand-dark transition font-bold text-sm bg-gray-100 px-4 py-2 rounded-lg whitespace-nowrap">← Volver al Dashboard</button>
                     </div>
                 </header>
 
@@ -346,9 +344,9 @@
             </div>
 
             <div id="tela-reportes" class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
-                <header class="mb-6 flex justify-between items-center">
+                <header class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h1 class="text-2xl font-bold text-brand-dark">Historial SIFEN</h1>
-                    <button onclick="mudarTela('dashboard', null)" class="text-gray-500 hover:text-brand-dark transition font-bold text-sm bg-gray-100 px-4 py-2 rounded-lg">← Volver al Dashboard</button>
+                    <button onclick="mudarTela('dashboard', null)" class="text-gray-500 hover:text-brand-dark transition font-bold text-sm bg-gray-100 px-4 py-2 rounded-lg whitespace-nowrap">← Volver al Dashboard</button>
                 </header>
                 <div class="flex gap-3 mb-6 bg-brand-light p-4 rounded-xl border border-gray-200">
                     <input type="text" id="busca" placeholder="Buscar por cliente o CDC..." class="w-full border border-gray-300 p-3 rounded-lg text-sm" onkeyup="buscarNotas()">
