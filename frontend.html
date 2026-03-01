@@ -317,6 +317,7 @@
       <div id="tela-restock" class="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
         <header class="mb-6">
           <h1 class="text-2xl font-bold text-brand-dark">Entrada de Stock Rápida</h1>
+          <p class="text-sm text-brand-primary">Agregue mercadería recibida a productos existentes.</p>
         </header>
         
         <div class="border border-gray-200 p-4 sm:p-6 rounded-xl bg-brand-light shadow-inner mb-6">
@@ -484,14 +485,27 @@
   </div>
 
   <script>
+    // --- VARIÁVEL SAAS GLOBAL ---
+    // Todos os requests usarão essa variável para se identificar ao servidor
+    let empresaAtualId = 1; 
+
     let productosGlobais = []; 
     let productosCaixa = [];
     let graficoAtual = null;
     let html5QrCode = null;
     let campoDestinoScanner = ''; 
     let totalDaVendaAtual = 0; 
-    let rolUsuario = 'admin'; // Variável de controle de acesso
-    let descuentoPorcentaje = 0; // Desconto atual do carrinho
+    let rolUsuario = 'admin'; 
+    let descuentoPorcentaje = 0; 
+
+    // Helper genérico para incluir headers SaaS em todos os fetch
+    const getSaaSHeaders = (extraHeaders = {}) => {
+      return {
+        'Content-Type': 'application/json',
+        'X-Empresa-ID': empresaAtualId.toString(),
+        ...extraHeaders
+      };
+    };
 
     // --- TOASTS ---
     function showToast(message, type = 'success') {
@@ -639,7 +653,6 @@
       } 
     }
 
-    // --- NOVO: LÓGICA DE NÍVEIS DE ACESSO NO LOGIN ---
     async function fazerLogin() { 
       const senha = document.getElementById('senha').value;
       
@@ -647,12 +660,11 @@
         
         rolUsuario = (senha === 'admin123') ? 'admin' : 'cajero';
         
-        // Esconde telas se for caixa
         if (rolUsuario === 'cajero') {
           document.getElementById('nav-group-inventario').style.display = 'none';
           document.getElementById('nav-btn-dashboard').style.display = 'none';
           document.getElementById('nav-btn-config').style.display = 'none';
-          document.getElementById('btn-cerrar-turno').style.display = 'none'; // Caixa não pode fechar, só abrir
+          document.getElementById('btn-cerrar-turno').style.display = 'none'; 
           showToast("¡Sesión iniciada como Cajero!"); 
         } else {
           showToast("¡Bienvenido Dueño (Admin)!"); 
@@ -676,7 +688,7 @@
     // --- SISTEMA DE CAIXA, TURNOS E SANGRÍA ---
     async function checarStatusCaixa() {
       try {
-        const res = await fetch('/status-caixa');
+        const res = await fetch('/status-caixa', { headers: { 'X-Empresa-ID': empresaAtualId.toString() } });
         const status = await res.json();
         const bloqueio = document.getElementById('bloqueio-caixa');
         const badge = document.getElementById('badge-caixa');
@@ -702,7 +714,7 @@
       try {
         const res = await fetch('/abrir-caixa', {
           method: 'POST', 
-          headers: {'Content-Type': 'application/json'},
+          headers: getSaaSHeaders(),
           body: JSON.stringify({valor_inicial: valor})
         });
         
@@ -727,7 +739,7 @@
       try {
         const res = await fetch('/fechar-caixa', {
           method: 'POST', 
-          headers: {'Content-Type': 'application/json'},
+          headers: getSaaSHeaders(),
           body: JSON.stringify({valor_final: valorFinal})
         });
         
@@ -742,7 +754,6 @@
       }
     }
 
-    // Modal de Sangría
     function abrirModalSangria() {
       document.getElementById('sangria-valor').value = '';
       document.getElementById('sangria-motivo').value = '';
@@ -767,7 +778,7 @@
       try {
         const res = await fetch('/registrar-sangria', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: getSaaSHeaders(),
           body: JSON.stringify({valor: valor, motivo: motivo})
         });
 
@@ -789,7 +800,6 @@
         return showToast("El carrito está vacío.", "info"); 
       }
 
-      // totalDaVendaAtual is already calculated correctly in actualizarInterfaceCaixa (including discounts)
       document.getElementById('checkout-total').innerText = totalDaVendaAtual.toLocaleString('es-PY');
       document.getElementById('checkout-metodo').value = "Efectivo";
       document.getElementById('checkout-recebido').value = "";
@@ -824,7 +834,7 @@
       }
     }
 
-   async function confirmarVenta() {
+    async function confirmarVenta() {
       const metodoPago = document.getElementById('checkout-metodo').value;
       
       if(metodoPago === "Efectivo") {
@@ -841,7 +851,7 @@
       try { 
         const res = await fetch('/emitir-nota', { 
           method: 'POST', 
-          headers: { 'Content-Type': 'application/json' }, 
+          headers: getSaaSHeaders(), 
           body: JSON.stringify({ 
             ruc_emissor: document.getElementById('ruc').value, 
             nome_cliente: document.getElementById('cliente').value || "Consumidor Final", 
@@ -867,7 +877,7 @@
         
         document.getElementById('resultado').classList.remove('hidden'); 
         
-        // MUDANÇA AQUI: API transforma o link da SIFEN em uma imagem real de QR Code
+        // QR Code Generator API
         const linkImagemQR = `https://quickchart.io/qr?text=${encodeURIComponent(dados.link_qrcode)}&size=150`;
         document.getElementById('qrcode-img').src = linkImagemQR; 
         
@@ -887,6 +897,7 @@
         showToast("❌ Error de conexión al emitir.", "error"); 
       } 
     }
+
     function novaVenda() {
       document.getElementById('resultado').classList.add('hidden');
       document.getElementById('btn-emitir').classList.remove('hidden');
@@ -896,8 +907,7 @@
       document.getElementById('scanner-barras').focus();
     }
 
-
-    // --- OMNI-SEARCH (PUNTO DE VENTA) ---
+    // --- OMNI-SEARCH E CARRINHO UI ---
     let isScanning = false;
 
     function filtrarPOS() {
@@ -982,7 +992,7 @@
             if(prodMemoria) {
               seleccionarProductoPOS(prodMemoria);
             } else {
-              const res = await fetch('/buscar-produto/' + encodeURIComponent(codigo)); 
+              const res = await fetch('/buscar-produto/' + encodeURIComponent(codigo), { headers: { 'X-Empresa-ID': empresaAtualId.toString() } }); 
               if(res.ok) { 
                 const producto = await res.json(); 
                 const precoSeguro = parseFloat(producto.preco) || parseFloat(producto.preco_venda) || 0;
@@ -1007,7 +1017,6 @@
       } 
     }
 
-    // --- SISTEMA DE DESCONTOS NO CARRINHO ---
     function pedirDescuento() {
       if(rolUsuario !== 'admin') {
         return showToast("⚠️ Solo el Administrador puede aplicar descuentos.", "error");
@@ -1026,7 +1035,6 @@
       }
     }
 
-    // --- CARRINHO UI (COM DESCONTO) ---
     function alterarQuantidade(index, delta) { 
       productosCaixa[index].quantidade += delta; 
       if (productosCaixa[index].quantidade <= 0) { 
@@ -1076,7 +1084,6 @@
         container.innerHTML = htmlContent; 
       } 
       
-      // Matemática de Desconto
       const descontoValor = subtotal * (descuentoPorcentaje / 100);
       totalDaVendaAtual = subtotal - descontoValor;
 
@@ -1087,7 +1094,7 @@
 
     function removerItemCarrinho(index) { 
       productosCaixa.splice(index, 1); 
-      if (productosCaixa.length === 0) descuentoPorcentaje = 0; // Tira o desconto se esvaziar o carrinho
+      if (productosCaixa.length === 0) descuentoPorcentaje = 0; 
       actualizarInterfaceCaixa(); 
     }
 
@@ -1180,7 +1187,7 @@
       try { 
         const res = await fetch('/cadastrar-produto', { 
           method: 'POST', 
-          headers: {'Content-Type': 'application/json'}, 
+          headers: getSaaSHeaders(), 
           body: JSON.stringify(payload) 
         }); 
         
@@ -1202,7 +1209,7 @@
       } 
     }
 
-    // --- UX INVENTÁRIO (FILTROS E TABELA) ---
+    // --- UX INVENTÁRIO ---
     function toggleFormProducto() { 
       const form = document.getElementById('form-novo-produto'); 
       if (form.classList.contains('hidden')) { 
@@ -1260,7 +1267,7 @@
     
     async function carregarEstoque() { 
       try { 
-        const res = await fetch('/listar-produtos'); 
+        const res = await fetch('/listar-produtos', { headers: { 'X-Empresa-ID': empresaAtualId.toString() } }); 
         productosGlobais = await res.json(); 
         filtrarEstoque(); 
       } catch(e) { console.error(e); } 
@@ -1313,7 +1320,7 @@
       try { 
         const res = await fetch('/cadastrar-produto', { 
           method: 'POST', 
-          headers: { 'Content-Type': 'application/json' }, 
+          headers: getSaaSHeaders(), 
           body: JSON.stringify(datos) 
         }); 
         
@@ -1334,7 +1341,7 @@
     async function deletarProduto(codigo) { 
       if(confirm("¿Seguro que desea eliminar?")) { 
         try { 
-          await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE' }); 
+          await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE', headers: { 'X-Empresa-ID': empresaAtualId.toString() } }); 
           carregarEstoque(); 
           showToast("✅ Eliminado."); 
         } catch(e) { 
@@ -1346,7 +1353,7 @@
     // --- DASHBOARD, REPORTES E CFECHAMENTO ---
     async function carregarCierreCaja() { 
       try { 
-        const res = await fetch('/cierre-caja'); 
+        const res = await fetch('/cierre-caja', { headers: { 'X-Empresa-ID': empresaAtualId.toString() } }); 
         if(res.ok) { 
           const dados = await res.json(); 
           document.getElementById('cierre-vendas').innerText = dados.vendas_hoje.toLocaleString('es-PY'); 
@@ -1380,7 +1387,7 @@
     
     async function carregarDashboard() { 
       try { 
-        const res = await fetch('/dados-dashboard'); 
+        const res = await fetch('/dados-dashboard', { headers: { 'X-Empresa-ID': empresaAtualId.toString() } }); 
         const dados = await res.json(); 
         
         document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY'); 
@@ -1406,7 +1413,7 @@
     
     async function carregarCategorias() { 
       try { 
-        const res = await fetch('/listar-categorias'); 
+        const res = await fetch('/listar-categorias', { headers: { 'X-Empresa-ID': empresaAtualId.toString() } }); 
         const categorias = await res.json(); 
         
         const selectForm = document.getElementById('novo-cat'); 
@@ -1438,7 +1445,7 @@
       if(!nome) return showToast("Escriba el nombre.", "info"); 
       
       try { 
-        const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome}) }); 
+        const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({nome: nome}) }); 
         if(res.ok) { 
           document.getElementById('nova-cat-nome').value = ''; 
           carregarCategorias(); 
@@ -1454,7 +1461,7 @@
     async function deletarCategoria(id) { 
       if(confirm("¿Seguro que desea eliminar?")) { 
         try { 
-          await fetch(`/deletar-categoria/${id}`, {method: 'DELETE'}); 
+          await fetch(`/deletar-categoria/${id}`, {method: 'DELETE', headers: { 'X-Empresa-ID': empresaAtualId.toString() } }); 
           carregarCategorias(); 
           showToast("✅ Eliminada."); 
         } catch(e) { 
@@ -1465,7 +1472,7 @@
     
     async function carregarHistorico(termoBusca = "") { 
       try { 
-        const res = await fetch(`/listar-notas?busca=${termoBusca}`); 
+        const res = await fetch(`/listar-notas?busca=${termoBusca}`, { headers: { 'X-Empresa-ID': empresaAtualId.toString() } }); 
         const datos = await res.json(); 
         const tbody = document.getElementById('tabela-historico'); 
         tbody.innerHTML = ''; 
@@ -1501,7 +1508,7 @@
     // --- CONFIGURAÇÃO DA EMPRESA ---
     async function carregarConfiguracao() { 
       try { 
-        const res = await fetch('/obter-configuracao'); 
+        const res = await fetch('/obter-configuracao', { headers: { 'X-Empresa-ID': empresaAtualId.toString() } }); 
         const dados = await res.json(); 
         if(dados) { 
           document.getElementById('conf-nome').value = dados.nome_empresa || ''; 
@@ -1528,7 +1535,12 @@
       formData.append('senha_certificado', document.getElementById('conf-senha-cert').value); 
       
       try { 
-        const res = await fetch('/salvar-configuracao', { method: 'POST', body: formData }); 
+        // Em uploads de FormData não definimos o Content-Type manualmente
+        const res = await fetch('/salvar-configuracao', { 
+          method: 'POST', 
+          headers: { 'X-Empresa-ID': empresaAtualId.toString() },
+          body: formData 
+        }); 
         if(res.ok) { 
           showToast("✅ Guardados."); 
           carregarConfiguracao(); 
@@ -1548,7 +1560,11 @@
       formData.append('arquivo', archivoInput.files[0]); 
       
       try { 
-        const res = await fetch('/upload-certificado', { method: 'POST', body: formData }); 
+        const res = await fetch('/upload-certificado', { 
+          method: 'POST', 
+          headers: { 'X-Empresa-ID': empresaAtualId.toString() },
+          body: formData 
+        }); 
         if(res.ok) { 
           showToast("✅ Subido."); 
           archivoInput.value = ''; 
