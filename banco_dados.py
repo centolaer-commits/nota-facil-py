@@ -19,7 +19,11 @@ def inicializar_banco():
             valor_total REAL,
             cdc TEXT,
             itens TEXT,
-            data_emissao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            data_emissao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            link_pdf TEXT DEFAULT '',
+            link_qrcode TEXT DEFAULT '',
+            metodo_pago TEXT DEFAULT 'Efectivo',
+            caixa_id INTEGER DEFAULT 0
         )
     ''')
 
@@ -31,7 +35,8 @@ def inicializar_banco():
             subcategoria TEXT,
             preco_custo REAL,
             preco_venda REAL NOT NULL,
-            quantidade INTEGER DEFAULT 0
+            quantidade INTEGER DEFAULT 0,
+            codigo_proveedor TEXT DEFAULT ''
         )
     ''')
 
@@ -55,12 +60,24 @@ def inicializar_banco():
     ''')
     cursor.execute('INSERT INTO categorias (nome) VALUES (\'General\') ON CONFLICT (nome) DO NOTHING')
 
+    # NOVO: Tabela para Controle de Turno/Caixa
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS caixa_sessoes (
+            id SERIAL PRIMARY KEY,
+            data_abertura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            data_fechamento TIMESTAMP,
+            valor_abertura REAL DEFAULT 0,
+            valor_fechamento REAL,
+            status TEXT DEFAULT 'ABERTO'
+        )
+    ''')
+
+    # Migrations de segurança
     try:
-        cursor.execute('ALTER TABLE produtos ADD COLUMN IF NOT EXISTS codigo_proveedor TEXT DEFAULT \'\'')
-        cursor.execute('ALTER TABLE notas ADD COLUMN IF NOT EXISTS link_pdf TEXT DEFAULT \'\'')
-        cursor.execute('ALTER TABLE notas ADD COLUMN IF NOT EXISTS link_qrcode TEXT DEFAULT \'\'')
+        cursor.execute("ALTER TABLE notas ADD COLUMN IF NOT EXISTS metodo_pago TEXT DEFAULT 'Efectivo'")
+        cursor.execute("ALTER TABLE notas ADD COLUMN IF NOT EXISTS caixa_id INTEGER DEFAULT 0")
     except Exception as e:
-        print("Aviso na migração:", e)
+        pass
 
     conexao.commit()
     cursor.close()
@@ -68,6 +85,42 @@ def inicializar_banco():
 
 if DATABASE_URL:
     inicializar_banco()
+
+# --- FUNÇÕES DE CAIXA (NOVO) ---
+def status_caixa_atual():
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT id, valor_abertura, data_abertura FROM caixa_sessoes WHERE status = 'ABERTO' ORDER BY id DESC LIMIT 1")
+    linha = cursor.fetchone()
+    conexao.close()
+    if linha:
+        return {"aberto": True, "caixa_id": linha[0], "valor_abertura": linha[1], "data_abertura": linha[2]}
+    return {"aberto": False}
+
+def abrir_caixa(valor_inicial):
+    # Verifica se já tem um aberto
+    atual = status_caixa_atual()
+    if atual["aberto"]:
+        return False, "Ya existe una caja abierta."
+    
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("INSERT INTO caixa_sessoes (valor_abertura, status) VALUES (%s, 'ABERTO')", (valor_inicial,))
+    conexao.commit()
+    conexao.close()
+    return True, "Caja abierta con éxito."
+
+def fechar_caixa(valor_fechamento):
+    atual = status_caixa_atual()
+    if not atual["aberto"]:
+        return False, "No hay caja abierta para cerrar."
+    
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("UPDATE caixa_sessoes SET status = 'FECHADO', data_fechamento = CURRENT_TIMESTAMP, valor_fechamento = %s WHERE id = %s", (valor_fechamento, atual["caixa_id"]))
+    conexao.commit()
+    conexao.close()
+    return True, "Caja cerrada con éxito."
 
 # --- FUNÇÕES DE CATEGORIAS ---
 def cadastrar_categoria(nome):
@@ -172,15 +225,18 @@ def deletar_produto(codigo_barras):
     conexao.close()
 
 # --- FUNÇÕES DE VENDAS E DASHBOARD ---
-def salvar_nota(ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode=""):
+# NOVO: Recebe metodo_pago e vincula ao caixa ativo
+def salvar_nota(ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode="", metodo_pago="Efectivo"):
     conexao = get_conexao()
     cursor = conexao.cursor()
     
+    # Verifica qual é o caixa aberto no momento
+    caixa_atual = status_caixa_atual()
+    caixa_id = caixa_atual["caixa_id"] if caixa_atual["aberto"] else 0
+
     itens_com_custo = []
-    
     for item in itens:
         item_dict = item.dict() if hasattr(item, 'dict') else item
-        
         if item_dict.get('codigo_barras'):
             cursor.execute('SELECT preco_custo FROM produtos WHERE codigo_barras = %s', (item_dict['codigo_barras'],))
             row = cursor.fetchone()
@@ -188,13 +244,14 @@ def salvar_nota(ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode=""):
             cursor.execute('UPDATE produtos SET quantidade = quantidade - %s WHERE codigo_barras = %s', (item_dict.get('quantidade', 0), item_dict['codigo_barras']))
         else:
             item_dict['preco_custo'] = 0 
-            
         itens_com_custo.append(item_dict)
 
     itens_json = json.dumps(itens_com_custo)
     
-    cursor.execute('INSERT INTO notas (ruc_emissor, nome_cliente, valor_total, cdc, itens, link_pdf, link_qrcode) VALUES (%s, %s, %s, %s, %s, %s, %s)',
-                   (ruc, cliente, valor, cdc, itens_json, link_pdf, link_qrcode))
+    cursor.execute('''
+        INSERT INTO notas (ruc_emissor, nome_cliente, valor_total, cdc, itens, link_pdf, link_qrcode, metodo_pago, caixa_id) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ''', (ruc, cliente, valor, cdc, itens_json, link_pdf, link_qrcode, metodo_pago, caixa_id))
     conexao.commit()
     conexao.close()
 
@@ -236,7 +293,6 @@ def obter_dados_dashboard():
         "top_produtos": [{"nome": p[0], "quantidade": p[1]} for p in top_produtos]
     }
 
-# --- NOVO: CIERRE DE CAJA DETALHADO ITEM A ITEM ---
 def obter_fechamento_caixa():
     conexao = get_conexao()
     cursor = conexao.cursor()
@@ -248,7 +304,6 @@ def obter_fechamento_caixa():
     lucro_bruto_hoje = 0
     total_notas_hoje = len(notas_hoje)
     
-    # Agrupador inteligente de itens
     itens_agrupados = {}
     
     for nota in notas_hoje:
@@ -260,21 +315,14 @@ def obter_fechamento_caixa():
             qtd = item.get('quantidade', 0)
             lucro_bruto_hoje += (preco_venda - preco_custo) * qtd
             
-            # Agrupa para o relatório
             cod = item.get('codigo_barras')
             desc = item.get('descricao', 'Manual / Otros')
             chave = cod if cod else desc
             
             if chave not in itens_agrupados:
-                itens_agrupados[chave] = {
-                    "codigo_barras": cod,
-                    "descricao": desc,
-                    "vendidos": 0,
-                    "estoque_restante": 0
-                }
+                itens_agrupados[chave] = {"codigo_barras": cod, "descricao": desc, "vendidos": 0, "estoque_restante": 0}
             itens_agrupados[chave]["vendidos"] += qtd
             
-    # Busca o estoque restante ATUAL apenas para os itens que foram vendidos hoje
     lista_detalhada = list(itens_agrupados.values())
     for item in lista_detalhada:
         if item["codigo_barras"]:
@@ -282,11 +330,9 @@ def obter_fechamento_caixa():
             row = cursor.fetchone()
             item["estoque_restante"] = row[0] if row else 0
         else:
-            item["estoque_restante"] = "-" # Itens manuais não tem estoque
+            item["estoque_restante"] = "-"
 
-    # Ordena para os mais vendidos aparecerem no topo da tabela
     lista_detalhada.sort(key=lambda x: x["vendidos"], reverse=True)
-    
     conexao.close()
     
     return {

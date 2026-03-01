@@ -24,7 +24,7 @@ class ProdutoNovo(BaseModel):
     preco_custo: float
     preco_venda: float
     quantidade: int
-    codigo_proveedor: Optional[str] = "" # NOVO: Código do fornecedor
+    codigo_proveedor: Optional[str] = ""
 
 class ItemNota(BaseModel):
     codigo_barras: Optional[str] = None
@@ -37,9 +37,36 @@ class DadosNota(BaseModel):
     nome_cliente: str
     valor_total: float
     itens: List[ItemNota]
+    metodo_pago: Optional[str] = "Efectivo" # NOVO: Método de Pagamento da venda
 
 class CategoriaNova(BaseModel):
     nome: str
+
+class CaixaAbertura(BaseModel):
+    valor_inicial: float
+
+class CaixaFechamento(BaseModel):
+    valor_final: float
+
+# --- ROTAS DE CONTROLE DE CAIXA (NOVO) ---
+@app.get("/status-caixa")
+def status_caixa():
+    return banco_dados.status_caixa_atual()
+
+@app.post("/abrir-caixa")
+def abrir_caixa(dados: CaixaAbertura):
+    sucesso, mensagem = banco_dados.abrir_caixa(dados.valor_inicial)
+    if sucesso:
+        return {"mensaje": mensagem}
+    raise HTTPException(status_code=400, detail=mensagem)
+
+@app.post("/fechar-caixa")
+def fechar_caixa(dados: CaixaFechamento):
+    sucesso, mensagem = banco_dados.fechar_caixa(dados.valor_final)
+    if sucesso:
+        return {"mensaje": mensagem}
+    raise HTTPException(status_code=400, detail=mensagem)
+
 
 # --- ROTAS DE CATEGORIAS ---
 @app.post("/cadastrar-categoria")
@@ -86,7 +113,7 @@ def cadastrar_produto(produto: ProdutoNovo):
     banco_dados.cadastrar_produto(
         produto.codigo_barras, produto.descricao, produto.categoria, 
         produto.subcategoria, produto.preco_custo, produto.preco_venda, 
-        produto.quantidade, produto.codigo_proveedor # NOVO: Salva o código do fornecedor
+        produto.quantidade, produto.codigo_proveedor
     )
     return {"mensaje": "Producto guardado con éxito"}
 
@@ -107,14 +134,19 @@ def deletar_produto(codigo_barras: str):
 
 @app.post("/emitir-nota")
 def emitir_nota(dados: DadosNota):
+    # Trava de Segurança: Verifica se o caixa está aberto antes de vender
+    caixa_atual = banco_dados.status_caixa_atual()
+    if not caixa_atual.get("aberto"):
+        raise HTTPException(status_code=403, detail="Debe abrir la caja antes de registrar ventas.")
+
     xml_bruto, cdc_real = construir_xml_sifen(dados)
     xml_final_assinado = assinar_documento(xml_bruto)
     
-    # NOVO: Gera os links e envia para o banco de dados guardar
     link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
     link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
     
-    banco_dados.salvar_nota(dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode)
+    # NOVO: Salvando a nota com o método de pagamento
+    banco_dados.salvar_nota(dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
     
     gerar_pdf_nota(dados, cdc_real)
     
@@ -135,7 +167,6 @@ def listar_notas(busca: Optional[str] = ""):
     historico = banco_dados.listar_todas_notas(busca)
     return {"total": len(historico), "historico": historico}
 
-# NOVO: Rota do Fechamento de Caixa
 @app.get("/cierre-caja")
 def api_cierre_caja():
     return banco_dados.obter_fechamento_caixa()
