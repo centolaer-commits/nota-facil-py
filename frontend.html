@@ -52,9 +52,12 @@
         <h1 class="text-3xl font-bold text-brand-dark">NubePY</h1>
       </div>
       <p class="text-brand-primary mb-6 text-sm">Acceso al Sistema</p>
-      <input type="password" id="senha" placeholder="Contraseña (admin123)" class="w-full border-gray-300 border p-3 rounded-lg mb-4 text-center focus:ring-2 focus:ring-brand-accent outline-none">
+      
+      <input type="password" id="senha" placeholder="Contraseña..." class="w-full border-gray-300 border p-3 rounded-lg mb-4 text-center focus:ring-2 focus:ring-brand-accent outline-none">
+      
       <button type="button" onclick="fazerLogin()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-lg hover:bg-brand-accentHover shadow-md transition">Ingresar</button>
       <p id="erro-login" class="text-red-500 mt-4 text-sm hidden bg-red-50 p-2 rounded">Contraseña incorrecta</p>
+      <p class="text-xs text-gray-400 mt-4 border-t border-gray-100 pt-4">Niveles: Dueño (admin123) / Cajero (caja123)</p>
     </div>
   </div>
 
@@ -79,7 +82,7 @@
             <span class="mr-3 text-lg">🛒</span> Punto de Venta
           </button>
           
-          <div class="mt-2">
+          <div id="nav-group-inventario" class="mt-2">
             <button type="button" onclick="toggleAcordeao('menu-inv', 'seta-inv')" class="w-full p-3 rounded-r-lg text-left hover:bg-brand-light transition flex justify-between items-center border-l-4 border-transparent group">
               <div class="flex items-center"><span class="mr-3 text-lg">📦</span> Inventario</div> 
               <span id="seta-inv" class="text-xs text-gray-400 group-hover:text-brand-accent">▼</span>
@@ -91,11 +94,11 @@
             </div>
           </div>
 
-          <button type="button" onclick="mudarTela('dashboard', this)" class="nav-btn border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center mt-2">
+          <button id="nav-btn-dashboard" type="button" onclick="mudarTela('dashboard', this)" class="nav-btn border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center mt-2">
             <span class="mr-3 text-lg">📊</span> Dashboard
           </button>
 
-          <button type="button" onclick="mudarTela('config', this)" class="nav-btn border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center mt-2">
+          <button id="nav-btn-config" type="button" onclick="mudarTela('config', this)" class="nav-btn border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-brand-light transition flex items-center mt-2">
             <span class="mr-3 text-lg">⚙️</span> Ajustes
           </button>
         </nav>
@@ -126,9 +129,14 @@
           </div>
         </div>
 
-        <header class="mb-6 flex justify-between items-center">
-          <h1 class="text-2xl font-bold text-brand-dark">Punto de Venta</h1>
-          <span id="badge-caixa" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold hidden border border-green-200">🟢 Turno Abierto</span>
+        <header class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 pb-4">
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold text-brand-dark">Punto de Venta</h1>
+            <span id="badge-caixa" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold hidden border border-green-200">🟢 Turno Abierto</span>
+          </div>
+          <button type="button" onclick="abrirModalSangria()" class="text-brand-primary hover:text-brand-dark font-bold text-sm bg-gray-100 px-4 py-2 rounded-lg border border-gray-200 transition flex items-center">
+            💸 Retiro de Caja (Sangría)
+          </button>
         </header>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-brand-light rounded-xl border border-gray-200">
@@ -161,9 +169,21 @@
           <div id="lista-produtos" class="space-y-2 mb-4 max-h-64 overflow-y-auto pr-2"></div>
         </div>
 
-        <div class="flex justify-between items-end mb-6 p-4 bg-brand-light rounded-xl border border-brand-accent/20">
-          <div><p class="text-sm text-brand-primary font-medium">Total a Pagar</p></div>
-          <div class="text-3xl font-extrabold text-brand-accent">Gs. <span id="valor-total-tela">0</span></div>
+        <div class="flex flex-col sm:flex-row justify-between items-end mb-6 p-4 bg-brand-light rounded-xl border border-brand-accent/20 gap-4">
+          <div class="w-full sm:w-1/2 space-y-2">
+            <div class="flex justify-between text-sm text-gray-500">
+              <span>Subtotal:</span>
+              <span class="font-bold">Gs. <span id="subtotal-tela">0</span></span>
+            </div>
+            <div class="flex justify-between items-center text-sm border-b border-gray-200 pb-2">
+              <button onclick="pedirDescuento()" class="text-brand-accent font-bold hover:underline">🎯 Aplicar Descuento (%)</button>
+              <span class="font-bold text-red-500">- Gs. <span id="descuento-tela">0</span></span>
+            </div>
+            <div class="flex justify-between items-end pt-2">
+              <p class="text-sm text-brand-primary font-bold">Total a Pagar</p>
+              <div class="text-3xl font-extrabold text-brand-accent">Gs. <span id="valor-total-tela">0</span></div>
+            </div>
+          </div>
         </div>
         
         <button type="button" onclick="abrirCheckout()" id="btn-emitir" class="w-full bg-brand-accent text-white font-bold py-4 text-lg rounded-xl hover:bg-brand-accentHover shadow-md transition">💳 Ir al Pago</button>
@@ -218,6 +238,26 @@
         </div>
       </div>
 
+      <div id="modal-sangria" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-gray-200">
+          <div class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+            <h3 class="text-xl font-bold text-brand-dark">💸 Retiro de Caja</h3>
+            <button type="button" onclick="fecharModalSangria()" class="text-gray-400 hover:text-red-500 font-bold text-2xl leading-none transition">&times;</button>
+          </div>
+          <p class="text-sm text-gray-500 mb-4">Registre el dinero retirado de la gaveta para pagos rápidos.</p>
+          
+          <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Monto Retirado (Gs)</label>
+          <input type="number" id="sangria-valor" placeholder="Ej: 50000" class="w-full border border-gray-300 p-3 rounded-lg text-lg font-bold mb-4 focus:ring-2 focus:ring-brand-accent outline-none">
+          
+          <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Motivo (Descripción)</label>
+          <input type="text" id="sangria-motivo" placeholder="Ej: Pago de agua" class="w-full border border-gray-300 p-3 rounded-lg text-sm mb-6 focus:ring-2 focus:ring-brand-accent outline-none">
+          
+          <button type="button" onclick="salvarSangria()" class="w-full bg-brand-primary text-white font-bold py-3 rounded-lg hover:bg-brand-dark transition shadow-md">
+            Guardar Retiro
+          </button>
+        </div>
+      </div>
+
       <div id="tela-inventario" class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
         <header class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 pb-4">
           <div>
@@ -239,31 +279,12 @@
                 <button type="button" onclick="abrirCamera('novo-cod')" class="bg-brand-dark text-white px-3 hover:bg-brand-primary transition shrink-0">📷</button>
               </div>
             </div>
-            <div class="md:col-span-3">
-              <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Descripción *</label>
-              <input type="text" id="novo-desc" class="w-full border border-gray-300 p-2 rounded-lg text-sm">
-            </div>
-            <div class="md:col-span-3">
-              <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Categoría</label>
-              <select id="novo-cat" class="w-full border border-gray-300 p-2 rounded-lg text-sm bg-white"></select>
-            </div>
-            <div class="md:col-span-3">
-              <label class="text-xs font-bold text-blue-600 uppercase block mb-1">Cód. Proveedor</label>
-              <input type="text" id="novo-prov" class="w-full border border-gray-300 p-2 rounded-lg text-sm focus:border-blue-500" placeholder="Ej: REF-991">
-            </div>
-            <div class="md:col-span-4">
-              <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Costo (Gs)</label>
-              <input type="number" id="novo-custo" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()">
-            </div>
-            <div class="md:col-span-4">
-              <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Venta (Gs) *</label>
-              <input type="number" id="novo-preco" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()">
-              <div id="info-lucro" class="h-4 mt-1 text-xs font-bold"></div>
-            </div>
-            <div class="md:col-span-4">
-              <label class="text-xs font-bold text-brand-primary uppercase block mb-1">Stock Inicial</label>
-              <input type="number" id="novo-qtd" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0">
-            </div>
+            <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Descripción *</label><input type="text" id="novo-desc" class="w-full border border-gray-300 p-2 rounded-lg text-sm"></div>
+            <div class="md:col-span-3"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Categoría</label><select id="novo-cat" class="w-full border border-gray-300 p-2 rounded-lg text-sm bg-white"></select></div>
+            <div class="md:col-span-3"><label class="text-xs font-bold text-blue-600 uppercase block mb-1">Cód. Proveedor</label><input type="text" id="novo-prov" class="w-full border border-gray-300 p-2 rounded-lg text-sm focus:border-blue-500" placeholder="Ej: REF-991"></div>
+            <div class="md:col-span-4"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Costo (Gs)</label><input type="number" id="novo-custo" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()"></div>
+            <div class="md:col-span-4"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Venta (Gs) *</label><input type="number" id="novo-preco" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0" oninput="calcularLucro()"><div id="info-lucro" class="h-4 mt-1 text-xs font-bold"></div></div>
+            <div class="md:col-span-4"><label class="text-xs font-bold text-brand-primary uppercase block mb-1">Stock Inicial</label><input type="number" id="novo-qtd" class="w-full border border-gray-300 p-2 rounded-lg text-sm" placeholder="0"></div>
             
             <div class="md:col-span-12 flex justify-end gap-3 pt-4 border-t border-gray-200 mt-2">
               <button type="button" onclick="toggleFormProducto()" class="text-gray-500 hover:text-gray-700 font-bold py-2 px-4 rounded-lg transition text-sm">Cancelar</button>
@@ -278,23 +299,14 @@
             <input type="text" id="busca-inventario" placeholder="Buscar por código o descripción..." class="w-full border border-gray-300 p-3 pl-10 rounded-lg text-sm focus:ring-2 focus:ring-brand-accent outline-none" oninput="filtrarEstoque()">
           </div>
           <div class="w-full sm:w-64">
-            <select id="filtro-cat-inventario" class="w-full border border-gray-300 p-3 rounded-lg text-sm focus:ring-2 focus:ring-brand-accent outline-none bg-white font-medium" onchange="filtrarEstoque()">
-              <option value="">📁 Todas las Categorías</option>
-            </select>
+            <select id="filtro-cat-inventario" class="w-full border border-gray-300 p-3 rounded-lg text-sm focus:ring-2 focus:ring-brand-accent outline-none bg-white font-medium" onchange="filtrarEstoque()"><option value="">📁 Todas las Categorías</option></select>
           </div>
         </div>
 
         <div class="border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
           <table class="w-full text-left bg-white min-w-[800px]">
             <thead class="bg-brand-primary text-white">
-              <tr>
-                <th class="p-4 text-xs font-bold uppercase">Producto</th>
-                <th class="p-4 text-xs font-bold uppercase">Categoría</th>
-                <th class="p-4 text-xs font-bold uppercase">Cód. Prov.</th>
-                <th class="p-4 text-xs font-bold uppercase text-right">Precio</th>
-                <th class="p-4 text-xs font-bold uppercase text-center">Stock</th>
-                <th class="p-4 text-xs font-bold uppercase text-center">Acción</th>
-              </tr>
+              <tr><th class="p-4 text-xs font-bold uppercase">Producto</th><th class="p-4 text-xs font-bold uppercase">Categoría</th><th class="p-4 text-xs font-bold uppercase">Cód. Prov.</th><th class="p-4 text-xs font-bold uppercase text-right">Precio</th><th class="p-4 text-xs font-bold uppercase text-center">Stock</th><th class="p-4 text-xs font-bold uppercase text-center">Acción</th></tr>
             </thead>
             <tbody id="tabela-estoque" class="divide-y divide-gray-100 text-sm"></tbody>
           </table>
@@ -305,7 +317,6 @@
       <div id="tela-restock" class="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 section-tela hidden">
         <header class="mb-6">
           <h1 class="text-2xl font-bold text-brand-dark">Entrada de Stock Rápida</h1>
-          <p class="text-sm text-brand-primary">Agregue mercadería recibida a productos existentes.</p>
         </header>
         
         <div class="border border-gray-200 p-4 sm:p-6 rounded-xl bg-brand-light shadow-inner mb-6">
@@ -386,24 +397,29 @@
             </div>
             <div class="flex gap-2 w-full sm:w-auto">
               <button onclick="mudarTela('dashboard', null)" class="flex-1 sm:flex-none text-brand-accent hover:text-brand-dark transition font-bold text-sm bg-brand-light px-4 py-3 rounded-lg border border-brand-accent/20">← Volver</button>
-              <button onclick="fecharTurnoCaixa()" class="flex-1 sm:flex-none bg-red-600 text-white hover:bg-red-700 transition font-bold text-sm px-6 py-3 rounded-lg shadow-md flex items-center justify-center">🔒 Cerrar Turno</button>
+              
+              <button id="btn-cerrar-turno" onclick="fecharTurnoCaixa()" class="flex-1 sm:flex-none bg-red-600 text-white hover:bg-red-700 transition font-bold text-sm px-6 py-3 rounded-lg shadow-md flex items-center justify-center">🔒 Cerrar Turno</button>
             </div>
           </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div class="bg-brand-light p-5 rounded-xl border border-gray-200">
             <p class="text-xs font-bold text-brand-primary uppercase mb-1">Ventas Hoy</p>
-            <p class="text-3xl font-bold text-brand-dark">Gs. <span id="cierre-vendas">0</span></p>
+            <p class="text-2xl font-bold text-brand-dark">Gs. <span id="cierre-vendas">0</span></p>
           </div>
           <div class="bg-green-50 p-5 rounded-xl border border-green-200 shadow-sm relative overflow-hidden">
             <div class="absolute right-0 top-0 h-full w-1 bg-green-500"></div>
             <p class="text-xs font-bold text-green-700 uppercase mb-1 flex items-center">Gross Profit (GP)</p>
-            <p class="text-3xl font-extrabold text-green-700">Gs. <span id="cierre-gp">0</span></p>
+            <p class="text-2xl font-extrabold text-green-700">Gs. <span id="cierre-gp">0</span></p>
+          </div>
+          <div class="bg-red-50 p-5 rounded-xl border border-red-200 shadow-sm">
+            <p class="text-xs font-bold text-red-700 uppercase mb-1">Retiros (Sangrías)</p>
+            <p class="text-2xl font-bold text-red-800">Gs. <span id="cierre-sangrias">0</span></p>
           </div>
           <div class="bg-brand-light p-5 rounded-xl border border-gray-200">
             <p class="text-xs font-bold text-brand-primary uppercase mb-1">Notas Emitidas</p>
-            <p class="text-3xl font-bold text-brand-dark"><span id="cierre-notas">0</span></p>
+            <p class="text-2xl font-bold text-brand-dark"><span id="cierre-notas">0</span></p>
           </div>
         </div>
         
@@ -474,6 +490,8 @@
     let html5QrCode = null;
     let campoDestinoScanner = ''; 
     let totalDaVendaAtual = 0; 
+    let rolUsuario = 'admin'; // Variável de controle de acesso
+    let descuentoPorcentaje = 0; // Desconto atual do carrinho
 
     // --- TOASTS ---
     function showToast(message, type = 'success') {
@@ -621,23 +639,41 @@
       } 
     }
 
+    // --- NOVO: LÓGICA DE NÍVEIS DE ACESSO NO LOGIN ---
     async function fazerLogin() { 
-      if(document.getElementById('senha').value === 'admin123') { 
+      const senha = document.getElementById('senha').value;
+      
+      if(senha === 'admin123' || senha === 'caja123') { 
+        
+        rolUsuario = (senha === 'admin123') ? 'admin' : 'cajero';
+        
+        // Esconde telas se for caixa
+        if (rolUsuario === 'cajero') {
+          document.getElementById('nav-group-inventario').style.display = 'none';
+          document.getElementById('nav-btn-dashboard').style.display = 'none';
+          document.getElementById('nav-btn-config').style.display = 'none';
+          document.getElementById('btn-cerrar-turno').style.display = 'none'; // Caixa não pode fechar, só abrir
+          showToast("¡Sesión iniciada como Cajero!"); 
+        } else {
+          showToast("¡Bienvenido Dueño (Admin)!"); 
+        }
+
         document.getElementById('login-screen').classList.add('hidden'); 
         document.getElementById('app-screen').classList.remove('hidden'); 
         document.getElementById('app-screen').classList.add('flex'); 
         document.getElementById('mobile-header').classList.remove('hidden');
+        
         await carregarConfiguracao(); 
         await carregarCategorias(); 
         await carregarEstoque(); 
         checarStatusCaixa(); 
-        showToast("¡Bienvenido a NubePY!"); 
+        
       } else { 
         document.getElementById('erro-login').classList.remove('hidden'); 
       } 
     }
 
-    // --- SISTEMA DE CAIXA E TURNOS ---
+    // --- SISTEMA DE CAIXA, TURNOS E SANGRÍA ---
     async function checarStatusCaixa() {
       try {
         const res = await fetch('/status-caixa');
@@ -706,14 +742,54 @@
       }
     }
 
+    // Modal de Sangría
+    function abrirModalSangria() {
+      document.getElementById('sangria-valor').value = '';
+      document.getElementById('sangria-motivo').value = '';
+      document.getElementById('modal-sangria').classList.remove('hidden');
+      document.getElementById('modal-sangria').classList.add('flex');
+      document.getElementById('sangria-valor').focus();
+    }
+
+    function fecharModalSangria() {
+      document.getElementById('modal-sangria').classList.add('hidden');
+      document.getElementById('modal-sangria').classList.remove('flex');
+    }
+
+    async function salvarSangria() {
+      const valor = parseFloat(document.getElementById('sangria-valor').value) || 0;
+      const motivo = document.getElementById('sangria-motivo').value.trim();
+
+      if (valor <= 0 || !motivo) {
+        return showToast("Ingrese un monto válido y un motivo.", "info");
+      }
+
+      try {
+        const res = await fetch('/registrar-sangria', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({valor: valor, motivo: motivo})
+        });
+
+        if (res.ok) {
+          showToast("✅ Retiro de caja registrado.");
+          fecharModalSangria();
+        } else {
+          const err = await res.json();
+          showToast("❌ " + err.detail, "error");
+        }
+      } catch(e) {
+        showToast("❌ Error de red al guardar.", "error");
+      }
+    }
+
     // --- CHECKOUT E PAGAMENTO ---
     function abrirCheckout() {
       if(productosCaixa.length === 0) {
         return showToast("El carrito está vacío.", "info"); 
       }
 
-      totalDaVendaAtual = productosCaixa.reduce((acc, p) => acc + (p.quantidade * p.preco_unitario), 0);
-      
+      // totalDaVendaAtual is already calculated correctly in actualizarInterfaceCaixa (including discounts)
       document.getElementById('checkout-total').innerText = totalDaVendaAtual.toLocaleString('es-PY');
       document.getElementById('checkout-metodo').value = "Efectivo";
       document.getElementById('checkout-recebido').value = "";
@@ -795,6 +871,7 @@
         document.getElementById('btn-emitir').classList.add('hidden'); 
         
         productosCaixa = []; 
+        descuentoPorcentaje = 0; // Reseta desconto
         actualizarInterfaceCaixa(); 
         showToast("✅ Factura emitida con éxito.", "success"); 
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); 
@@ -811,6 +888,8 @@
       document.getElementById('resultado').classList.add('hidden');
       document.getElementById('btn-emitir').classList.remove('hidden');
       document.getElementById('cliente').value = '';
+      descuentoPorcentaje = 0;
+      actualizarInterfaceCaixa();
       document.getElementById('scanner-barras').focus();
     }
 
@@ -925,7 +1004,26 @@
       } 
     }
 
-    // --- CARRINHO UI ---
+    // --- SISTEMA DE DESCONTOS NO CARRINHO ---
+    function pedirDescuento() {
+      if(rolUsuario !== 'admin') {
+        return showToast("⚠️ Solo el Administrador puede aplicar descuentos.", "error");
+      }
+      
+      const desc = prompt("Ingrese el porcentaje de descuento (Ej: 10 para 10%):");
+      if (desc === null) return;
+      
+      const valorDesc = parseFloat(desc);
+      if (valorDesc >= 0 && valorDesc <= 100) {
+        descuentoPorcentaje = valorDesc;
+        actualizarInterfaceCaixa();
+        showToast(`✅ Descuento de ${valorDesc}% aplicado.`);
+      } else {
+        showToast("⚠️ Porcentaje inválido.", "error");
+      }
+    }
+
+    // --- CARRINHO UI (COM DESCONTO) ---
     function alterarQuantidade(index, delta) { 
       productosCaixa[index].quantidade += delta; 
       if (productosCaixa[index].quantidade <= 0) { 
@@ -939,7 +1037,7 @@
       const container = document.getElementById('lista-produtos'); 
       const emptyState = document.getElementById('carrinho-vazio'); 
       let htmlContent = ''; 
-      let total = 0; 
+      let subtotal = 0; 
       
       if (productosCaixa.length === 0) { 
         emptyState.classList.remove('hidden'); 
@@ -951,8 +1049,8 @@
         
         productosCaixa.forEach((p, index) => { 
           const preco = Number(p.preco_unitario) || 0; 
-          const subtotal = p.quantidade * preco; 
-          total += subtotal; 
+          const calcLinha = p.quantidade * preco; 
+          subtotal += calcLinha; 
           
           htmlContent += `
             <div class="bg-white p-3 border border-gray-200 rounded-lg flex flex-col sm:flex-row justify-between shadow-sm items-start sm:items-center relative group hover:border-brand-accent transition gap-2 mt-2">
@@ -966,7 +1064,7 @@
                   <span class="px-2 font-bold text-sm min-w-[2rem] text-center">${p.quantidade}</span>
                   <button type="button" onclick="alterarQuantidade(${index}, 1)" class="px-3 py-1 text-brand-primary hover:bg-gray-200 font-bold rounded-r-lg transition text-lg leading-none">+</button>
                 </div>
-                <span class="font-bold text-brand-accent text-sm w-24 text-right">Gs. ${subtotal.toLocaleString('es-PY')}</span>
+                <span class="font-bold text-brand-accent text-sm w-24 text-right">Gs. ${calcLinha.toLocaleString('es-PY')}</span>
               </div>
               <button type="button" onclick="removerItemCarrinho(${index})" class="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow-sm" title="Quitar">✕</button>
             </div>
@@ -974,11 +1072,19 @@
         }); 
         container.innerHTML = htmlContent; 
       } 
-      document.getElementById('valor-total-tela').innerText = total.toLocaleString('es-PY'); 
+      
+      // Matemática de Desconto
+      const descontoValor = subtotal * (descuentoPorcentaje / 100);
+      totalDaVendaAtual = subtotal - descontoValor;
+
+      document.getElementById('subtotal-tela').innerText = subtotal.toLocaleString('es-PY'); 
+      document.getElementById('descuento-tela').innerText = descontoValor.toLocaleString('es-PY'); 
+      document.getElementById('valor-total-tela').innerText = totalDaVendaAtual.toLocaleString('es-PY'); 
     }
 
     function removerItemCarrinho(index) { 
       productosCaixa.splice(index, 1); 
+      if (productosCaixa.length === 0) descuentoPorcentaje = 0; // Tira o desconto se esvaziar o carrinho
       actualizarInterfaceCaixa(); 
     }
 
@@ -1243,6 +1349,7 @@
           document.getElementById('cierre-vendas').innerText = dados.vendas_hoje.toLocaleString('es-PY'); 
           document.getElementById('cierre-gp').innerText = dados.lucro_bruto.toLocaleString('es-PY'); 
           document.getElementById('cierre-notas').innerText = dados.notas_emitidas; 
+          document.getElementById('cierre-sangrias').innerText = dados.total_sangrias.toLocaleString('es-PY');
           
           const tbody = document.getElementById('tabela-cierre-itens'); 
           tbody.innerHTML = ''; 
