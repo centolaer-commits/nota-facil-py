@@ -15,7 +15,6 @@ app = FastAPI(title="NubePY SaaS - SIFEN")
 if not os.path.exists("notas_pdf"): os.makedirs("notas_pdf")
 if not os.path.exists("certificados"): os.makedirs("certificados")
 
-# --- MODELOS DE DADOS ---
 class DadosLogin(BaseModel):
     ruc: str
     senha: str
@@ -25,6 +24,8 @@ class NovaEmpresa(BaseModel):
     ruc: str
     senha_admin: str
     senha_caixa: str
+    plano: str
+    valor_mensalidade: float
 
 class ProdutoNovo(BaseModel):
     codigo_barras: str
@@ -75,13 +76,15 @@ def fazer_login(dados: DadosLogin):
 
 @app.get("/super-admin/empresas")
 def listar_todas_empresas():
-    # Em produção, aqui deveria ter uma validação de token do SuperAdmin. 
-    # Para o MVP, a proteção é na tela de Login do Frontend.
     return banco_dados.listar_todas_empresas()
+
+@app.get("/super-admin/metricas")
+def metricas_saas():
+    return banco_dados.obter_metricas_saas()
 
 @app.post("/super-admin/criar-empresa")
 def criar_empresa(dados: NovaEmpresa):
-    sucesso, msg = banco_dados.criar_nova_empresa(dados.nome, dados.ruc, dados.senha_admin, dados.senha_caixa)
+    sucesso, msg = banco_dados.criar_nova_empresa(dados.nome, dados.ruc, dados.senha_admin, dados.senha_caixa, dados.plano, dados.valor_mensalidade)
     if sucesso:
         return {"mensaje": msg}
     raise HTTPException(status_code=400, detail=msg)

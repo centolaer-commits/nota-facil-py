@@ -1,6 +1,7 @@
 import os
 import json
 import psycopg2
+from datetime import date, timedelta
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -19,13 +20,21 @@ def inicializar_banco():
             ruc TEXT UNIQUE,
             endereco TEXT,
             senha_certificado TEXT,
-            caminho_certificado TEXT
+            caminho_certificado TEXT,
+            ambiente_sifen TEXT DEFAULT 'testes',
+            senha_admin TEXT DEFAULT 'admin123',
+            senha_caixa TEXT DEFAULT 'caja123',
+            plano TEXT DEFAULT 'Básico',
+            status_assinatura TEXT DEFAULT 'Activo',
+            data_vencimento DATE,
+            valor_mensalidade REAL DEFAULT 0
         )
     ''')
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS notas (
             id SERIAL PRIMARY KEY,
+            empresa_id INTEGER DEFAULT 1,
             ruc_emissor TEXT,
             nome_cliente TEXT,
             valor_total REAL,
@@ -41,27 +50,32 @@ def inicializar_banco():
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS produtos (
-            codigo_barras TEXT PRIMARY KEY,
+            codigo_barras TEXT,
+            empresa_id INTEGER DEFAULT 1,
             descricao TEXT NOT NULL,
             categoria TEXT,
             subcategoria TEXT,
             preco_custo REAL,
             preco_venda REAL NOT NULL,
             quantidade INTEGER DEFAULT 0,
-            codigo_proveedor TEXT DEFAULT ''
+            codigo_proveedor TEXT DEFAULT '',
+            PRIMARY KEY (empresa_id, codigo_barras)
         )
     ''')
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS categorias (
             id SERIAL PRIMARY KEY,
-            nome TEXT NOT NULL
+            empresa_id INTEGER DEFAULT 1,
+            nome TEXT NOT NULL,
+            UNIQUE (empresa_id, nome)
         )
     ''')
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS caixa_sessoes (
             id SERIAL PRIMARY KEY,
+            empresa_id INTEGER DEFAULT 1,
             data_abertura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             data_fechamento TIMESTAMP,
             valor_abertura REAL DEFAULT 0,
@@ -73,6 +87,7 @@ def inicializar_banco():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS caixa_movimentacoes (
             id SERIAL PRIMARY KEY,
+            empresa_id INTEGER DEFAULT 1,
             caixa_id INTEGER,
             tipo TEXT,
             valor REAL,
@@ -81,26 +96,24 @@ def inicializar_banco():
         )
     ''')
 
-    # 2. MIGRATIONS: ADICIONA AS COLUNAS NOVAS (SaaS + Login)
+    # 2. MIGRATIONS: Atualizando para o Painel Financeiro SaaS
     try:
-        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS ambiente_sifen TEXT DEFAULT 'testes'")
-        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS senha_admin TEXT DEFAULT 'admin123'")
-        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS senha_caixa TEXT DEFAULT 'caja123'")
-        
-        cursor.execute("ALTER TABLE notas ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
-        cursor.execute("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
-        cursor.execute("ALTER TABLE categorias ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
-        cursor.execute("ALTER TABLE caixa_sessoes ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
-        cursor.execute("ALTER TABLE caixa_movimentacoes ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
-        
-        cursor.execute("ALTER TABLE produtos DROP CONSTRAINT IF EXISTS produtos_pkey CASCADE")
-        cursor.execute("ALTER TABLE produtos ADD PRIMARY KEY (empresa_id, codigo_barras)")
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS plano TEXT DEFAULT 'Básico'")
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS status_assinatura TEXT DEFAULT 'Activo'")
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS data_vencimento DATE")
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS valor_mensalidade REAL DEFAULT 0")
     except Exception as e:
         print("Aviso Migration:", e)
 
     # 3. INSERÇÕES INICIAIS
     try:
-        cursor.execute('INSERT INTO empresas (id, nome_empresa, ruc, senha_admin, senha_caixa) VALUES (1, \'Mi Empresa S.A.\', \'80012345-6\', \'admin123\', \'caja123\') ON CONFLICT DO NOTHING')
+        vencimento_inicial = date.today() + timedelta(days=365) # A sua própria loja tem 1 ano grátis
+        cursor.execute('''
+            INSERT INTO empresas (id, nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade) 
+            VALUES (1, 'Mi Empresa S.A.', '80012345-6', 'admin123', 'caja123', 'Pro', 'Activo', %s, 0) 
+            ON CONFLICT DO NOTHING
+        ''', (vencimento_inicial,))
+        
         cursor.execute("SELECT 1 FROM categorias WHERE nome = 'General' AND empresa_id = 1")
         if not cursor.fetchone():
             cursor.execute("INSERT INTO categorias (empresa_id, nome) VALUES (1, 'General')")
@@ -114,22 +127,26 @@ def inicializar_banco():
 if DATABASE_URL:
     inicializar_banco()
 
-# --- NOVO: SISTEMA DE AUTENTICAÇÃO E SUPER ADMIN ---
+# --- SISTEMA DE AUTENTICAÇÃO E SUPER ADMIN ---
 def autenticar_usuario(ruc, senha):
-    # Porta Secreta do Dono do Software (Super Admin)
     if ruc == "NUBE" and senha == "nube2026":
         return {"sucesso": True, "empresa_id": 0, "rol": "superadmin"}
 
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute("SELECT id, senha_admin, senha_caixa FROM empresas WHERE ruc = %s", (ruc,))
+    cursor.execute("SELECT id, senha_admin, senha_caixa, status_assinatura FROM empresas WHERE ruc = %s", (ruc,))
     empresa = cursor.fetchone()
     conexao.close()
 
     if not empresa:
         return {"sucesso": False, "mensagem": "Empresa (RUC) no encontrada"}
 
-    emp_id, s_admin, s_caixa = empresa
+    emp_id, s_admin, s_caixa, status_ass = empresa
+    
+    # Bloqueia se a assinatura estiver cancelada (Opcional, mas recomendado para SaaS)
+    if status_ass == 'Cancelado':
+        return {"sucesso": False, "mensagem": "Su suscripción está cancelada. Contacte soporte."}
+
     if senha == s_admin:
         return {"sucesso": True, "empresa_id": emp_id, "rol": "admin"}
     elif senha == s_caixa:
@@ -137,19 +154,51 @@ def autenticar_usuario(ruc, senha):
     else:
         return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
 
+def obter_metricas_saas():
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    
+    # Atualiza automaticamente o status para Vencido se a data passou
+    cursor.execute("UPDATE empresas SET status_assinatura = 'Vencido' WHERE data_vencimento < CURRENT_DATE AND status_assinatura = 'Activo'")
+    conexao.commit()
+
+    cursor.execute("SELECT COUNT(*) FROM empresas WHERE status_assinatura = 'Activo'")
+    clientes_ativos = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT SUM(valor_mensalidade) FROM empresas WHERE status_assinatura = 'Activo'")
+    mrr = cursor.fetchone()[0] or 0
+    
+    cursor.execute("SELECT COUNT(*) FROM empresas WHERE status_assinatura = 'Vencido'")
+    clientes_vencidos = cursor.fetchone()[0]
+    
+    conexao.close()
+    return {
+        "mrr": mrr,
+        "clientes_ativos": clientes_ativos,
+        "clientes_vencidos": clientes_vencidos
+    }
+
 def listar_todas_empresas():
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute("SELECT id, nome_empresa, ruc, ambiente_sifen FROM empresas ORDER BY id ASC")
+    # Puxa os dados financeiros novos
+    cursor.execute("SELECT id, nome_empresa, ruc, ambiente_sifen, plano, status_assinatura, data_vencimento, valor_mensalidade FROM empresas ORDER BY id ASC")
     linhas = cursor.fetchall()
     conexao.close()
-    return [{"id": l[0], "nome": l[1], "ruc": l[2], "ambiente": l[3]} for l in linhas]
+    return [{
+        "id": l[0], "nome": l[1], "ruc": l[2], "ambiente": l[3], 
+        "plano": l[4], "status": l[5], "vencimento": str(l[6]) if l[6] else "N/A", "valor": l[7]
+    } for l in linhas]
 
-def criar_nova_empresa(nome, ruc, senha_admin, senha_caixa):
+def criar_nova_empresa(nome, ruc, senha_admin, senha_caixa, plano, valor):
     conexao = get_conexao()
     cursor = conexao.cursor()
+    vencimento = date.today() + timedelta(days=30) # Vence em 30 dias
     try:
-        cursor.execute("INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa) VALUES (%s, %s, %s, %s)", (nome, ruc, senha_admin, senha_caixa))
+        cursor.execute(
+            "INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, valor_mensalidade, status_assinatura, data_vencimento) VALUES (%s, %s, %s, %s, %s, %s, 'Activo', %s)", 
+            (nome, ruc, senha_admin, senha_caixa, plano, valor, vencimento)
+        )
         conexao.commit()
         return True, "Empresa creada exitosamente."
     except psycopg2.IntegrityError:

@@ -21,7 +21,6 @@
     }
   </script>
   <style>
-    /* Ajuste para o tema escuro na navegação */
     .menu-ativo { background-color: #1e293b; border-left-color: #0d9488; color: #2dd4bf; font-weight: 600; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -29,7 +28,6 @@
     .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 300ms ease-out; }
     .toast-exit { transform: translateX(0); opacity: 1; }
     .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 300ms ease-in; }
-    /* Estilizando inputs para o modo escuro */
     input::placeholder, select::placeholder { color: #94a3b8; opacity: 1; }
     input, select, textarea { color: #f1f5f9; }
   </style>
@@ -65,42 +63,82 @@
       
       <button type="button" id="btn-login" onclick="fazerLogin()" class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl hover:bg-brand-accentHover shadow-lg hover:shadow-brand-accent/20 transition text-lg">Ingresar al Sistema</button>
       <p id="erro-login" class="text-red-400 mt-4 text-sm font-bold hidden bg-red-950/30 p-3 rounded-lg border border-red-900/50 animate-pulse">Error</p>
-      
-      <p class="text-[10px] text-gray-500 mt-8 pt-6 border-t border-slate-700">
-        Para demostración use RUC: <b class="text-gray-300">80012345-6</b><br>Contraseña: <b class="text-gray-300">admin123</b> (Dueño) o <b class="text-gray-300">caja123</b> (Cajero)
-      </p>
     </div>
   </div>
 
   <div id="superadmin-screen" class="hidden fixed inset-0 bg-slate-900 z-40 overflow-y-auto">
-    <div class="max-w-6xl mx-auto p-8">
+    <div class="max-w-7xl mx-auto p-8">
       <header class="flex justify-between items-center mb-8 bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700">
         <div>
           <h1 class="text-3xl font-extrabold text-white">NubePY <span class="text-brand-accent">| Hub</span></h1>
-          <p class="text-gray-400 font-medium mt-1">Panel de Control de Franquicias (SaaS)</p>
+          <p class="text-gray-400 font-medium mt-1">Panel de Control Financiero SaaS</p>
         </div>
         <button onclick="window.location.reload()" class="bg-red-950/30 text-red-400 font-bold px-6 py-3 rounded-xl hover:bg-red-900/50 transition border border-red-900/30">Cerrar Sesión</button>
       </header>
 
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-sm relative overflow-hidden">
+          <div class="absolute right-0 top-0 h-full w-1 bg-green-500"></div>
+          <h3 class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-2">MRR Total (Mensual)</h3>
+          <p class="text-4xl font-extrabold text-white">Gs. <span id="saas-mrr">0</span></p>
+        </div>
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-sm">
+          <h3 class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-2">Clientes Activos</h3>
+          <p class="text-4xl font-extrabold text-brand-accent"><span id="saas-ativos">0</span></p>
+        </div>
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-sm relative overflow-hidden">
+          <div class="absolute right-0 top-0 h-full w-1 bg-red-500"></div>
+          <h3 class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-2">Pagos Pendientes/Vencidos</h3>
+          <p class="text-4xl font-extrabold text-red-400"><span id="saas-vencidos">0</span></p>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div class="lg:col-span-1 bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700">
-          <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-3">➕ Nueva Empresa</h3>
+          <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-3">➕ Nueva Suscripción</h3>
           <div class="space-y-4">
             <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Nombre Comercial</label><input type="text" id="sa-nome" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white focus:border-brand-accent outline-none"></div>
             <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">RUC</label><input type="text" id="sa-ruc" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white font-mono focus:border-brand-accent outline-none"></div>
-            <div><label class="text-xs font-bold text-brand-accent uppercase block mb-1">Contraseña Administrador</label><input type="text" id="sa-pass-admin" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-slate-700 font-bold text-white focus:border-brand-accent outline-none"></div>
-            <div><label class="text-xs font-bold text-brand-accent uppercase block mb-1">Contraseña Cajero</label><input type="text" id="sa-pass-caja" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-slate-700 font-bold text-white focus:border-brand-accent outline-none"></div>
-            <button onclick="criarEmpresaSaaS()" class="w-full bg-white text-slate-900 font-bold py-4 rounded-xl hover:bg-gray-200 transition shadow-md mt-2">Crear Instancia</button>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Plan</label>
+                <select id="sa-plano" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white outline-none">
+                  <option value="Básico">Básico</option>
+                  <option value="Pro">Pro</option>
+                  <option value="Premium">Premium</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Mensualidad (Gs)</label>
+                <input type="number" id="sa-valor" placeholder="150000" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white outline-none">
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-700">
+              <label class="text-xs font-bold text-brand-accent uppercase block mb-1">Contraseña Administrador</label><input type="text" id="sa-pass-admin" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-slate-700 font-bold text-white focus:border-brand-accent outline-none mb-3">
+              <label class="text-xs font-bold text-brand-accent uppercase block mb-1">Contraseña Cajero</label><input type="text" id="sa-pass-caja" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-slate-700 font-bold text-white focus:border-brand-accent outline-none">
+            </div>
+
+            <button onclick="criarEmpresaSaaS()" class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl hover:bg-brand-accentHover transition shadow-md mt-2">Crear Instancia y Facturar</button>
           </div>
         </div>
+
         <div class="lg:col-span-2 bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700">
-          <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-3">🏢 Clientes Activos</h3>
+          <h3 class="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-3">🏢 Suscripciones Activas</h3>
           <div class="overflow-x-auto rounded-lg border border-slate-700">
             <table class="w-full text-left">
               <thead class="bg-slate-900 text-gray-400 text-xs uppercase font-bold">
-                <tr><th class="p-3">ID</th><th class="p-3">Empresa</th><th class="p-3">RUC</th><th class="p-3">Ambiente SIFEN</th></tr>
+                <tr>
+                  <th class="p-4">Empresa</th>
+                  <th class="p-4">RUC / SIFEN</th>
+                  <th class="p-4">Plan / Mensual</th>
+                  <th class="p-4">Vencimiento</th>
+                  <th class="p-4">Estado</th>
+                </tr>
               </thead>
-              <tbody id="tabela-saas" class="divide-y divide-slate-700 text-sm text-gray-300"></tbody>
+              <tbody id="tabela-saas" class="divide-y divide-slate-700 text-sm text-gray-300">
+                </tbody>
             </table>
           </div>
         </div>
@@ -164,7 +202,6 @@
     <div class="flex-1 p-4 md:p-8 pb-32 md:pb-8 overflow-y-auto w-full h-full relative bg-slate-900 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
       
       <div id="tela-pos" class="max-w-5xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 section-tela relative">
-        
         <div id="bloqueio-caixa" class="absolute inset-0 bg-slate-900/95 backdrop-blur-sm z-40 hidden flex-col items-center justify-center p-6 rounded-2xl">
           <div class="text-center max-w-sm w-full bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-600">
             <div class="text-5xl mb-4">🔒</div>
@@ -182,56 +219,29 @@
             <span id="badge-caixa" class="bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-xs font-bold hidden border border-green-800/50">🟢 Turno Abierto</span>
             <span id="badge-conexao" class="bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-xs font-bold border border-green-800/50 hidden transition-all">📡 Online</span>
           </div>
-          
-          <button type="button" onclick="abrirModalSangria()" class="text-gray-300 hover:text-white font-bold text-sm bg-slate-700 px-4 py-2 rounded-lg border border-slate-600 transition flex items-center hover:bg-slate-600">
-            💸 Retiro de Caja
-          </button>
+          <button type="button" onclick="abrirModalSangria()" class="text-gray-300 hover:text-white font-bold text-sm bg-slate-700 px-4 py-2 rounded-lg border border-slate-600 transition flex items-center hover:bg-slate-600">💸 Retiro de Caja</button>
         </header>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-slate-700/50 rounded-xl border border-slate-700">
-          <div class="md:col-span-1">
-            <label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Emisor</label>
-            <input type="text" id="ruc" class="w-full border-slate-600 border p-2 rounded-lg bg-slate-800 text-sm font-semibold text-gray-500" readonly>
-          </div>
-          <div class="md:col-span-2">
-            <label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Cliente</label>
-            <input type="text" id="cliente" class="w-full border-slate-600 border p-2 rounded-lg text-sm focus:border-brand-accent outline-none bg-slate-800 text-white placeholder-gray-500 focus:ring-1 focus:ring-brand-accent" placeholder="Nombre o RUC del Cliente">
-          </div>
+          <div class="md:col-span-1"><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Emisor</label><input type="text" id="ruc" class="w-full border-slate-600 border p-2 rounded-lg bg-slate-800 text-sm font-semibold text-gray-500" readonly></div>
+          <div class="md:col-span-2"><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Cliente</label><input type="text" id="cliente" class="w-full border-slate-600 border p-2 rounded-lg text-sm focus:border-brand-accent outline-none bg-slate-800 text-white placeholder-gray-500 focus:ring-1 focus:ring-brand-accent" placeholder="Nombre o RUC del Cliente"></div>
         </div>
 
         <div class="border border-slate-700 p-4 rounded-xl bg-slate-800 shadow-sm mb-6 relative overflow-visible z-10">
           <div class="absolute top-0 left-0 w-1 h-full bg-brand-accent rounded-l-xl"></div>
-          
           <div class="relative w-full mb-4">
-            <div class="flex items-center bg-slate-700 rounded-lg border-2 border-brand-accent/30 overflow-hidden focus-within:border-brand-accent transition-all">
-              <span class="text-xl pl-3 py-3 shrink-0 text-brand-accent">🔎</span>
-              <input type="text" id="scanner-barras" placeholder="Escanear código o buscar nombre..." autocomplete="off" class="w-full flex-1 bg-transparent p-3 sm:text-lg font-bold focus:outline-none text-white min-w-0 truncate placeholder-gray-500" oninput="filtrarPOS()" onkeypress="verificarScanner(event)">
-              <button type="button" onclick="abrirCamera('scanner-barras')" class="bg-brand-accent text-white px-4 py-3 sm:px-5 sm:py-4 font-bold hover:bg-brand-accentHover transition shrink-0 shadow-lg" title="Cámara">📷</button>
-            </div>
+            <div class="flex items-center bg-slate-700 rounded-lg border-2 border-brand-accent/30 overflow-hidden focus-within:border-brand-accent transition-all"><span class="text-xl pl-3 py-3 shrink-0 text-brand-accent">🔎</span><input type="text" id="scanner-barras" placeholder="Escanear código o buscar nombre..." autocomplete="off" class="w-full flex-1 bg-transparent p-3 sm:text-lg font-bold focus:outline-none text-white min-w-0 truncate placeholder-gray-500" oninput="filtrarPOS()" onkeypress="verificarScanner(event)"><button type="button" onclick="abrirCamera('scanner-barras')" class="bg-brand-accent text-white px-4 py-3 sm:px-5 sm:py-4 font-bold hover:bg-brand-accentHover transition shrink-0 shadow-lg" title="Cámara">📷</button></div>
             <div id="pos-dropdown" class="absolute z-50 w-full bg-slate-700 border border-slate-600 shadow-2xl rounded-lg mt-1 hidden max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-500"></div>
           </div>
-          
-          <div id="carrinho-vazio" class="flex flex-col items-center justify-center h-24 text-gray-500 border-2 border-dashed border-slate-600 rounded-lg bg-slate-700/30 mb-4">
-            <p class="text-sm font-medium">El carrito está vacío</p>
-          </div>
-          
+          <div id="carrinho-vazio" class="flex flex-col items-center justify-center h-24 text-gray-500 border-2 border-dashed border-slate-600 rounded-lg bg-slate-700/30 mb-4"><p class="text-sm font-medium">El carrito está vacío</p></div>
           <div id="lista-produtos" class="space-y-2 mb-4 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-600"></div>
         </div>
 
         <div class="flex flex-col sm:flex-row justify-between items-end mb-6 p-4 bg-slate-700/50 rounded-xl border border-slate-700 gap-4">
           <div class="w-full sm:w-1/2 space-y-2">
-            <div class="flex justify-between text-sm text-gray-400">
-              <span>Subtotal:</span>
-              <span class="font-bold text-gray-200">Gs. <span id="subtotal-tela">0</span></span>
-            </div>
-            <div class="flex justify-between items-center text-sm border-b border-slate-700 pb-2">
-              <button onclick="pedirDescuento()" class="text-brand-accent font-bold hover:underline">🎯 Aplicar Descuento (%)</button>
-              <span class="font-bold text-red-400">- Gs. <span id="descuento-tela">0</span></span>
-            </div>
-            <div class="flex justify-between items-end pt-2">
-              <p class="text-sm text-gray-300 font-bold">Total a Pagar</p>
-              <div class="text-3xl font-extrabold text-brand-accent">Gs. <span id="valor-total-tela">0</span></div>
-            </div>
+            <div class="flex justify-between text-sm text-gray-400"><span>Subtotal:</span><span class="font-bold text-gray-200">Gs. <span id="subtotal-tela">0</span></span></div>
+            <div class="flex justify-between items-center text-sm border-b border-slate-700 pb-2"><button onclick="pedirDescuento()" class="text-brand-accent font-bold hover:underline">🎯 Aplicar Descuento (%)</button><span class="font-bold text-red-400">- Gs. <span id="descuento-tela">0</span></span></div>
+            <div class="flex justify-between items-end pt-2"><p class="text-sm text-gray-300 font-bold">Total a Pagar</p><div class="text-3xl font-extrabold text-brand-accent">Gs. <span id="valor-total-tela">0</span></div></div>
           </div>
         </div>
         
@@ -249,55 +259,20 @@
 
       <div id="modal-checkout" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-700">
-          <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
-            <h3 class="text-2xl font-bold text-white">Finalizar Venta</h3>
-            <button type="button" onclick="fecharCheckout()" class="text-gray-400 hover:text-red-400 font-bold text-2xl leading-none transition">&times;</button>
-          </div>
-          
-          <div class="text-center mb-6">
-            <p class="text-sm text-gray-400 uppercase tracking-wider font-bold mb-1">Monto a Cobrar</p>
-            <p class="text-5xl font-extrabold text-brand-accent">Gs. <span id="checkout-total">0</span></p>
-          </div>
-
-          <div class="mb-6">
-            <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Método de Pago</label>
-            <select id="checkout-metodo" class="w-full border-2 border-slate-600 p-4 rounded-xl text-lg font-bold focus:border-brand-accent outline-none bg-slate-700 text-white transition-all" onchange="actualizarTroco()">
-              <option value="Efectivo">💵 Efectivo (Dinero)</option>
-              <option value="Tarjeta">💳 Tarjeta (POS)</option>
-              <option value="Transferencia">📱 Transferencia / QR</option>
-            </select>
-          </div>
-
-          <div id="box-vuelto" class="mb-6 bg-slate-700/50 p-4 rounded-xl border border-slate-600">
-            <div class="flex items-center gap-4">
-              <div class="flex-1">
-                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Monto Recibido</label>
-                <input type="number" id="checkout-recebido" placeholder="0" class="w-full border-2 border-slate-600 p-3 rounded-lg text-xl font-bold focus:border-brand-accent outline-none text-center bg-slate-700 text-white placeholder-gray-500 transition-all" oninput="actualizarTroco()">
-              </div>
-              <div class="flex-1 text-center">
-                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Vuelto</label>
-                <p class="text-3xl font-extrabold text-green-400">Gs. <span id="checkout-vuelto">0</span></p>
-              </div>
-            </div>
-          </div>
-
-          <button type="button" onclick="confirmarVenta()" id="btn-confirmar-venta" class="w-full bg-brand-accent text-white font-bold py-4 text-xl rounded-xl hover:bg-brand-accentHover shadow-lg transition flex items-center justify-center hover:shadow-brand-accent/20">
-            ✔️ Emitir Factura
-          </button>
+          <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4"><h3 class="text-2xl font-bold text-white">Finalizar Venta</h3><button type="button" onclick="fecharCheckout()" class="text-gray-400 hover:text-red-400 font-bold text-2xl leading-none transition">&times;</button></div>
+          <div class="text-center mb-6"><p class="text-sm text-gray-400 uppercase tracking-wider font-bold mb-1">Monto a Cobrar</p><p class="text-5xl font-extrabold text-brand-accent">Gs. <span id="checkout-total">0</span></p></div>
+          <div class="mb-6"><label class="text-xs font-bold text-gray-400 uppercase block mb-2">Método de Pago</label><select id="checkout-metodo" class="w-full border-2 border-slate-600 p-4 rounded-xl text-lg font-bold focus:border-brand-accent outline-none bg-slate-700 text-white transition-all" onchange="actualizarTroco()"><option value="Efectivo">💵 Efectivo (Dinero)</option><option value="Tarjeta">💳 Tarjeta (POS)</option><option value="Transferencia">📱 Transferencia / QR</option></select></div>
+          <div id="box-vuelto" class="mb-6 bg-slate-700/50 p-4 rounded-xl border border-slate-600"><div class="flex items-center gap-4"><div class="flex-1"><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Monto Recibido</label><input type="number" id="checkout-recebido" placeholder="0" class="w-full border-2 border-slate-600 p-3 rounded-lg text-xl font-bold focus:border-brand-accent outline-none text-center bg-slate-700 text-white placeholder-gray-500 transition-all" oninput="actualizarTroco()"></div><div class="flex-1 text-center"><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Vuelto</label><p class="text-3xl font-extrabold text-green-400">Gs. <span id="checkout-vuelto">0</span></p></div></div></div>
+          <button type="button" onclick="confirmarVenta()" id="btn-confirmar-venta" class="w-full bg-brand-accent text-white font-bold py-4 text-xl rounded-xl hover:bg-brand-accentHover shadow-lg transition flex items-center justify-center hover:shadow-brand-accent/20">✔️ Emitir Factura</button>
         </div>
       </div>
 
       <div id="modal-sangria" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-700">
-          <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
-            <h3 class="text-xl font-bold text-white">💸 Retiro de Caja</h3>
-            <button type="button" onclick="fecharModalSangria()" class="text-gray-400 hover:text-red-400 font-bold text-2xl leading-none transition">&times;</button>
-          </div>
+          <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4"><h3 class="text-xl font-bold text-white">💸 Retiro de Caja</h3><button type="button" onclick="fecharModalSangria()" class="text-gray-400 hover:text-red-400 font-bold text-2xl leading-none transition">&times;</button></div>
           <p class="text-sm text-gray-400 mb-4">Registre el dinero retirado de la gaveta para pagos rápidos.</p>
-          <label class="text-xs font-bold text-brand-accent uppercase block mb-1">Monto Retirado (Gs)</label>
-          <input type="number" id="sangria-valor" placeholder="Ej: 50000" class="w-full border border-slate-600 p-3 rounded-lg text-lg font-bold mb-4 focus:border-brand-accent outline-none bg-slate-700 text-white placeholder-gray-500">
-          <label class="text-xs font-bold text-brand-accent uppercase block mb-1">Motivo (Descripción)</label>
-          <input type="text" id="sangria-motivo" placeholder="Ej: Pago de agua" class="w-full border border-slate-600 p-3 rounded-lg text-sm mb-6 focus:border-brand-accent outline-none bg-slate-700 text-white placeholder-gray-500">
+          <label class="text-xs font-bold text-brand-accent uppercase block mb-1">Monto Retirado (Gs)</label><input type="number" id="sangria-valor" placeholder="Ej: 50000" class="w-full border border-slate-600 p-3 rounded-lg text-lg font-bold mb-4 focus:border-brand-accent outline-none bg-slate-700 text-white placeholder-gray-500">
+          <label class="text-xs font-bold text-brand-accent uppercase block mb-1">Motivo (Descripción)</label><input type="text" id="sangria-motivo" placeholder="Ej: Pago de agua" class="w-full border border-slate-600 p-3 rounded-lg text-sm mb-6 focus:border-brand-accent outline-none bg-slate-700 text-white placeholder-gray-500">
           <button type="button" onclick="salvarSangria()" class="w-full bg-slate-600 text-white font-bold py-3 rounded-lg hover:bg-slate-500 transition shadow-md border border-slate-500">Guardar Retiro</button>
         </div>
       </div>
@@ -416,9 +391,77 @@
     function atualizarStatusConexao() { const badge = document.getElementById('badge-conexao'); if (navigator.onLine) { badge.className = "bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-xs font-bold border border-green-800/50 hidden md:inline-block transition-all"; badge.innerHTML = `📡 Online ${filaContingencia.length > 0 ? `(Cola: ${filaContingencia.length})` : ''}`; if (filaContingencia.length > 0) sincronizarFila(); } else { badge.classList.remove('hidden'); badge.className = "bg-red-900/30 text-red-400 px-3 py-1 rounded-full text-xs font-bold border border-red-800/50 inline-block transition-all animate-pulse"; badge.innerHTML = `🔴 Offline (Cola: ${filaContingencia.length})`; } } window.addEventListener('online', atualizarStatusConexao); window.addEventListener('offline', atualizarStatusConexao);
     function showToast(message, type = 'success') { const container = document.getElementById('toast-container'); const toast = document.createElement('div'); const bgColor = type === 'success' ? 'bg-brand-accent' : (type === 'error' ? 'bg-red-600' : 'bg-slate-700'); const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️'); toast.className = `${bgColor} text-white p-4 rounded-lg shadow-lg flex items-center min-w-[300px] toast-enter relative overflow-hidden border border-white/10`; toast.innerHTML = `<span class="text-xl mr-3">${icon}</span><p class="font-bold text-sm">${message}</p><div class="absolute bottom-0 left-0 h-1 bg-white/30 animate-[toast-progress_3s_linear_forwards]"></div>`; container.appendChild(toast); requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); }); setTimeout(() => { toast.classList.remove('toast-enter-active'); toast.classList.add('toast-exit-active'); setTimeout(() => container.removeChild(toast), 300); }, 3000); }
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); } function toggleAcordeao(menuId, setaId) { const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; } } function mudarTela(telaId, elementoBotao) { document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden')); document.getElementById('tela-' + telaId).classList.remove('hidden'); if(elementoBotao !== null) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); elementoBotao.classList.add('menu-ativo'); } if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); } const sidebar = document.getElementById('sidebar'); const mobileHeader = document.getElementById('mobile-header'); if (telaId === 'cierre' || telaId === 'reportes') { sidebar.style.display = 'none'; mobileHeader.style.display = 'none'; } else { sidebar.style.display = ''; mobileHeader.style.display = ''; } if(telaId === 'inventario' || telaId === 'restock' || telaId === 'pos') { carregarEstoque(); } if(telaId === 'restock') { document.getElementById('restock-cod').value = ''; document.getElementById('restock-dropdown').classList.add('hidden'); document.getElementById('restock-ficha').classList.add('hidden'); document.getElementById('restock-cod').focus(); } if(telaId === 'reportes') carregarHistorico(); if(telaId === 'cierre') carregarCierreCaja(); if(telaId === 'config') carregarConfiguracao(); if(telaId === 'categorias') carregarCategorias(); if(telaId === 'dashboard') carregarDashboard(); if(telaId === 'pos') { checarStatusCaixa(); document.getElementById('scanner-barras').focus(); atualizarStatusConexao(); } }
-    async function fazerLogin() { const ruc = document.getElementById('login-ruc').value.trim(); const senha = document.getElementById('login-senha').value; const btn = document.getElementById('btn-login'); const erroBox = document.getElementById('erro-login'); if(!ruc || !senha) { erroBox.innerText = "Complete todos los campos."; erroBox.classList.remove('hidden'); return; } btn.innerText = "Verificando..."; btn.disabled = true; try { const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ruc: ruc, senha: senha}) }); if (res.ok) { const dados = await res.json(); empresaAtualId = dados.empresa_id; rolUsuario = dados.rol; document.getElementById('login-screen').classList.add('hidden'); if (rolUsuario === 'superadmin') { document.getElementById('app-screen').classList.add('hidden'); document.getElementById('superadmin-screen').classList.remove('hidden'); carregarEmpresasSaaS(); showToast("¡Bienvenido al Panel Super Admin!"); } else { document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); document.getElementById('sidebar-rol-loja').innerText = (rolUsuario === 'admin') ? "Dueño / Admin" : "Cajero"; if (rolUsuario === 'cajero') { document.getElementById('nav-group-inventario').style.display = 'none'; document.getElementById('nav-btn-dashboard').style.display = 'none'; document.getElementById('nav-btn-config').style.display = 'none'; document.getElementById('btn-cerrar-turno').style.display = 'none'; } await carregarConfiguracao(); await carregarCategorias(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); showToast("¡Sesión Iniciada con éxito!"); } } else { const err = await res.json(); erroBox.innerText = err.detail || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); } } catch(e) { erroBox.innerText = "Error de red al conectar al servidor."; erroBox.classList.remove('hidden'); } finally { btn.innerText = "Ingresar al Sistema"; btn.disabled = false; } }
-    async function carregarEmpresasSaaS() { try { const res = await fetch('/super-admin/empresas'); if (res.ok) { const empresas = await res.json(); const tbody = document.getElementById('tabela-saas'); tbody.innerHTML = ''; empresas.forEach(emp => { let corAmb = emp.ambiente === 'produccion' ? 'text-green-400 bg-green-900/30 border border-green-800/50' : 'text-yellow-400 bg-yellow-900/30 border border-yellow-800/50'; tbody.innerHTML += `<tr class="hover:bg-slate-700/50 transition border-b border-slate-700"><td class="p-3 font-mono text-gray-500">#${emp.id}</td><td class="p-3 font-bold text-white">${emp.nome}</td><td class="p-3 font-mono text-xs text-gray-400">${emp.ruc}</td><td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold uppercase ${corAmb}">${emp.ambiente}</span></td></tr>`; }); } } catch(e) { console.error("Error al cargar empresas", e); } }
-    async function criarEmpresaSaaS() { const nome = document.getElementById('sa-nome').value.trim(); const ruc = document.getElementById('sa-ruc').value.trim(); const s_admin = document.getElementById('sa-pass-admin').value.trim(); const s_caja = document.getElementById('sa-pass-caja').value.trim(); if(!nome || !ruc || !s_admin || !s_caja) { return showToast("Complete todos los campos.", "error"); } try { const res = await fetch('/super-admin/criar-empresa', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome, ruc: ruc, senha_admin: s_admin, senha_caixa: s_caja}) }); if (res.ok) { showToast("✅ Empresa creada y lista para facturar."); ['sa-nome', 'sa-ruc', 'sa-pass-admin', 'sa-pass-caja'].forEach(id => document.getElementById(id).value = ''); carregarEmpresasSaaS(); } else { const err = await res.json(); showToast("❌ " + err.detail, "error"); } } catch(e) { showToast("❌ Error de red.", "error"); } }
+    
+    async function fazerLogin() { 
+      const ruc = document.getElementById('login-ruc').value.trim(); const senha = document.getElementById('login-senha').value; const btn = document.getElementById('btn-login'); const erroBox = document.getElementById('erro-login'); 
+      if(!ruc || !senha) { erroBox.innerText = "Complete todos los campos."; erroBox.classList.remove('hidden'); return; } 
+      btn.innerText = "Verificando..."; btn.disabled = true; 
+      try { 
+        const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ruc: ruc, senha: senha}) }); 
+        if (res.ok) { 
+          const dados = await res.json(); empresaAtualId = dados.empresa_id; rolUsuario = dados.rol; document.getElementById('login-screen').classList.add('hidden'); 
+          if (rolUsuario === 'superadmin') { 
+            document.getElementById('app-screen').classList.add('hidden'); document.getElementById('superadmin-screen').classList.remove('hidden'); carregarEmpresasSaaS(); showToast("¡Bienvenido al Panel Super Admin!"); 
+          } else { 
+            document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); document.getElementById('sidebar-rol-loja').innerText = (rolUsuario === 'admin') ? "Dueño / Admin" : "Cajero"; 
+            if (rolUsuario === 'cajero') { document.getElementById('nav-group-inventario').style.display = 'none'; document.getElementById('nav-btn-dashboard').style.display = 'none'; document.getElementById('nav-btn-config').style.display = 'none'; document.getElementById('btn-cerrar-turno').style.display = 'none'; } 
+            await carregarConfiguracao(); await carregarCategorias(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); showToast("¡Sesión Iniciada con éxito!"); 
+          } 
+        } else { const err = await res.json(); erroBox.innerText = err.detail || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); } 
+      } catch(e) { erroBox.innerText = "Error de red al conectar al servidor."; erroBox.classList.remove('hidden'); } finally { btn.innerText = "Ingresar al Sistema"; btn.disabled = false; } 
+    }
+
+    // --- FUNÇÕES DO SUPER ADMIN (ATUALIZADAS) ---
+    async function carregarEmpresasSaaS() { 
+      try { 
+        // 1. Carrega as métricas financeiras
+        const resMet = await fetch('/super-admin/metricas');
+        if (resMet.ok) {
+          const met = await resMet.json();
+          document.getElementById('saas-mrr').innerText = met.mrr.toLocaleString('es-PY');
+          document.getElementById('saas-ativos').innerText = met.clientes_ativos;
+          document.getElementById('saas-vencidos').innerText = met.clientes_vencidos;
+        }
+
+        // 2. Carrega a tabela de clientes
+        const res = await fetch('/super-admin/empresas'); 
+        if (res.ok) { 
+          const empresas = await res.json(); const tbody = document.getElementById('tabela-saas'); tbody.innerHTML = ''; 
+          empresas.forEach(emp => { 
+            let corStatus = emp.status === 'Activo' ? 'text-green-400 bg-green-900/30 border border-green-800/50' : 'text-red-400 bg-red-900/30 border border-red-800/50'; 
+            tbody.innerHTML += `
+              <tr class="hover:bg-slate-700/50 transition border-b border-slate-700">
+                <td class="p-4 font-bold text-white">${emp.nome}</td>
+                <td class="p-4"><span class="font-mono text-sm text-gray-400 block">${emp.ruc}</span><span class="text-[10px] text-gray-500 uppercase">${emp.ambiente}</span></td>
+                <td class="p-4"><span class="text-brand-accent font-bold block">${emp.plano}</span><span class="text-xs text-gray-400">Gs. ${emp.valor.toLocaleString('es-PY')}</span></td>
+                <td class="p-4 text-sm text-gray-300">${emp.vencimento}</td>
+                <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold uppercase ${corStatus}">${emp.status}</span></td>
+              </tr>`; 
+          }); 
+        } 
+      } catch(e) { console.error("Error al cargar panel SaaS", e); } 
+    }
+
+    async function criarEmpresaSaaS() { 
+      const nome = document.getElementById('sa-nome').value.trim(); const ruc = document.getElementById('sa-ruc').value.trim(); 
+      const s_admin = document.getElementById('sa-pass-admin').value.trim(); const s_caja = document.getElementById('sa-pass-caja').value.trim(); 
+      const plano = document.getElementById('sa-plano').value; const valor = parseFloat(document.getElementById('sa-valor').value) || 0;
+      
+      if(!nome || !ruc || !s_admin || !s_caja) { return showToast("Complete todos los campos.", "error"); } 
+      
+      try { 
+        const res = await fetch('/super-admin/criar-empresa', { 
+          method: 'POST', headers: {'Content-Type': 'application/json'}, 
+          body: JSON.stringify({nome: nome, ruc: ruc, senha_admin: s_admin, senha_caixa: s_caja, plano: plano, valor_mensalidade: valor}) 
+        }); 
+        if (res.ok) { 
+          showToast("✅ Suscripción creada y facturada."); 
+          ['sa-nome', 'sa-ruc', 'sa-pass-admin', 'sa-pass-caja', 'sa-valor'].forEach(id => document.getElementById(id).value = ''); 
+          carregarEmpresasSaaS(); 
+        } else { const err = await res.json(); showToast("❌ " + err.detail, "error"); } 
+      } catch(e) { showToast("❌ Error de red.", "error"); } 
+    }
+    
     async function checarStatusCaixa() { try { const res = await fetch('/status-caixa', { headers: getSaaSHeaders() }); const status = await res.json(); const bloqueio = document.getElementById('bloqueio-caixa'); const badge = document.getElementById('badge-caixa'); if(!status.aberto) { bloqueio.classList.remove('hidden'); bloqueio.classList.add('flex'); badge.classList.add('hidden'); } else { bloqueio.classList.add('hidden'); bloqueio.classList.remove('flex'); badge.classList.remove('hidden'); } } catch(e) { console.error("Erro ao checar caixa", e); } }
     async function abrirTurnoCaixa() { const valorStr = document.getElementById('valor-abertura-caixa').value; const valor = parseFloat(valorStr) || 0; try { const res = await fetch('/abrir-caixa', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({valor_inicial: valor}) }); if(res.ok) { showToast("✅ Turno abierto con éxito."); checarStatusCaixa(); } else { const err = await res.json(); showToast("❌ " + err.detail, "error"); } } catch(e) { showToast("❌ Error de red.", "error"); } }
     async function fecharTurnoCaixa() { const valor = prompt("Cierre Ciego: Ingrese el monto total en Efectivo que hay en la gaveta ahora:"); if(valor === null) return; const valorFinal = parseFloat(valor) || 0; try { const res = await fetch('/fechar-caixa', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({valor_final: valorFinal}) }); if(res.ok) { showToast("✅ Turno cerrado correctamente."); mudarTela('pos', null); } else { showToast("❌ Error al cerrar la caja.", "error"); } } catch(e) { showToast("❌ Error de red.", "error"); } }
@@ -426,9 +469,9 @@
     async function salvarSangria() { const valor = parseFloat(document.getElementById('sangria-valor').value) || 0; const motivo = document.getElementById('sangria-motivo').value.trim(); if (valor <= 0 || !motivo) { return showToast("Ingrese un monto válido y un motivo.", "info"); } try { const res = await fetch('/registrar-sangria', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({valor: valor, motivo: motivo}) }); if (res.ok) { showToast("✅ Retiro de caja registrado."); fecharModalSangria(); } else { const err = await res.json(); showToast("❌ " + err.detail, "error"); } } catch(e) { showToast("❌ Error de red al guardar.", "error"); } }
     function abrirCheckout() { if(productosCaixa.length === 0) { return showToast("El carrito está vacío.", "info"); } document.getElementById('checkout-total').innerText = totalDaVendaAtual.toLocaleString('es-PY'); document.getElementById('checkout-metodo').value = "Efectivo"; document.getElementById('checkout-recebido').value = ""; document.getElementById('checkout-vuelto').innerText = "0"; actualizarTroco(); const modal = document.getElementById('modal-checkout'); modal.classList.remove('hidden'); modal.classList.add('flex'); } function fecharCheckout() { const modal = document.getElementById('modal-checkout'); modal.classList.add('hidden'); modal.classList.remove('flex'); }
     function actualizarTroco() { const metodo = document.getElementById('checkout-metodo').value; const boxVuelto = document.getElementById('box-vuelto'); if(metodo === "Efectivo") { boxVuelto.classList.remove('hidden'); const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0; let troco = recebido - totalDaVendaAtual; if(troco < 0) troco = 0; document.getElementById('checkout-vuelto').innerText = troco.toLocaleString('es-PY'); } else { boxVuelto.classList.add('hidden'); } }
-    async function confirmarVenta() { const metodoPago = document.getElementById('checkout-metodo').value; if(metodoPago === "Efectivo") { const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0; if(recebido > 0 && recebido < totalDaVendaAtual) { return showToast("⚠️ El monto recibido es menor al total.", "error"); } } const btn = document.getElementById('btn-confirmar-venta'); btn.innerHTML = '⏳ Procesando...'; btn.disabled = true; const payloadNota = { ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: totalDaVendaAtual, itens: productosCaixa, metodo_pago: metodoPago }; if (!navigator.onLine) { filaContingencia.push(payloadNota); localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); fecharCheckout(); document.getElementById('resultado').classList.remove('hidden'); document.getElementById('texto-resultado').innerText = "🛜 Guardado Localmente"; document.getElementById('qrcode-img').src = "https://cdn-icons-png.flaticon.com/512/2907/2907150.png"; document.getElementById('btn-pdf').style.display = "none"; document.getElementById('btn-emitir').classList.add('hidden'); productosCaixa = []; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); actualizarStatusConexao(); btn.innerHTML = '✔️ Emitir Factura'; btn.disabled = false; showToast("🔴 Sin internet. Factura guardada en cola de contingencia.", "info"); return; } try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payloadNota) }); if (!res.ok) { const err = await res.json(); showToast("❌ " + (err.detail || "Error en el servidor."), "error"); btn.disabled = false; btn.innerHTML = '✔️ Emitir Factura'; return; } const dados = await res.json(); btn.innerHTML = '✔️ Emitir Factura'; btn.disabled = false; fecharCheckout(); document.getElementById('resultado').classList.remove('hidden'); document.getElementById('texto-resultado').innerText = "✅ ¡Factura Aprobada!"; document.getElementById('btn-pdf').style.display = "inline-flex"; const linkImagemQR = `https://quickchart.io/qr?text=${encodeURIComponent(dados.link_qrcode)}&size=150`; document.getElementById('qrcode-img').src = linkImagemQR; document.getElementById('btn-pdf').href = dados.link_pdf; document.getElementById('btn-emitir').classList.add('hidden'); productosCaixa = []; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); showToast(dados.mensaje, "success"); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); carregarEstoque(); } catch(e) { btn.disabled = false; btn.innerHTML = '✔️ Emitir Factura'; showToast("❌ Error de red.", "error"); } }
+    async function confirmarVenta() { const metodoPago = document.getElementById('checkout-metodo').value; if(metodoPago === "Efectivo") { const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0; if(recebido > 0 && recebido < totalDaVendaAtual) { return showToast("⚠️ El monto recibido es menor al total.", "error"); } } const btn = document.getElementById('btn-confirmar-venta'); btn.innerHTML = '⏳ Procesando...'; btn.disabled = true; const payloadNota = { ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: totalDaVendaAtual, itens: productosCaixa, metodo_pago: metodoPago }; if (!navigator.onLine) { filaContingencia.push(payloadNota); localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); fecharCheckout(); document.getElementById('resultado').classList.remove('hidden'); document.getElementById('texto-resultado').innerText = "🛜 Guardado Localmente"; document.getElementById('qrcode-img').src = "https://cdn-icons-png.flaticon.com/512/2907/2907150.png"; document.getElementById('btn-pdf').style.display = "none"; document.getElementById('btn-emitir').classList.add('hidden'); productosCaixa = []; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); atualizarStatusConexao(); btn.innerHTML = '✔️ Emitir Factura'; btn.disabled = false; showToast("🔴 Sin internet. Factura guardada en cola de contingencia.", "info"); return; } try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payloadNota) }); if (!res.ok) { const err = await res.json(); showToast("❌ " + (err.detail || "Error en el servidor."), "error"); btn.disabled = false; btn.innerHTML = '✔️ Emitir Factura'; return; } const dados = await res.json(); btn.innerHTML = '✔️ Emitir Factura'; btn.disabled = false; fecharCheckout(); document.getElementById('resultado').classList.remove('hidden'); document.getElementById('texto-resultado').innerText = "✅ ¡Factura Aprobada!"; document.getElementById('btn-pdf').style.display = "inline-flex"; const linkImagemQR = `https://quickchart.io/qr?text=${encodeURIComponent(dados.link_qrcode)}&size=150`; document.getElementById('qrcode-img').src = linkImagemQR; document.getElementById('btn-pdf').href = dados.link_pdf; document.getElementById('btn-emitir').classList.add('hidden'); productosCaixa = []; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); showToast(dados.mensaje, "success"); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); carregarEstoque(); } catch(e) { btn.disabled = false; btn.innerHTML = '✔️ Emitir Factura'; showToast("❌ Error de red.", "error"); } }
     function novaVenda() { document.getElementById('resultado').classList.add('hidden'); document.getElementById('btn-emitir').classList.remove('hidden'); document.getElementById('cliente').value = ''; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); document.getElementById('scanner-barras').focus(); }
-    async function sincronizarFila() { if (filaContingencia.length === 0 || !navigator.onLine) return; showToast(`Sincronizando ${filaContingencia.length} facturas pendientes...`, "info"); let pendentes = [...filaContingencia]; filaContingencia = []; localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); let sucessoCount = 0; for (let nota of pendentes) { try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(nota) }); if (res.ok) { sucessoCount++; } else { filaContingencia.push(nota); } } catch(e) { filaContingencia.push(nota); } } localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); actualizarStatusConexao(); if(sucessoCount > 0) showToast(`✅ ${sucessoCount} facturas sincronizadas con SIFEN.`, "success"); }
+    async function sincronizarFila() { if (filaContingencia.length === 0 || !navigator.onLine) return; showToast(`Sincronizando ${filaContingencia.length} facturas pendientes...`, "info"); let pendentes = [...filaContingencia]; filaContingencia = []; localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); let sucessoCount = 0; for (let nota of pendentes) { try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(nota) }); if (res.ok) { sucessoCount++; } else { filaContingencia.push(nota); } } catch(e) { filaContingencia.push(nota); } } localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); atualizarStatusConexao(); if(sucessoCount > 0) showToast(`✅ ${sucessoCount} facturas sincronizadas con SIFEN.`, "success"); }
     function abrirCamera(idCampo) { campoDestinoScanner = idCampo; const modal = document.getElementById('camera-modal'); modal.classList.remove('hidden'); modal.classList.add('flex'); if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); } html5QrCode.start( { facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, () => {} ).catch(err => { showToast("Error al activar cámara.", "error"); fecharCamera(); }); } function onScanSucesso(codigoDecodificado) { fecharCamera(); document.getElementById(campoDestinoScanner).value = codigoDecodificado; if (campoDestinoScanner === 'scanner-barras') { verificarScanner({ key: 'Enter', preventDefault: function(){} }); } else if (campoDestinoScanner === 'novo-cod') { document.getElementById('novo-desc').focus(); } else if (campoDestinoScanner === 'restock-cod') { buscarParaRestock({ key: 'Enter', preventDefault: function(){} }); } } function fecharCamera() { const modal = document.getElementById('camera-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); if (html5QrCode) { try { html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(e => { html5QrCode = null; }); } catch (err) { html5QrCode = null; } } }
     let isScanning = false; function filtrarPOS() { const input = document.getElementById('scanner-barras').value.toLowerCase(); const dropdown = document.getElementById('pos-dropdown'); dropdown.innerHTML = ''; if (input.length < 2) { dropdown.classList.add('hidden'); return; } const resultados = productosGlobais.filter(p => p.descricao.toLowerCase().includes(input) || p.codigo_barras.toLowerCase().includes(input)).slice(0, 10); if (resultados.length > 0) { dropdown.classList.remove('hidden'); resultados.forEach(p => { const div = document.createElement('div'); div.className = 'p-4 hover:bg-slate-700/50 cursor-pointer border-b border-slate-700 flex justify-between items-center transition text-gray-200'; div.innerHTML = `<div><span class="font-bold text-sm text-white block">${p.descricao}</span><span class="text-xs text-gray-400 font-mono">${p.codigo_barras}</span></div><span class="text-sm text-brand-accent font-bold">Gs. ${p.preco_venda.toLocaleString('es-PY')}</span>`; div.onclick = () => seleccionarProductoPOS(p); dropdown.appendChild(div); }); } else { dropdown.classList.add('hidden'); } }
     function seleccionarProductoPOS(prod) { document.getElementById('pos-dropdown').classList.add('hidden'); document.getElementById('scanner-barras').value = ''; const indexExistente = productosCaixa.findIndex(p => p.codigo_barras === prod.codigo_barras); if (indexExistente !== -1) { productosCaixa[indexExistente].quantidade += 1; } else { productosCaixa.push({ codigo_barras: prod.codigo_barras, descricao: prod.descricao, quantidade: 1, preco_unitario: Number(prod.preco_venda) || 0 }); } actualizarInterfaceCaixa(); showToast(`✅ ${prod.descricao} agregado.`, 'success'); document.getElementById('scanner-barras').focus(); }
