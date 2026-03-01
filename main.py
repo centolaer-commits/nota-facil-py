@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Header
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
@@ -10,7 +10,7 @@ from assinador_xml import assinar_documento
 from gerador_pdf import gerar_pdf_nota
 import banco_dados
 
-app = FastAPI(title="Facturación y ERP SIFEN PY")
+app = FastAPI(title="NubePY SaaS - SIFEN")
 
 if not os.path.exists("notas_pdf"): os.makedirs("notas_pdf")
 if not os.path.exists("certificados"): os.makedirs("certificados")
@@ -48,119 +48,120 @@ class CaixaAbertura(BaseModel):
 class CaixaFechamento(BaseModel):
     valor_final: float
 
-# NOVO: Modelo para Sangría
 class DadosSangria(BaseModel):
     valor: float
     motivo: str
 
 # --- ROTAS DE CONTROLE DE CAIXA E SANGRÍA ---
 @app.get("/status-caixa")
-def status_caixa():
-    return banco_dados.status_caixa_atual()
+def status_caixa(x_empresa_id: int = Header(1)):
+    return banco_dados.status_caixa_atual(x_empresa_id)
 
 @app.post("/abrir-caixa")
-def abrir_caixa(dados: CaixaAbertura):
-    sucesso, mensagem = banco_dados.abrir_caixa(dados.valor_inicial)
-    if sucesso:
-        return {"mensaje": mensagem}
+def abrir_caixa(dados: CaixaAbertura, x_empresa_id: int = Header(1)):
+    sucesso, mensagem = banco_dados.abrir_caixa(x_empresa_id, dados.valor_inicial)
+    if sucesso: return {"mensaje": mensagem}
     raise HTTPException(status_code=400, detail=mensagem)
 
 @app.post("/fechar-caixa")
-def fechar_caixa(dados: CaixaFechamento):
-    sucesso, mensagem = banco_dados.fechar_caixa(dados.valor_final)
-    if sucesso:
-        return {"mensaje": mensagem}
+def fechar_caixa(dados: CaixaFechamento, x_empresa_id: int = Header(1)):
+    sucesso, mensagem = banco_dados.fechar_caixa(x_empresa_id, dados.valor_final)
+    if sucesso: return {"mensaje": mensagem}
     raise HTTPException(status_code=400, detail=mensagem)
 
 @app.post("/registrar-sangria")
-def api_registrar_sangria(dados: DadosSangria):
-    sucesso, msg = banco_dados.registrar_sangria(dados.valor, dados.motivo)
-    if sucesso:
-        return {"mensaje": msg}
+def api_registrar_sangria(dados: DadosSangria, x_empresa_id: int = Header(1)):
+    sucesso, msg = banco_dados.registrar_sangria(x_empresa_id, dados.valor, dados.motivo)
+    if sucesso: return {"mensaje": msg}
     raise HTTPException(status_code=400, detail=msg)
 
 # --- ROTAS DE CATEGORIAS ---
 @app.post("/cadastrar-categoria")
-def cadastrar_categoria(cat: CategoriaNova):
-    sucesso = banco_dados.cadastrar_categoria(cat.nome.strip())
-    if sucesso:
-        return {"mensaje": "Categoría creada con éxito"}
+def cadastrar_categoria(cat: CategoriaNova, x_empresa_id: int = Header(1)):
+    sucesso = banco_dados.cadastrar_categoria(x_empresa_id, cat.nome.strip())
+    if sucesso: return {"mensaje": "Categoría creada con éxito"}
     raise HTTPException(status_code=400, detail="Esta categoría ya existe")
 
 @app.get("/listar-categorias")
-def listar_categorias():
-    return banco_dados.listar_categorias()
+def listar_categorias(x_empresa_id: int = Header(1)):
+    return banco_dados.listar_categorias(x_empresa_id)
 
 @app.delete("/deletar-categoria/{id_categoria}")
-def deletar_categoria(id_categoria: int):
-    banco_dados.deletar_categoria(id_categoria)
+def deletar_categoria(id_categoria: int, x_empresa_id: int = Header(1)):
+    banco_dados.deletar_categoria(x_empresa_id, id_categoria)
     return {"mensaje": "Categoría eliminada"}
 
 # --- ROTAS DE CONFIGURAÇÃO DA EMPRESA ---
 @app.get("/obter-configuracao")
-def obter_configuracao():
-    return banco_dados.obter_configuracao()
+def obter_configuracao(x_empresa_id: int = Header(1)):
+    return banco_dados.obter_configuracao(x_empresa_id)
 
 @app.post("/salvar-configuracao")
-def salvar_configuracao(nome_empresa: str = Form(...), ruc: str = Form(...), endereco: str = Form(""), senha_certificado: str = Form("")):
-    banco_dados.salvar_configuracao_texto(nome_empresa, ruc, endereco, senha_certificado)
+def salvar_configuracao(nome_empresa: str = Form(...), ruc: str = Form(...), endereco: str = Form(""), senha_certificado: str = Form(""), x_empresa_id: int = Header(1)):
+    banco_dados.salvar_configuracao_texto(x_empresa_id, nome_empresa, ruc, endereco, senha_certificado)
     return {"mensaje": "Datos guardados"}
 
 @app.post("/upload-certificado")
-def upload_certificado(arquivo: UploadFile = File(...)):
+def upload_certificado(arquivo: UploadFile = File(...), x_empresa_id: int = Header(1)):
     if not arquivo.filename.endswith(('.p12', '.pfx')): raise HTTPException(status_code=400, detail="Formato inválido.")
-    caminho_destino = f"certificados/{arquivo.filename}"
+    caminho_destino = f"certificados/emp_{x_empresa_id}_{arquivo.filename}"
     with open(caminho_destino, "wb") as buffer: shutil.copyfileobj(arquivo.file, buffer)
-    banco_dados.salvar_caminho_certificado(caminho_destino)
+    banco_dados.salvar_caminho_certificado(x_empresa_id, caminho_destino)
     return {"mensaje": "Certificado digital subido"}
 
 # --- ROTAS DE ESTOQUE E VENDAS ---
 @app.get("/dados-dashboard")
-def dados_dashboard():
-    return banco_dados.obter_dados_dashboard()
+def dados_dashboard(x_empresa_id: int = Header(1)):
+    return banco_dados.obter_dados_dashboard(x_empresa_id)
 
 @app.post("/cadastrar-produto")
-def cadastrar_produto(produto: ProdutoNovo):
+def cadastrar_produto(produto: ProdutoNovo, x_empresa_id: int = Header(1)):
     banco_dados.cadastrar_produto(
-        produto.codigo_barras, produto.descricao, produto.categoria, 
+        x_empresa_id, produto.codigo_barras, produto.descricao, produto.categoria, 
         produto.subcategoria, produto.preco_custo, produto.preco_venda, 
         produto.quantidade, produto.codigo_proveedor
     )
     return {"mensaje": "Producto guardado con éxito"}
 
 @app.get("/listar-produtos")
-def listar_produtos():
-    return banco_dados.listar_produtos()
+def listar_produtos(x_empresa_id: int = Header(1)):
+    return banco_dados.listar_produtos(x_empresa_id)
 
 @app.get("/buscar-produto/{codigo_barras}")
-def buscar_produto(codigo_barras: str):
-    produto = banco_dados.buscar_produto_por_codigo(codigo_barras)
+def buscar_produto(codigo_barras: str, x_empresa_id: int = Header(1)):
+    produto = banco_dados.buscar_produto_por_codigo(x_empresa_id, codigo_barras)
     if produto: return {"descricao": produto["descricao"], "preco": produto["preco_venda"]}
     raise HTTPException(status_code=404, detail="Producto no encontrado")
 
 @app.delete("/deletar-produto/{codigo_barras}")
-def deletar_produto(codigo_barras: str):
-    banco_dados.deletar_produto(codigo_barras)
+def deletar_produto(codigo_barras: str, x_empresa_id: int = Header(1)):
+    banco_dados.deletar_produto(x_empresa_id, codigo_barras)
     return {"mensaje": "Producto eliminado"}
 
 @app.post("/emitir-nota")
-def emitir_nota(dados: DadosNota):
-    caixa_atual = banco_dados.status_caixa_atual()
+def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(1)):
+    caixa_atual = banco_dados.status_caixa_atual(x_empresa_id)
     if not caixa_atual.get("aberto"):
         raise HTTPException(status_code=403, detail="Debe abrir la caja antes de registrar ventas.")
 
+    # Busca a configuração para saber se envia pra Teste ou Produção (Sifen Real)
+    config = banco_dados.obter_configuracao(x_empresa_id)
+    ambiente = config.get("ambiente_sifen", "testes") if config else "testes"
+
+    # AQUI: A comunicação real com a SET será configurada com base na variável "ambiente"
+
     xml_bruto, cdc_real = construir_xml_sifen(dados)
-    xml_final_assinado = assinar_documento(xml_bruto)
+    xml_final_assinado = assinar_documento(xml_bruto) # Idealmente passaria a senha/certificado correto aqui
     
     link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
     link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
     
-    banco_dados.salvar_nota(dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
+    banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
     
     gerar_pdf_nota(dados, cdc_real)
     
     return {
-        "mensaje": "Factura generada", "cdc": cdc_real,
+        "mensaje": f"Factura generada ({ambiente.upper()})", "cdc": cdc_real,
         "link_qrcode": link_qrcode,
         "link_pdf": link_pdf
     }
@@ -172,13 +173,13 @@ def baixar_pdf(id_nota: str):
     raise HTTPException(status_code=404, detail="PDF no encontrado")
 
 @app.get("/listar-notas")
-def listar_notas(busca: Optional[str] = ""):
-    historico = banco_dados.listar_todas_notas(busca)
+def listar_notas(busca: Optional[str] = "", x_empresa_id: int = Header(1)):
+    historico = banco_dados.listar_todas_notas(x_empresa_id, busca)
     return {"total": len(historico), "historico": historico}
 
 @app.get("/cierre-caja")
-def api_cierre_caja():
-    return banco_dados.obter_fechamento_caixa()
+def api_cierre_caja(x_empresa_id: int = Header(1)):
+    return banco_dados.obter_fechamento_caixa(x_empresa_id)
 
 @app.get("/painel")
 def abrir_painel():
