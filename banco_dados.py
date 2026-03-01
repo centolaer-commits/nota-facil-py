@@ -60,7 +60,6 @@ def inicializar_banco():
     ''')
     cursor.execute('INSERT INTO categorias (nome) VALUES (\'General\') ON CONFLICT (nome) DO NOTHING')
 
-    # NOVO: Tabela para Controle de Turno/Caixa
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS caixa_sessoes (
             id SERIAL PRIMARY KEY,
@@ -72,7 +71,18 @@ def inicializar_banco():
         )
     ''')
 
-    # Migrations de segurança
+    # NOVO: Tabela de Sangrías (Petty Cash)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS caixa_movimentacoes (
+            id SERIAL PRIMARY KEY,
+            caixa_id INTEGER,
+            tipo TEXT,
+            valor REAL,
+            motivo TEXT,
+            data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     try:
         cursor.execute("ALTER TABLE notas ADD COLUMN IF NOT EXISTS metodo_pago TEXT DEFAULT 'Efectivo'")
         cursor.execute("ALTER TABLE notas ADD COLUMN IF NOT EXISTS caixa_id INTEGER DEFAULT 0")
@@ -86,7 +96,7 @@ def inicializar_banco():
 if DATABASE_URL:
     inicializar_banco()
 
-# --- FUNÇÕES DE CAIXA (NOVO) ---
+# --- FUNÇÕES DE CAIXA E SANGRÍA ---
 def status_caixa_atual():
     conexao = get_conexao()
     cursor = conexao.cursor()
@@ -98,7 +108,6 @@ def status_caixa_atual():
     return {"aberto": False}
 
 def abrir_caixa(valor_inicial):
-    # Verifica se já tem um aberto
     atual = status_caixa_atual()
     if atual["aberto"]:
         return False, "Ya existe una caja abierta."
@@ -121,6 +130,19 @@ def fechar_caixa(valor_fechamento):
     conexao.commit()
     conexao.close()
     return True, "Caja cerrada con éxito."
+
+# NOVO: Registrar Sangría (Retirada)
+def registrar_sangria(valor, motivo):
+    atual = status_caixa_atual()
+    if not atual["aberto"]:
+        return False, "La caja debe estar abierta para registrar una sangría."
+    
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("INSERT INTO caixa_movimentacoes (caixa_id, tipo, valor, motivo) VALUES (%s, 'SANGRIA', %s, %s)", (atual["caixa_id"], valor, motivo))
+    conexao.commit()
+    conexao.close()
+    return True, "Sangría registrada con éxito."
 
 # --- FUNÇÕES DE CATEGORIAS ---
 def cadastrar_categoria(nome):
@@ -225,12 +247,10 @@ def deletar_produto(codigo_barras):
     conexao.close()
 
 # --- FUNÇÕES DE VENDAS E DASHBOARD ---
-# NOVO: Recebe metodo_pago e vincula ao caixa ativo
 def salvar_nota(ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode="", metodo_pago="Efectivo"):
     conexao = get_conexao()
     cursor = conexao.cursor()
     
-    # Verifica qual é o caixa aberto no momento
     caixa_atual = status_caixa_atual()
     caixa_id = caixa_atual["caixa_id"] if caixa_atual["aberto"] else 0
 
@@ -259,12 +279,12 @@ def listar_todas_notas(busca=""):
     conexao = get_conexao()
     cursor = conexao.cursor()
     if busca: 
-        cursor.execute("SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao FROM notas WHERE nome_cliente ILIKE %s OR cdc ILIKE %s ORDER BY id DESC", (f"%{busca}%", f"%{busca}%"))
+        cursor.execute("SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao, metodo_pago FROM notas WHERE nome_cliente ILIKE %s OR cdc ILIKE %s ORDER BY id DESC", (f"%{busca}%", f"%{busca}%"))
     else: 
-        cursor.execute('SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao FROM notas ORDER BY id DESC')
+        cursor.execute('SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao, metodo_pago FROM notas ORDER BY id DESC')
     linhas = cursor.fetchall()
     conexao.close()
-    return [{"id": l[0], "nome_cliente": l[1], "valor_total": l[2], "cdc": l[3], "link_pdf": l[4], "data_emissao": l[5]} for l in linhas]
+    return [{"id": l[0], "nome_cliente": l[1], "valor_total": l[2], "cdc": l[3], "link_pdf": l[4], "data_emissao": l[5], "metodo_pago": l[6]} for l in linhas]
 
 def obter_dados_dashboard():
     conexao = get_conexao()
@@ -293,16 +313,21 @@ def obter_dados_dashboard():
         "top_produtos": [{"nome": p[0], "quantidade": p[1]} for p in top_produtos]
     }
 
+# NOVO: Cierre de Caja agora soma as Sangrías
 def obter_fechamento_caixa():
     conexao = get_conexao()
     cursor = conexao.cursor()
     
-    cursor.execute("SELECT valor_total, itens FROM notas WHERE DATE(data_emissao) = CURRENT_DATE")
+    cursor.execute("SELECT valor_total, itens, metodo_pago FROM notas WHERE DATE(data_emissao) = CURRENT_DATE")
     notas_hoje = cursor.fetchall()
     
     total_vendas_hoje = 0
     lucro_bruto_hoje = 0
     total_notas_hoje = len(notas_hoje)
+    
+    # Soma as retiradas de caixa de hoje
+    cursor.execute("SELECT SUM(valor) FROM caixa_movimentacoes WHERE tipo = 'SANGRIA' AND DATE(data) = CURRENT_DATE")
+    total_sangrias = cursor.fetchone()[0] or 0
     
     itens_agrupados = {}
     
@@ -339,5 +364,6 @@ def obter_fechamento_caixa():
         "vendas_hoje": total_vendas_hoje,
         "lucro_bruto": lucro_bruto_hoje,
         "notas_emitidas": total_notas_hoje,
+        "total_sangrias": total_sangrias, # <--- ENVIADO PARA O FRONTEND
         "detalhes_itens": lista_detalhada
     }

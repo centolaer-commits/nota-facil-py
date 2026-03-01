@@ -37,7 +37,7 @@ class DadosNota(BaseModel):
     nome_cliente: str
     valor_total: float
     itens: List[ItemNota]
-    metodo_pago: Optional[str] = "Efectivo" # NOVO: Método de Pagamento da venda
+    metodo_pago: Optional[str] = "Efectivo"
 
 class CategoriaNova(BaseModel):
     nome: str
@@ -48,7 +48,12 @@ class CaixaAbertura(BaseModel):
 class CaixaFechamento(BaseModel):
     valor_final: float
 
-# --- ROTAS DE CONTROLE DE CAIXA (NOVO) ---
+# NOVO: Modelo para Sangría
+class DadosSangria(BaseModel):
+    valor: float
+    motivo: str
+
+# --- ROTAS DE CONTROLE DE CAIXA E SANGRÍA ---
 @app.get("/status-caixa")
 def status_caixa():
     return banco_dados.status_caixa_atual()
@@ -67,6 +72,12 @@ def fechar_caixa(dados: CaixaFechamento):
         return {"mensaje": mensagem}
     raise HTTPException(status_code=400, detail=mensagem)
 
+@app.post("/registrar-sangria")
+def api_registrar_sangria(dados: DadosSangria):
+    sucesso, msg = banco_dados.registrar_sangria(dados.valor, dados.motivo)
+    if sucesso:
+        return {"mensaje": msg}
+    raise HTTPException(status_code=400, detail=msg)
 
 # --- ROTAS DE CATEGORIAS ---
 @app.post("/cadastrar-categoria")
@@ -134,7 +145,6 @@ def deletar_produto(codigo_barras: str):
 
 @app.post("/emitir-nota")
 def emitir_nota(dados: DadosNota):
-    # Trava de Segurança: Verifica se o caixa está aberto antes de vender
     caixa_atual = banco_dados.status_caixa_atual()
     if not caixa_atual.get("aberto"):
         raise HTTPException(status_code=403, detail="Debe abrir la caja antes de registrar ventas.")
@@ -145,7 +155,6 @@ def emitir_nota(dados: DadosNota):
     link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
     link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
     
-    # NOVO: Salvando a nota com o método de pagamento
     banco_dados.salvar_nota(dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
     
     gerar_pdf_nota(dados, cdc_real)
