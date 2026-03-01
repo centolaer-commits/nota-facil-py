@@ -824,7 +824,7 @@
       }
     }
 
-    async function confirmarVenta() {
+   async function confirmarVenta() {
       const metodoPago = document.getElementById('checkout-metodo').value;
       
       if(metodoPago === "Efectivo") {
@@ -866,12 +866,16 @@
         fecharCheckout();
         
         document.getElementById('resultado').classList.remove('hidden'); 
-        document.getElementById('qrcode-img').src = dados.link_qrcode; 
+        
+        // MUDANÇA AQUI: API transforma o link da SIFEN em uma imagem real de QR Code
+        const linkImagemQR = `https://quickchart.io/qr?text=${encodeURIComponent(dados.link_qrcode)}&size=150`;
+        document.getElementById('qrcode-img').src = linkImagemQR; 
+        
         document.getElementById('btn-pdf').href = dados.link_pdf; 
         document.getElementById('btn-emitir').classList.add('hidden'); 
         
         productosCaixa = []; 
-        descuentoPorcentaje = 0; // Reseta desconto
+        descuentoPorcentaje = 0; 
         actualizarInterfaceCaixa(); 
         showToast("✅ Factura emitida con éxito.", "success"); 
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); 
@@ -883,7 +887,6 @@
         showToast("❌ Error de conexión al emitir.", "error"); 
       } 
     }
-
     function novaVenda() {
       document.getElementById('resultado').classList.add('hidden');
       document.getElementById('btn-emitir').classList.remove('hidden');
