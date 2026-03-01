@@ -11,7 +11,7 @@ def inicializar_banco():
     conexao = get_conexao()
     cursor = conexao.cursor()
 
-    # 1. Tabela Principal de SaaS (Empresas Clientes)
+    # 1. CRIAR AS TABELAS BASE
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS empresas (
             id SERIAL PRIMARY KEY,
@@ -19,17 +19,13 @@ def inicializar_banco():
             ruc TEXT,
             endereco TEXT,
             senha_certificado TEXT,
-            caminho_certificado TEXT,
-            ambiente_sifen TEXT DEFAULT 'testes'
+            caminho_certificado TEXT
         )
     ''')
-    # Garante que a sua loja original seja a Empresa ID 1
-    cursor.execute('INSERT INTO empresas (id, nome_empresa, ruc) VALUES (1, \'Mi Empresa S.A.\', \'80012345-6\') ON CONFLICT (id) DO NOTHING')
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS notas (
             id SERIAL PRIMARY KEY,
-            empresa_id INTEGER DEFAULT 1,
             ruc_emissor TEXT,
             nome_cliente TEXT,
             valor_total REAL,
@@ -45,33 +41,27 @@ def inicializar_banco():
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS produtos (
-            codigo_barras TEXT,
-            empresa_id INTEGER DEFAULT 1,
+            codigo_barras TEXT PRIMARY KEY,
             descricao TEXT NOT NULL,
             categoria TEXT,
             subcategoria TEXT,
             preco_custo REAL,
             preco_venda REAL NOT NULL,
             quantidade INTEGER DEFAULT 0,
-            codigo_proveedor TEXT DEFAULT '',
-            PRIMARY KEY (empresa_id, codigo_barras)
+            codigo_proveedor TEXT DEFAULT ''
         )
     ''')
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS categorias (
             id SERIAL PRIMARY KEY,
-            empresa_id INTEGER DEFAULT 1,
-            nome TEXT NOT NULL,
-            UNIQUE (empresa_id, nome)
+            nome TEXT NOT NULL
         )
     ''')
-    cursor.execute('INSERT INTO categorias (empresa_id, nome) VALUES (1, \'General\') ON CONFLICT DO NOTHING')
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS caixa_sessoes (
             id SERIAL PRIMARY KEY,
-            empresa_id INTEGER DEFAULT 1,
             data_abertura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             data_fechamento TIMESTAMP,
             valor_abertura REAL DEFAULT 0,
@@ -83,7 +73,6 @@ def inicializar_banco():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS caixa_movimentacoes (
             id SERIAL PRIMARY KEY,
-            empresa_id INTEGER DEFAULT 1,
             caixa_id INTEGER,
             tipo TEXT,
             valor REAL,
@@ -92,19 +81,32 @@ def inicializar_banco():
         )
     ''')
 
-    # Migrations para adicionar empresa_id nas tabelas velhas (se existirem)
+    # 2. MIGRATIONS: ADICIONA AS COLUNAS NOVAS (SaaS)
     try:
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS ambiente_sifen TEXT DEFAULT 'testes'")
         cursor.execute("ALTER TABLE notas ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
         cursor.execute("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
         cursor.execute("ALTER TABLE categorias ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
         cursor.execute("ALTER TABLE caixa_sessoes ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
         cursor.execute("ALTER TABLE caixa_movimentacoes ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
         
-        # Tenta remover a chave primária velha e colocar a nova Multi-Tenant (empresa + codigo)
+        # Ajuste de Chave Primária Produtos (SaaS)
         cursor.execute("ALTER TABLE produtos DROP CONSTRAINT IF EXISTS produtos_pkey CASCADE")
         cursor.execute("ALTER TABLE produtos ADD PRIMARY KEY (empresa_id, codigo_barras)")
     except Exception as e:
-        pass
+        print("Aviso Migration:", e)
+
+    # 3. INSERÇÕES INICIAIS (Executadas só depois que as colunas já existem)
+    try:
+        # Garante a empresa ID 1
+        cursor.execute('INSERT INTO empresas (id, nome_empresa, ruc) VALUES (1, \'Mi Empresa S.A.\', \'80012345-6\') ON CONFLICT (id) DO NOTHING')
+        
+        # Garante a categoria Padrão
+        cursor.execute("SELECT 1 FROM categorias WHERE nome = 'General' AND empresa_id = 1")
+        if not cursor.fetchone():
+            cursor.execute("INSERT INTO categorias (empresa_id, nome) VALUES (1, 'General')")
+    except Exception as e:
+        print("Aviso Insert Inicial:", e)
 
     conexao.commit()
     cursor.close()
@@ -158,11 +160,12 @@ def cadastrar_categoria(empresa_id, nome):
     try:
         conexao = get_conexao()
         cursor = conexao.cursor()
+        cursor.execute("SELECT 1 FROM categorias WHERE empresa_id = %s AND nome = %s", (empresa_id, nome))
+        if cursor.fetchone():
+            return False
         cursor.execute('INSERT INTO categorias (empresa_id, nome) VALUES (%s, %s)', (empresa_id, nome))
         conexao.commit()
         return True
-    except psycopg2.IntegrityError:
-        return False
     finally:
         if 'conexao' in locals(): conexao.close()
 
