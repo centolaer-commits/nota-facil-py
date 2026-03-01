@@ -16,7 +16,7 @@ def inicializar_banco():
         CREATE TABLE IF NOT EXISTS empresas (
             id SERIAL PRIMARY KEY,
             nome_empresa TEXT,
-            ruc TEXT,
+            ruc TEXT UNIQUE,
             endereco TEXT,
             senha_certificado TEXT,
             caminho_certificado TEXT
@@ -81,27 +81,26 @@ def inicializar_banco():
         )
     ''')
 
-    # 2. MIGRATIONS: ADICIONA AS COLUNAS NOVAS (SaaS)
+    # 2. MIGRATIONS: ADICIONA AS COLUNAS NOVAS (SaaS + Login)
     try:
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS ambiente_sifen TEXT DEFAULT 'testes'")
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS senha_admin TEXT DEFAULT 'admin123'")
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS senha_caixa TEXT DEFAULT 'caja123'")
+        
         cursor.execute("ALTER TABLE notas ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
         cursor.execute("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
         cursor.execute("ALTER TABLE categorias ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
         cursor.execute("ALTER TABLE caixa_sessoes ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
         cursor.execute("ALTER TABLE caixa_movimentacoes ADD COLUMN IF NOT EXISTS empresa_id INTEGER DEFAULT 1")
         
-        # Ajuste de Chave Primária Produtos (SaaS)
         cursor.execute("ALTER TABLE produtos DROP CONSTRAINT IF EXISTS produtos_pkey CASCADE")
         cursor.execute("ALTER TABLE produtos ADD PRIMARY KEY (empresa_id, codigo_barras)")
     except Exception as e:
         print("Aviso Migration:", e)
 
-    # 3. INSERÇÕES INICIAIS (Executadas só depois que as colunas já existem)
+    # 3. INSERÇÕES INICIAIS
     try:
-        # Garante a empresa ID 1
-        cursor.execute('INSERT INTO empresas (id, nome_empresa, ruc) VALUES (1, \'Mi Empresa S.A.\', \'80012345-6\') ON CONFLICT (id) DO NOTHING')
-        
-        # Garante a categoria Padrão
+        cursor.execute('INSERT INTO empresas (id, nome_empresa, ruc, senha_admin, senha_caixa) VALUES (1, \'Mi Empresa S.A.\', \'80012345-6\', \'admin123\', \'caja123\') ON CONFLICT DO NOTHING')
         cursor.execute("SELECT 1 FROM categorias WHERE nome = 'General' AND empresa_id = 1")
         if not cursor.fetchone():
             cursor.execute("INSERT INTO categorias (empresa_id, nome) VALUES (1, 'General')")
@@ -115,8 +114,50 @@ def inicializar_banco():
 if DATABASE_URL:
     inicializar_banco()
 
-# --- FUNÇÕES FILTRADAS POR EMPRESA_ID ---
+# --- NOVO: SISTEMA DE AUTENTICAÇÃO E SUPER ADMIN ---
+def autenticar_usuario(ruc, senha):
+    # Porta Secreta do Dono do Software (Super Admin)
+    if ruc == "NUBE" and senha == "nube2026":
+        return {"sucesso": True, "empresa_id": 0, "rol": "superadmin"}
 
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT id, senha_admin, senha_caixa FROM empresas WHERE ruc = %s", (ruc,))
+    empresa = cursor.fetchone()
+    conexao.close()
+
+    if not empresa:
+        return {"sucesso": False, "mensagem": "Empresa (RUC) no encontrada"}
+
+    emp_id, s_admin, s_caixa = empresa
+    if senha == s_admin:
+        return {"sucesso": True, "empresa_id": emp_id, "rol": "admin"}
+    elif senha == s_caixa:
+        return {"sucesso": True, "empresa_id": emp_id, "rol": "cajero"}
+    else:
+        return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
+
+def listar_todas_empresas():
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT id, nome_empresa, ruc, ambiente_sifen FROM empresas ORDER BY id ASC")
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"id": l[0], "nome": l[1], "ruc": l[2], "ambiente": l[3]} for l in linhas]
+
+def criar_nova_empresa(nome, ruc, senha_admin, senha_caixa):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        cursor.execute("INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa) VALUES (%s, %s, %s, %s)", (nome, ruc, senha_admin, senha_caixa))
+        conexao.commit()
+        return True, "Empresa creada exitosamente."
+    except psycopg2.IntegrityError:
+        return False, "Ya existe una empresa con este RUC."
+    finally:
+        conexao.close()
+
+# --- FUNÇÕES FILTRADAS POR EMPRESA_ID ---
 def status_caixa_atual(empresa_id):
     conexao = get_conexao()
     cursor = conexao.cursor()
