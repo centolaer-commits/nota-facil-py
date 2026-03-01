@@ -52,6 +52,9 @@ class DadosSangria(BaseModel):
     valor: float
     motivo: str
 
+class AmbienteUpdate(BaseModel):
+    ambiente: str
+
 # --- ROTAS DE CONTROLE DE CAIXA E SANGRÍA ---
 @app.get("/status-caixa")
 def status_caixa(x_empresa_id: int = Header(1)):
@@ -109,6 +112,14 @@ def upload_certificado(arquivo: UploadFile = File(...), x_empresa_id: int = Head
     banco_dados.salvar_caminho_certificado(x_empresa_id, caminho_destino)
     return {"mensaje": "Certificado digital subido"}
 
+# NOVO: ROTA PARA ALTERAR O AMBIENTE SIFEN (TESTE VS PRODUÇÃO)
+@app.post("/alternar-ambiente")
+def alternar_ambiente(dados: AmbienteUpdate, x_empresa_id: int = Header(1)):
+    if dados.ambiente not in ["testes", "produccion"]:
+        raise HTTPException(status_code=400, detail="Ambiente inválido")
+    banco_dados.alternar_ambiente_sifen(x_empresa_id, dados.ambiente)
+    return {"mensaje": f"Ambiente cambiado a {dados.ambiente.upper()}"}
+
 # --- ROTAS DE ESTOQUE E VENDAS ---
 @app.get("/dados-dashboard")
 def dados_dashboard(x_empresa_id: int = Header(1)):
@@ -144,14 +155,11 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(1)):
     if not caixa_atual.get("aberto"):
         raise HTTPException(status_code=403, detail="Debe abrir la caja antes de registrar ventas.")
 
-    # Busca a configuração para saber se envia pra Teste ou Produção (Sifen Real)
     config = banco_dados.obter_configuracao(x_empresa_id)
     ambiente = config.get("ambiente_sifen", "testes") if config else "testes"
 
-    # AQUI: A comunicação real com a SET será configurada com base na variável "ambiente"
-
     xml_bruto, cdc_real = construir_xml_sifen(dados)
-    xml_final_assinado = assinar_documento(xml_bruto) # Idealmente passaria a senha/certificado correto aqui
+    xml_final_assinado = assinar_documento(xml_bruto)
     
     link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
     link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
