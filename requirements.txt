@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+pydantic
 qrcode
 reportlab
 cryptography
@@ -8,3 +9,7 @@ lxml
 python-multipart
 fpdf
 psycopg2-binary
+cryptography
+signxml
+lxml
+zeep

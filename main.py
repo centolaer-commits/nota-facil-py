@@ -183,15 +183,32 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
     if not caixa_atual.get("aberto"):
         raise HTTPException(status_code=403, detail="Debe abrir la caja antes de registrar ventas.")
 
+    # 1. Puxa os dados SaaS da empresa logada
     config = banco_dados.obter_configuracao(x_empresa_id)
-    ambiente = config.get("ambiente_sifen", "testes") if config else "testes"
+    if not config:
+        raise HTTPException(status_code=400, detail="Configuración de empresa no encontrada.")
+        
+    ambiente = config.get("ambiente_sifen", "testes")
 
-    xml_bruto, cdc_real = construir_xml_sifen(dados)
+    # 2. Constrói o XML oficial e gera o CDC Módulo 11
+    xml_bruto, cdc_real = construir_xml_sifen(dados, config)
     
-    # Simula a assinatura
-    xml_final_assinado = assinar_documento(xml_bruto)
+    # 3. Processo de Assinatura Digital (XMLDSig)
+    caminho_cert = config.get("caminho_certificado")
+    senha_cert = config.get("senha_certificado")
+    xml_final = xml_bruto
     
-    # Gera a URL de validação com o CDC verdadeiro
+    try:
+        # Só assina se o cliente já tiver feito upload do ficheiro .p12 válido
+        if caminho_cert and os.path.exists(caminho_cert) and senha_cert:
+            xml_final = assinar_documento(xml_bruto, caminho_cert, senha_cert)
+            print(f"XML da Empresa {x_empresa_id} assinado com sucesso!")
+        else:
+            print(f"Aviso: Empresa {x_empresa_id} sem certificado .p12. XML gerado mas não assinado.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error con el Certificado Digital: {str(e)}")
+    
+    # 4. Define o link oficial do QR Code (KuDE) com base no ambiente (Pruebas ou Producción)
     if ambiente == "produccion":
         link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
     else:
@@ -199,12 +216,15 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
 
     link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
     
+    # 5. Guarda na base de dados
     banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
     
+    # 6. Gera o PDF visual (KuDE)
     gerar_pdf_nota(dados, cdc_real)
     
     return {
-        "mensaje": f"Factura generada ({ambiente.upper()})", "cdc": cdc_real,
+        "mensaje": f"Factura generada ({ambiente.upper()})", 
+        "cdc": cdc_real,
         "link_qrcode": link_qrcode,
         "link_pdf": link_pdf
     }

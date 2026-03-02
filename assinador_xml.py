@@ -1,69 +1,43 @@
-import os
-from lxml import etree
-from signxml import XMLSigner
 from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.hazmat.primitives import serialization
+from signxml import XMLSigner, methods
+from lxml import etree
+import os
 
-# --- CONFIGURAÇÃO DO CERTIFICADO DO CLIENTE ---
-# Quando o cliente te der o certificado, você colocará o nome do arquivo e a senha aqui
-CAMINHO_CERTIFICADO = "certificado_empresa.p12"
-SENHA_CERTIFICADO = b"senha_do_cliente_aqui" 
-# (A letra 'b' antes das aspas é obrigatória no Python para senhas de criptografia)
+def carregar_certificado_p12(caminho_p12, senha):
+    """Abre o ficheiro .p12 e extrai a Chave Privada e o Certificado Público."""
+    with open(caminho_p12, "rb") as f:
+        p12_data = f.read()
+    
+    # Extrai os dados usando a password fornecida pelo lojista
+    private_key, certificate, additional_certificates = pkcs12.load_key_and_certificates(
+        p12_data, senha.encode()
+    )
+    return private_key, certificate
 
-def assinar_documento(xml_string):
-    """
-    Tenta assinar com o Certificado Real. Se não encontrar o arquivo,
-    usa o modo de simulação para não travar o desenvolvimento.
-    """
-    if not os.path.exists(CAMINHO_CERTIFICADO):
-        print("⚠️ AVISO: Certificado .p12 não encontrado. Usando Assinatura Simulada.")
-        return assinatura_simulada(xml_string)
-        
+def assinar_documento(xml_string, caminho_p12, senha):
+    """Aplica a assinatura XMLDSig Enveloped exigida pela SIFEN."""
     try:
-        # 1. Abre o "cofre" do certificado .p12
-        with open(CAMINHO_CERTIFICADO, "rb") as arquivo_cert:
-            p12_dados = arquivo_cert.read()
-
-        # 2. Usa a senha para extrair a Chave Privada da empresa
-        private_key, certificate, additional_certificates = pkcs12.load_key_and_certificates(
-            p12_dados, 
-            SENHA_CERTIFICADO
-        )
-
-        # 3. Prepara o XML para ser carimbado
+        private_key, cert = carregar_certificado_p12(caminho_p12, senha)
+        
+        # Converte o XML de texto para um objeto manipulável
         root = etree.fromstring(xml_string.encode('utf-8'))
-
-        # 4. Aplica a Criptografia (Padrão SIFEN RSA-SHA256)
-        signer = XMLSigner(signature_algorithm="rsa-sha256", digest_algorithm="sha256")
-        xml_assinado = signer.sign(root, key=private_key, cert=certificate)
-
-        # 5. Devolve o XML pronto e legalmente válido
-        return etree.tostring(xml_assinado, encoding="utf-8").decode("utf-8")
-
-    except ValueError:
-        print("❌ ERRO: A senha do certificado está incorreta!")
-        raise Exception("Senha do certificado digital inválida.")
+        
+        # Prepara as chaves no formato PEM
+        cert_pem = cert.public_bytes(serialization.Encoding.PEM)
+        key_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        
+        # Assinatura Enveloped (SHA256) conforme o manual técnico da DNIT
+        signer = XMLSigner(method=methods.enveloped, signature_algorithm="rsa-sha256", digest_algorithm="sha256")
+        signed_root = signer.sign(root, key=key_pem, cert=cert_pem)
+        
+        # Devolve o XML final já carimbado
+        return etree.tostring(signed_root, encoding='unicode')
+        
     except Exception as e:
-        print(f"❌ ERRO na Assinatura Digital: {e}")
-        raise Exception("Falha ao assinar o documento.")
-
-def assinatura_simulada(xml_string):
-    """
-    Função de "estepe" que mantém o sistema funcionando na sua máquina
-    enquanto o cliente não compra o certificado real.
-    """
-    assinatura_falsa = """
-    <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
-        <SignedInfo>
-            <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
-            <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
-            <Reference URI="">
-                <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-                <DigestValue>simulacao_digest_value_base64_aqui</DigestValue>
-            </Reference>
-        </SignedInfo>
-        <SignatureValue>simulacao_assinatura_criptografica_aqui</SignatureValue>
-    </Signature>
-    """
-    # Insere a assinatura falsa no final do XML antes de fechar a tag principal
-    xml_string = xml_string.replace("</rDE>", f"{assinatura_falsa}</rDE>")
-    return xml_string
+        print(f"Erro na assinatura digital: {e}")
+        raise e
