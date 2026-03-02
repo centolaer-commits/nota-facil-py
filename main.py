@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Header
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
+from conexao_sifen import enviar_xml_para_sifen
 import os
 import shutil
 
@@ -183,32 +184,41 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
     if not caixa_atual.get("aberto"):
         raise HTTPException(status_code=403, detail="Debe abrir la caja antes de registrar ventas.")
 
-    # 1. Puxa os dados SaaS da empresa logada
     config = banco_dados.obter_configuracao(x_empresa_id)
     if not config:
         raise HTTPException(status_code=400, detail="Configuración de empresa no encontrada.")
         
     ambiente = config.get("ambiente_sifen", "testes")
 
-    # 2. Constrói o XML oficial e gera o CDC Módulo 11
+    # 1. Gera o XML rico e o CDC matemático
     xml_bruto, cdc_real = construir_xml_sifen(dados, config)
     
-    # 3. Processo de Assinatura Digital (XMLDSig)
+    # 2. Assinatura Digital
     caminho_cert = config.get("caminho_certificado")
     senha_cert = config.get("senha_certificado")
-    xml_final = xml_bruto
+    xml_final_assinado = xml_bruto
+    
+    status_sifen = "No Enviado (Falta Certificado)"
     
     try:
-        # Só assina se o cliente já tiver feito upload do ficheiro .p12 válido
         if caminho_cert and os.path.exists(caminho_cert) and senha_cert:
-            xml_final = assinar_documento(xml_bruto, caminho_cert, senha_cert)
-            print(f"XML da Empresa {x_empresa_id} assinado com sucesso!")
-        else:
-            print(f"Aviso: Empresa {x_empresa_id} sem certificado .p12. XML gerado mas não assinado.")
+            # Assina o XML
+            xml_final_assinado = assinar_documento(xml_bruto, caminho_cert, senha_cert)
+            
+            # 3. NOVO: Transmissão SOAP mTLS para a SIFEN
+            retorno_sifen = enviar_xml_para_sifen(xml_final_assinado, caminho_cert, senha_cert, ambiente)
+            
+            if retorno_sifen["sucesso"]:
+                # Se a SET devolver código 0300, significa "Recibido con éxito"
+                status_sifen = f"Aprobado (Cod: {retorno_sifen.get('codigo_retorno', 'OK')})"
+            else:
+                status_sifen = f"Rechazado SET: {retorno_sifen.get('erro', 'Desconocido')}"
+                
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error con el Certificado Digital: {str(e)}")
+        print(f"Erro no processamento SIFEN: {str(e)}")
+        status_sifen = f"Error Interno: {str(e)}"
     
-    # 4. Define o link oficial do QR Code (KuDE) com base no ambiente (Pruebas ou Producción)
+    # 4. Links do KuDE (QR Code e PDF)
     if ambiente == "produccion":
         link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
     else:
@@ -216,14 +226,14 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
 
     link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
     
-    # 5. Guarda na base de dados
+    # 5. Guarda no Banco (Agora com Status da SIFEN)
     banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
     
-    # 6. Gera o PDF visual (KuDE)
+    # 6. Gera o PDF visual
     gerar_pdf_nota(dados, cdc_real)
     
     return {
-        "mensaje": f"Factura generada ({ambiente.upper()})", 
+        "mensaje": f"Factura generada | SIFEN: {status_sifen}", 
         "cdc": cdc_real,
         "link_qrcode": link_qrcode,
         "link_pdf": link_pdf

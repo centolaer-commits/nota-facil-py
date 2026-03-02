@@ -3,9 +3,6 @@ uvicorn
 pydantic
 qrcode
 reportlab
-cryptography
-signxml
-lxml
 python-multipart
 fpdf
 psycopg2-binary
@@ -13,3 +10,4 @@ cryptography
 signxml
 lxml
 zeep
+requests
