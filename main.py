@@ -66,7 +66,6 @@ class DadosSangria(BaseModel):
 class AmbienteUpdate(BaseModel):
     ambiente: str
 
-# --- SISTEMA DE LOGIN E SUPER ADMIN ---
 @app.post("/api/login")
 def fazer_login(dados: DadosLogin):
     resultado = banco_dados.autenticar_usuario(dados.ruc, dados.senha)
@@ -89,8 +88,6 @@ def criar_empresa(dados: NovaEmpresa):
         return {"mensaje": msg}
     raise HTTPException(status_code=400, detail=msg)
 
-
-# --- ROTAS DE CONTROLE DE CAIXA E SANGRÍA ---
 @app.get("/status-caixa")
 def status_caixa(x_empresa_id: int = Header(...)):
     return banco_dados.status_caixa_atual(x_empresa_id)
@@ -113,7 +110,6 @@ def api_registrar_sangria(dados: DadosSangria, x_empresa_id: int = Header(...)):
     if sucesso: return {"mensaje": msg}
     raise HTTPException(status_code=400, detail=msg)
 
-# --- ROTAS DE CATEGORIAS ---
 @app.post("/cadastrar-categoria")
 def cadastrar_categoria(cat: CategoriaNova, x_empresa_id: int = Header(...)):
     sucesso = banco_dados.cadastrar_categoria(x_empresa_id, cat.nome.strip())
@@ -129,14 +125,13 @@ def deletar_categoria(id_categoria: int, x_empresa_id: int = Header(...)):
     banco_dados.deletar_categoria(x_empresa_id, id_categoria)
     return {"mensaje": "Categoría eliminada"}
 
-# --- ROTAS DE CONFIGURAÇÃO DA EMPRESA ---
 @app.get("/obter-configuracao")
 def obter_configuracao(x_empresa_id: int = Header(...)):
     return banco_dados.obter_configuracao(x_empresa_id)
 
 @app.post("/salvar-configuracao")
-def salvar_configuracao(nome_empresa: str = Form(...), ruc: str = Form(...), endereco: str = Form(""), senha_certificado: str = Form(""), x_empresa_id: int = Header(...)):
-    banco_dados.salvar_configuracao_texto(x_empresa_id, nome_empresa, ruc, endereco, senha_certificado)
+def salvar_configuracao(nome_empresa: str = Form(...), ruc: str = Form(...), endereco: str = Form(""), senha_certificado: str = Form(""), csc: str = Form(""), x_empresa_id: int = Header(...)):
+    banco_dados.salvar_configuracao_texto(x_empresa_id, nome_empresa, ruc, endereco, senha_certificado, csc)
     return {"mensaje": "Datos guardados"}
 
 @app.post("/upload-certificado")
@@ -154,7 +149,6 @@ def alternar_ambiente(dados: AmbienteUpdate, x_empresa_id: int = Header(...)):
     banco_dados.alternar_ambiente_sifen(x_empresa_id, dados.ambiente)
     return {"mensaje": f"Ambiente cambiado a {dados.ambiente.upper()}"}
 
-# --- ROTAS DE ESTOQUE E VENDAS ---
 @app.get("/dados-dashboard")
 def dados_dashboard(x_empresa_id: int = Header(...)):
     return banco_dados.obter_dados_dashboard(x_empresa_id)
@@ -193,9 +187,16 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
     ambiente = config.get("ambiente_sifen", "testes") if config else "testes"
 
     xml_bruto, cdc_real = construir_xml_sifen(dados)
+    
+    # Simula a assinatura
     xml_final_assinado = assinar_documento(xml_bruto)
     
-    link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
+    # Gera a URL de validação com o CDC verdadeiro
+    if ambiente == "produccion":
+        link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
+    else:
+        link_qrcode = f"https://sifen-test.set.gov.py/consultas/qr?nId={cdc_real}"
+
     link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
     
     banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)

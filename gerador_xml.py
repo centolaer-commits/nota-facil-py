@@ -1,52 +1,54 @@
-from lxml import etree
-import datetime
 import random
+from datetime import datetime
 
-def calcular_iva(valor_total, taxa=10):
-    # Regra oficial: Valor Total / 1.1 (para 10%) ou 1.05 (para 5%)
-    divisor = 1.1 if taxa == 10 else 1.05
-    base_gravada = round(valor_total / divisor, 2)
-    valor_iva = round(valor_total - base_gravada, 2)
-    return base_gravada, valor_iva
+# Algoritmo Oficial da SIFEN (Módulo 11) para calcular o Dígito Verificador (DV)
+def calcular_dv_modulo11(numero_str):
+    soma = 0
+    peso = 2
+    for digito in reversed(numero_str):
+        soma += int(digito) * peso
+        peso += 1
+        if peso > 7:
+            peso = 2
+    resto = soma % 11
+    dv = 11 - resto
+    if dv >= 10:
+        dv = 0
+    return str(dv)
 
-def gerar_cdc_oficial(ruc_emissor):
-    # Gera o CDC de 44 dígitos (Identificador único da nota no Paraguai)
-    hoje = datetime.datetime.now().strftime("%Y%m%d")
-    ruc_limpo = ruc_emissor.split('-')[0].zfill(8)
-    seguranca = "".join([str(random.randint(0, 9)) for _ in range(11)])
-    # Tipo(2) + RUC(8) + DV(1) + Est(3) + Pnt(3) + Num(7) + Data(8) + Emis(1) + Seg(11)
-    cdc = f"01{ruc_limpo}10010010000001{hoje}1{seguranca}"
-    return cdc[:44]
+# Função que monta os 44 dígitos exatos do CDC
+def gerar_cdc_sifen(ruc_emissor, tipo_doc="01", estab="001", pex="001", numero_nota="0000001", data_emissao=None, tipo_emissao="1"):
+    if not data_emissao:
+        data_emissao = datetime.now()
+    
+    # Limpar o RUC (Ex: '80012345-6' -> Base: '80012345', DV: '6')
+    if "-" in ruc_emissor:
+        ruc_base, ruc_dv = ruc_emissor.split("-")
+    else:
+        ruc_base = ruc_emissor[:-1]
+        ruc_dv = ruc_emissor[-1]
+    
+    # A SIFEN exige que o RUC base tenha 8 dígitos (preenchido com zeros à esquerda)
+    ruc_base = ruc_base.zfill(8)
+    
+    tipo_contribuyente = "2" # 2 = Persona Jurídica (Empresa)
+    fecha_str = data_emissao.strftime("%Y%m%d")
+    codigo_aleatorio = str(random.randint(1, 999999999)).zfill(9)
 
-def construir_xml_sifen(dados_nota):
-    cdc = gerar_cdc_oficial(dados_nota.ruc_emissor)
-    base, imposto = calcular_iva(dados_nota.valor_total, taxa=10)
+    # Montagem dos 43 primeiros dígitos segundo o manual
+    cdc_43 = f"{tipo_doc}{ruc_base}{ruc_dv}{estab}{pex}{numero_nota}{tipo_contribuyente}{fecha_str}{tipo_emissao}{codigo_aleatorio}"
     
-    ns = "http://ekuatia.set.gov.py/sifen/xsd"
-    rDE = etree.Element("rDE", xmlns=ns)
-    etree.SubElement(rDE, "dVerFor").text = "150"
+    # Cálculo do 44º dígito (DV do CDC)
+    dv_cdc = calcular_dv_modulo11(cdc_43)
     
-    DE = etree.SubElement(rDE, "DE")
-    etree.SubElement(DE, "Id").text = cdc
-    
-    # Emissor (gEmis)
-    emissor = etree.SubElement(DE, "gEmis")
-    etree.SubElement(emissor, "dRucEm").text = dados_nota.ruc_emissor.split('-')[0]
-    etree.SubElement(emissor, "dDVEmi").text = dados_nota.ruc_emissor.split('-')[1] if '-' in dados_nota.ruc_emissor else "0"
-    etree.SubElement(emissor, "dNomEm").text = "SUA EMPRESA S.A."
-    
-    # Receptor (gDatRec)
-    receptor = etree.SubElement(DE, "gDatRec")
-    etree.SubElement(receptor, "dNomRec").text = dados_nota.nome_cliente
-    
-    # Totais (gTotRes)
-    totais = etree.SubElement(DE, "gTotRes")
-    etree.SubElement(totais, "dTotOpe").text = f"{dados_nota.valor_total:.2f}"
-    
-    # IVA (gPaEmiIVA) - Onde o governo valida o imposto
-    iva_detalhe = etree.SubElement(totais, "gPaEmiIVA")
-    etree.SubElement(iva_detalhe, "dBaseGra10").text = f"{base:.2f}"
-    etree.SubElement(iva_detalhe, "dIVA10").text = f"{imposto:.2f}"
+    cdc_completo = f"{cdc_43}{dv_cdc}"
+    return cdc_completo
 
-    xml_string = etree.tostring(rDE, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8")
-    return xml_string, cdc
+# Esta função será expandida na Fase 2 para gerar o XML completo
+def construir_xml_sifen(dados):
+    # Por enquanto, gera o CDC real validado matematicamente
+    cdc_real = gerar_cdc_sifen(dados.ruc_emissor)
+    
+    # O XML completo faremos na Fase 2
+    xml_bruto = f"<xml><cdc>{cdc_real}</cdc></xml>" 
+    return xml_bruto, cdc_real

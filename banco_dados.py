@@ -12,7 +12,6 @@ def inicializar_banco():
     conexao = get_conexao()
     cursor = conexao.cursor()
 
-    # 1. CRIAR AS TABELAS BASE
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS empresas (
             id SERIAL PRIMARY KEY,
@@ -27,7 +26,8 @@ def inicializar_banco():
             plano TEXT DEFAULT 'Básico',
             status_assinatura TEXT DEFAULT 'Activo',
             data_vencimento DATE,
-            valor_mensalidade REAL DEFAULT 0
+            valor_mensalidade REAL DEFAULT 0,
+            csc TEXT DEFAULT ''
         )
     ''')
 
@@ -96,18 +96,18 @@ def inicializar_banco():
         )
     ''')
 
-    # 2. MIGRATIONS: Atualizando para o Painel Financeiro SaaS
+    # MIGRATIONS
     try:
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS plano TEXT DEFAULT 'Básico'")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS status_assinatura TEXT DEFAULT 'Activo'")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS data_vencimento DATE")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS valor_mensalidade REAL DEFAULT 0")
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS csc TEXT DEFAULT ''") # NOVO: CSC
     except Exception as e:
-        print("Aviso Migration:", e)
+        pass
 
-    # 3. INSERÇÕES INICIAIS
     try:
-        vencimento_inicial = date.today() + timedelta(days=365) # A sua própria loja tem 1 ano grátis
+        vencimento_inicial = date.today() + timedelta(days=365)
         cursor.execute('''
             INSERT INTO empresas (id, nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade) 
             VALUES (1, 'Mi Empresa S.A.', '80012345-6', 'admin123', 'caja123', 'Pro', 'Activo', %s, 0) 
@@ -118,7 +118,7 @@ def inicializar_banco():
         if not cursor.fetchone():
             cursor.execute("INSERT INTO categorias (empresa_id, nome) VALUES (1, 'General')")
     except Exception as e:
-        print("Aviso Insert Inicial:", e)
+        pass
 
     conexao.commit()
     cursor.close()
@@ -127,7 +127,6 @@ def inicializar_banco():
 if DATABASE_URL:
     inicializar_banco()
 
-# --- SISTEMA DE AUTENTICAÇÃO E SUPER ADMIN ---
 def autenticar_usuario(ruc, senha):
     if ruc == "NUBE" and senha == "nube2026":
         return {"sucesso": True, "empresa_id": 0, "rol": "superadmin"}
@@ -138,67 +137,43 @@ def autenticar_usuario(ruc, senha):
     empresa = cursor.fetchone()
     conexao.close()
 
-    if not empresa:
-        return {"sucesso": False, "mensagem": "Empresa (RUC) no encontrada"}
+    if not empresa: return {"sucesso": False, "mensagem": "Empresa (RUC) no encontrada"}
 
     emp_id, s_admin, s_caixa, status_ass = empresa
-    
-    # Bloqueia se a assinatura estiver cancelada (Opcional, mas recomendado para SaaS)
-    if status_ass == 'Cancelado':
-        return {"sucesso": False, "mensagem": "Su suscripción está cancelada. Contacte soporte."}
+    if status_ass == 'Cancelado': return {"sucesso": False, "mensagem": "Su suscripción está cancelada."}
 
-    if senha == s_admin:
-        return {"sucesso": True, "empresa_id": emp_id, "rol": "admin"}
-    elif senha == s_caixa:
-        return {"sucesso": True, "empresa_id": emp_id, "rol": "cajero"}
-    else:
-        return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
+    if senha == s_admin: return {"sucesso": True, "empresa_id": emp_id, "rol": "admin"}
+    elif senha == s_caixa: return {"sucesso": True, "empresa_id": emp_id, "rol": "cajero"}
+    else: return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
 
 def obter_metricas_saas():
     conexao = get_conexao()
     cursor = conexao.cursor()
-    
-    # Atualiza automaticamente o status para Vencido se a data passou
     cursor.execute("UPDATE empresas SET status_assinatura = 'Vencido' WHERE data_vencimento < CURRENT_DATE AND status_assinatura = 'Activo'")
     conexao.commit()
-
     cursor.execute("SELECT COUNT(*) FROM empresas WHERE status_assinatura = 'Activo'")
     clientes_ativos = cursor.fetchone()[0]
-    
     cursor.execute("SELECT SUM(valor_mensalidade) FROM empresas WHERE status_assinatura = 'Activo'")
     mrr = cursor.fetchone()[0] or 0
-    
     cursor.execute("SELECT COUNT(*) FROM empresas WHERE status_assinatura = 'Vencido'")
     clientes_vencidos = cursor.fetchone()[0]
-    
     conexao.close()
-    return {
-        "mrr": mrr,
-        "clientes_ativos": clientes_ativos,
-        "clientes_vencidos": clientes_vencidos
-    }
+    return {"mrr": mrr, "clientes_ativos": clientes_ativos, "clientes_vencidos": clientes_vencidos}
 
 def listar_todas_empresas():
     conexao = get_conexao()
     cursor = conexao.cursor()
-    # Puxa os dados financeiros novos
     cursor.execute("SELECT id, nome_empresa, ruc, ambiente_sifen, plano, status_assinatura, data_vencimento, valor_mensalidade FROM empresas ORDER BY id ASC")
     linhas = cursor.fetchall()
     conexao.close()
-    return [{
-        "id": l[0], "nome": l[1], "ruc": l[2], "ambiente": l[3], 
-        "plano": l[4], "status": l[5], "vencimento": str(l[6]) if l[6] else "N/A", "valor": l[7]
-    } for l in linhas]
+    return [{"id": l[0], "nome": l[1], "ruc": l[2], "ambiente": l[3], "plano": l[4], "status": l[5], "vencimento": str(l[6]) if l[6] else "N/A", "valor": l[7]} for l in linhas]
 
 def criar_nova_empresa(nome, ruc, senha_admin, senha_caixa, plano, valor):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    vencimento = date.today() + timedelta(days=30) # Vence em 30 dias
+    vencimento = date.today() + timedelta(days=30)
     try:
-        cursor.execute(
-            "INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, valor_mensalidade, status_assinatura, data_vencimento) VALUES (%s, %s, %s, %s, %s, %s, 'Activo', %s)", 
-            (nome, ruc, senha_admin, senha_caixa, plano, valor, vencimento)
-        )
+        cursor.execute("INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, valor_mensalidade, status_assinatura, data_vencimento) VALUES (%s, %s, %s, %s, %s, %s, 'Activo', %s)", (nome, ruc, senha_admin, senha_caixa, plano, valor, vencimento))
         conexao.commit()
         return True, "Empresa creada exitosamente."
     except psycopg2.IntegrityError:
@@ -206,7 +181,6 @@ def criar_nova_empresa(nome, ruc, senha_admin, senha_caixa, plano, valor):
     finally:
         conexao.close()
 
-# --- FUNÇÕES FILTRADAS POR EMPRESA_ID ---
 def status_caixa_atual(empresa_id):
     conexao = get_conexao()
     cursor = conexao.cursor()
@@ -251,8 +225,7 @@ def cadastrar_categoria(empresa_id, nome):
         conexao = get_conexao()
         cursor = conexao.cursor()
         cursor.execute("SELECT 1 FROM categorias WHERE empresa_id = %s AND nome = %s", (empresa_id, nome))
-        if cursor.fetchone():
-            return False
+        if cursor.fetchone(): return False
         cursor.execute('INSERT INTO categorias (empresa_id, nome) VALUES (%s, %s)', (empresa_id, nome))
         conexao.commit()
         return True
@@ -277,16 +250,17 @@ def deletar_categoria(empresa_id, id_categoria):
 def obter_configuracao(empresa_id):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute('SELECT nome_empresa, ruc, endereco, senha_certificado, caminho_certificado, ambiente_sifen FROM empresas WHERE id = %s', (empresa_id,))
+    # Adicionado o CSC na busca
+    cursor.execute('SELECT nome_empresa, ruc, endereco, senha_certificado, caminho_certificado, ambiente_sifen, csc FROM empresas WHERE id = %s', (empresa_id,))
     linha = cursor.fetchone()
     conexao.close()
-    if linha: return {"nome_empresa": linha[0], "ruc": linha[1], "endereco": linha[2], "senha_certificado": linha[3], "caminho_certificado": linha[4], "ambiente_sifen": linha[5]}
+    if linha: return {"nome_empresa": linha[0], "ruc": linha[1], "endereco": linha[2], "senha_certificado": linha[3], "caminho_certificado": linha[4], "ambiente_sifen": linha[5], "csc": linha[6]}
     return None
 
-def salvar_configuracao_texto(empresa_id, nome, ruc, endereco, senha):
+def salvar_configuracao_texto(empresa_id, nome, ruc, endereco, senha, csc):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute('UPDATE empresas SET nome_empresa = %s, ruc = %s, endereco = %s, senha_certificado = %s WHERE id = %s', (nome, ruc, endereco, senha, empresa_id))
+    cursor.execute('UPDATE empresas SET nome_empresa = %s, ruc = %s, endereco = %s, senha_certificado = %s, csc = %s WHERE id = %s', (nome, ruc, endereco, senha, csc, empresa_id))
     conexao.commit()
     conexao.close()
 
@@ -349,7 +323,6 @@ def deletar_produto(empresa_id, codigo_barras):
 def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode="", metodo_pago="Efectivo"):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    
     caixa_atual = status_caixa_atual(empresa_id)
     caixa_id = caixa_atual["caixa_id"] if caixa_atual["aberto"] else 0
 
@@ -410,10 +383,8 @@ def obter_dados_dashboard(empresa_id):
 def obter_fechamento_caixa(empresa_id):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    
     cursor.execute("SELECT valor_total, itens, metodo_pago FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE", (empresa_id,))
     notas_hoje = cursor.fetchall()
-    
     total_vendas_hoje = 0
     lucro_bruto_hoje = 0
     total_notas_hoje = len(notas_hoje)
@@ -422,7 +393,6 @@ def obter_fechamento_caixa(empresa_id):
     total_sangrias = cursor.fetchone()[0] or 0
     
     itens_agrupados = {}
-    
     for nota in notas_hoje:
         total_vendas_hoje += nota[0]
         itens = json.loads(nota[1])
@@ -431,11 +401,9 @@ def obter_fechamento_caixa(empresa_id):
             preco_custo = item.get('preco_custo', 0)
             qtd = item.get('quantidade', 0)
             lucro_bruto_hoje += (preco_venda - preco_custo) * qtd
-            
             cod = item.get('codigo_barras')
             desc = item.get('descricao', 'Manual / Otros')
             chave = cod if cod else desc
-            
             if chave not in itens_agrupados:
                 itens_agrupados[chave] = {"codigo_barras": cod, "descricao": desc, "vendidos": 0, "estoque_restante": 0}
             itens_agrupados[chave]["vendidos"] += qtd
@@ -452,10 +420,4 @@ def obter_fechamento_caixa(empresa_id):
     lista_detalhada.sort(key=lambda x: x["vendidos"], reverse=True)
     conexao.close()
     
-    return {
-        "vendas_hoje": total_vendas_hoje,
-        "lucro_bruto": lucro_bruto_hoje,
-        "notas_emitidas": total_notas_hoje,
-        "total_sangrias": total_sangrias,
-        "detalhes_itens": lista_detalhada
-    }
+    return {"vendas_hoje": total_vendas_hoje, "lucro_bruto": lucro_bruto_hoje, "notas_emitidas": total_notas_hoje, "total_sangrias": total_sangrias, "detalhes_itens": lista_detalhada}
