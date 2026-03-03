@@ -96,7 +96,6 @@ def inicializar_banco():
         )
     ''')
 
-    # MIGRATIONS: Tabelas do Novo Módulo de Stock Take
     try:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS auditorias (
@@ -341,7 +340,6 @@ def deletar_produto(empresa_id, codigo_barras):
     conexao.commit()
     conexao.close()
 
-# --- NOVO: FUNÇÕES DO STOCK TAKE (AUDITORIA) ---
 def salvar_auditoria_estoque(empresa_id, itens_auditados):
     conexao = get_conexao()
     cursor = conexao.cursor()
@@ -367,11 +365,7 @@ def salvar_auditoria_estoque(empresa_id, itens_auditados):
             if diferenca != 0:
                 impacto_total += impacto
                 total_itens += 1
-                
-                # Atualiza o inventário com o valor físico real
                 cursor.execute("UPDATE produtos SET quantidade = %s WHERE empresa_id = %s AND codigo_barras = %s", (fisica, empresa_id, cod))
-
-                # Regista o histórico da mudança
                 cursor.execute("INSERT INTO auditorias_itens (auditoria_id, codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario) VALUES (%s, %s, %s, %s, %s, %s, %s)", (auditoria_id, cod, desc, qtd_sis, fisica, diferenca, custo))
 
         cursor.execute("UPDATE auditorias SET impacto_financeiro = %s, total_itens = %s WHERE id = %s", (impacto_total, total_itens, auditoria_id))
@@ -395,17 +389,14 @@ def listar_auditorias(empresa_id):
 def obter_detalhes_auditoria(empresa_id, auditoria_id):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    
     cursor.execute("SELECT 1 FROM auditorias WHERE id = %s AND empresa_id = %s", (auditoria_id, empresa_id))
     if not cursor.fetchone():
         conexao.close()
         return []
-
     cursor.execute("SELECT codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario FROM auditorias_itens WHERE auditoria_id = %s", (auditoria_id,))
     linhas = cursor.fetchall()
     conexao.close()
     return [{"codigo_barras": l[0], "descricao": l[1], "qtd_sistema": l[2], "qtd_fisica": l[3], "diferenca": l[4], "custo_unitario": l[5]} for l in linhas]
-
 
 def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode="", metodo_pago="Efectivo"):
     conexao = get_conexao()
@@ -426,7 +417,6 @@ def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_q
         itens_com_custo.append(item_dict)
 
     itens_json = json.dumps(itens_com_custo)
-    
     cursor.execute('''
         INSERT INTO notas (empresa_id, ruc_emissor, nome_cliente, valor_total, cdc, itens, link_pdf, link_qrcode, metodo_pago, caixa_id) 
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -448,7 +438,9 @@ def listar_todas_notas(empresa_id, busca=""):
 def obter_dados_dashboard(empresa_id):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute('SELECT valor_total, itens FROM notas WHERE empresa_id = %s', (empresa_id,))
+    
+    # ATUALIZADO: Filtra apenas as vendas do dia corrente
+    cursor.execute('SELECT valor_total, itens FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE', (empresa_id,))
     notas = cursor.fetchall()
     conexao.close()
     
@@ -472,6 +464,7 @@ def obter_fechamento_caixa(empresa_id):
     cursor = conexao.cursor()
     cursor.execute("SELECT valor_total, itens, metodo_pago FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE", (empresa_id,))
     notas_hoje = cursor.fetchall()
+    
     total_vendas_hoje = 0
     lucro_bruto_hoje = 0
     total_notas_hoje = len(notas_hoje)
@@ -487,16 +480,28 @@ def obter_fechamento_caixa(empresa_id):
             preco_venda = item.get('preco_unitario', 0)
             preco_custo = item.get('preco_custo', 0)
             qtd = item.get('quantidade', 0)
-            lucro_bruto_hoje += (preco_venda - preco_custo) * qtd
+            
+            receita_item = preco_venda * qtd
+            lucro_item = (preco_venda - preco_custo) * qtd
+            lucro_bruto_hoje += lucro_item
+            
             cod = item.get('codigo_barras')
             desc = item.get('descricao', 'Manual / Otros')
             chave = cod if cod else desc
+            
             if chave not in itens_agrupados:
-                itens_agrupados[chave] = {"codigo_barras": cod, "descricao": desc, "vendidos": 0, "estoque_restante": 0}
+                itens_agrupados[chave] = {
+                    "codigo_barras": cod, "descricao": desc, "vendidos": 0, "estoque_restante": 0, "receita_total": 0, "lucro_total": 0, "margem": 0
+                }
             itens_agrupados[chave]["vendidos"] += qtd
+            itens_agrupados[chave]["receita_total"] += receita_item
+            itens_agrupados[chave]["lucro_total"] += lucro_item
             
     lista_detalhada = list(itens_agrupados.values())
     for item in lista_detalhada:
+        if item["receita_total"] > 0:
+            item["margem"] = round((item["lucro_total"] / item["receita_total"]) * 100, 1)
+            
         if item["codigo_barras"]:
             cursor.execute("SELECT quantidade FROM produtos WHERE empresa_id = %s AND codigo_barras = %s", (empresa_id, item["codigo_barras"]))
             row = cursor.fetchone()
@@ -504,7 +509,7 @@ def obter_fechamento_caixa(empresa_id):
         else:
             item["estoque_restante"] = "-"
 
-    lista_detalhada.sort(key=lambda x: x["vendidos"], reverse=True)
+    lista_detalhada.sort(key=lambda x: x["receita_total"], reverse=True)
     conexao.close()
     
     return {"vendas_hoje": total_vendas_hoje, "lucro_bruto": lucro_bruto_hoje, "notas_emitidas": total_notas_hoje, "total_sangrias": total_sangrias, "detalhes_itens": lista_detalhada}
