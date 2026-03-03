@@ -2,13 +2,13 @@ from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Header
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
-from conexao_sifen import enviar_xml_para_sifen
 import os
 import shutil
 
 from gerador_xml import construir_xml_sifen
 from assinador_xml import assinar_documento
 from gerador_pdf import gerar_pdf_nota
+from conexao_sifen import enviar_xml_para_sifen
 import banco_dados
 
 app = FastAPI(title="NubePY SaaS - SIFEN")
@@ -66,6 +66,15 @@ class DadosSangria(BaseModel):
 
 class AmbienteUpdate(BaseModel):
     ambiente: str
+
+# NOVOS MODELOS DE STOCK TAKE
+class ItemAuditoria(BaseModel):
+    codigo_barras: str
+    qtd_fisica: int
+
+class DadosAuditoria(BaseModel):
+    itens: List[ItemAuditoria]
+
 
 @app.post("/api/login")
 def fazer_login(dados: DadosLogin):
@@ -178,6 +187,22 @@ def deletar_produto(codigo_barras: str, x_empresa_id: int = Header(...)):
     banco_dados.deletar_produto(x_empresa_id, codigo_barras)
     return {"mensaje": "Producto eliminado"}
 
+# --- NOVAS ROTAS: STOCK TAKE ---
+@app.post("/salvar-auditoria")
+def api_salvar_auditoria(dados: DadosAuditoria, x_empresa_id: int = Header(...)):
+    itens_dicts = [{"codigo_barras": i.codigo_barras, "qtd_fisica": i.qtd_fisica} for i in dados.itens]
+    sucesso, msg = banco_dados.salvar_auditoria_estoque(x_empresa_id, itens_dicts)
+    if sucesso: return {"mensaje": msg}
+    raise HTTPException(status_code=400, detail=msg)
+
+@app.get("/listar-auditorias")
+def api_listar_auditorias(x_empresa_id: int = Header(...)):
+    return banco_dados.listar_auditorias(x_empresa_id)
+
+@app.get("/detalhes-auditoria/{id_auditoria}")
+def api_detalhes_auditoria(id_auditoria: int, x_empresa_id: int = Header(...)):
+    return banco_dados.obter_detalhes_auditoria(x_empresa_id, id_auditoria)
+
 @app.post("/emitir-nota")
 def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
     caixa_atual = banco_dados.status_caixa_atual(x_empresa_id)
@@ -185,40 +210,29 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
         raise HTTPException(status_code=403, detail="Debe abrir la caja antes de registrar ventas.")
 
     config = banco_dados.obter_configuracao(x_empresa_id)
-    if not config:
-        raise HTTPException(status_code=400, detail="Configuración de empresa no encontrada.")
+    if not config: raise HTTPException(status_code=400, detail="Configuración no encontrada.")
         
     ambiente = config.get("ambiente_sifen", "testes")
-
-    # 1. Gera o XML rico e o CDC matemático
     xml_bruto, cdc_real = construir_xml_sifen(dados, config)
     
-    # 2. Assinatura Digital
     caminho_cert = config.get("caminho_certificado")
     senha_cert = config.get("senha_certificado")
     xml_final_assinado = xml_bruto
-    
     status_sifen = "No Enviado (Falta Certificado)"
     
     try:
         if caminho_cert and os.path.exists(caminho_cert) and senha_cert:
-            # Assina o XML
             xml_final_assinado = assinar_documento(xml_bruto, caminho_cert, senha_cert)
-            
-            # 3. NOVO: Transmissão SOAP mTLS para a SIFEN
             retorno_sifen = enviar_xml_para_sifen(xml_final_assinado, caminho_cert, senha_cert, ambiente)
             
             if retorno_sifen["sucesso"]:
-                # Se a SET devolver código 0300, significa "Recibido con éxito"
                 status_sifen = f"Aprobado (Cod: {retorno_sifen.get('codigo_retorno', 'OK')})"
             else:
                 status_sifen = f"Rechazado SET: {retorno_sifen.get('erro', 'Desconocido')}"
-                
     except Exception as e:
         print(f"Erro no processamento SIFEN: {str(e)}")
         status_sifen = f"Error Interno: {str(e)}"
     
-    # 4. Links do KuDE (QR Code e PDF)
     if ambiente == "produccion":
         link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
     else:
@@ -226,10 +240,7 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
 
     link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
     
-    # 5. Guarda no Banco (Agora com Status da SIFEN)
     banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
-    
-    # 6. Gera o PDF visual
     gerar_pdf_nota(dados, cdc_real)
     
     return {

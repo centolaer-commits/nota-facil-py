@@ -96,13 +96,35 @@ def inicializar_banco():
         )
     ''')
 
-    # MIGRATIONS
+    # MIGRATIONS: Tabelas do Novo Módulo de Stock Take
     try:
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS auditorias (
+                id SERIAL PRIMARY KEY,
+                empresa_id INTEGER DEFAULT 1,
+                data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                impacto_financeiro REAL DEFAULT 0,
+                total_itens INTEGER DEFAULT 0
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS auditorias_itens (
+                id SERIAL PRIMARY KEY,
+                auditoria_id INTEGER,
+                codigo_barras TEXT,
+                descricao TEXT,
+                qtd_sistema INTEGER,
+                qtd_fisica INTEGER,
+                diferenca INTEGER,
+                custo_unitario REAL
+            )
+        ''')
+        
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS plano TEXT DEFAULT 'Básico'")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS status_assinatura TEXT DEFAULT 'Activo'")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS data_vencimento DATE")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS valor_mensalidade REAL DEFAULT 0")
-        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS csc TEXT DEFAULT ''") # NOVO: CSC
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS csc TEXT DEFAULT ''")
     except Exception as e:
         pass
 
@@ -250,7 +272,6 @@ def deletar_categoria(empresa_id, id_categoria):
 def obter_configuracao(empresa_id):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    # Adicionado o CSC na busca
     cursor.execute('SELECT nome_empresa, ruc, endereco, senha_certificado, caminho_certificado, ambiente_sifen, csc FROM empresas WHERE id = %s', (empresa_id,))
     linha = cursor.fetchone()
     conexao.close()
@@ -319,6 +340,72 @@ def deletar_produto(empresa_id, codigo_barras):
     cursor.execute('DELETE FROM produtos WHERE empresa_id = %s AND codigo_barras = %s', (empresa_id, codigo_barras))
     conexao.commit()
     conexao.close()
+
+# --- NOVO: FUNÇÕES DO STOCK TAKE (AUDITORIA) ---
+def salvar_auditoria_estoque(empresa_id, itens_auditados):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        cursor.execute("INSERT INTO auditorias (empresa_id) VALUES (%s) RETURNING id", (empresa_id,))
+        auditoria_id = cursor.fetchone()[0]
+
+        impacto_total = 0
+        total_itens = 0
+
+        for item in itens_auditados:
+            cod = item['codigo_barras']
+            fisica = item['qtd_fisica']
+
+            cursor.execute("SELECT descricao, quantidade, preco_custo FROM produtos WHERE empresa_id = %s AND codigo_barras = %s", (empresa_id, cod))
+            linha = cursor.fetchone()
+            if not linha: continue
+
+            desc, qtd_sis, custo = linha
+            diferenca = fisica - qtd_sis
+            impacto = diferenca * custo
+
+            if diferenca != 0:
+                impacto_total += impacto
+                total_itens += 1
+                
+                # Atualiza o inventário com o valor físico real
+                cursor.execute("UPDATE produtos SET quantidade = %s WHERE empresa_id = %s AND codigo_barras = %s", (fisica, empresa_id, cod))
+
+                # Regista o histórico da mudança
+                cursor.execute("INSERT INTO auditorias_itens (auditoria_id, codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario) VALUES (%s, %s, %s, %s, %s, %s, %s)", (auditoria_id, cod, desc, qtd_sis, fisica, diferenca, custo))
+
+        cursor.execute("UPDATE auditorias SET impacto_financeiro = %s, total_itens = %s WHERE id = %s", (impacto_total, total_itens, auditoria_id))
+        conexao.commit()
+        return True, "Auditoría completada. Inventario actualizado."
+    except Exception as e:
+        conexao.rollback()
+        return False, str(e)
+    finally:
+        cursor.close()
+        conexao.close()
+
+def listar_auditorias(empresa_id):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT id, data, impacto_financeiro, total_itens FROM auditorias WHERE empresa_id = %s ORDER BY id DESC", (empresa_id,))
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"id": l[0], "data": str(l[1])[:16], "impacto_financeiro": l[2], "total_itens": l[3]} for l in linhas]
+
+def obter_detalhes_auditoria(empresa_id, auditoria_id):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    
+    cursor.execute("SELECT 1 FROM auditorias WHERE id = %s AND empresa_id = %s", (auditoria_id, empresa_id))
+    if not cursor.fetchone():
+        conexao.close()
+        return []
+
+    cursor.execute("SELECT codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario FROM auditorias_itens WHERE auditoria_id = %s", (auditoria_id,))
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"codigo_barras": l[0], "descricao": l[1], "qtd_sistema": l[2], "qtd_fisica": l[3], "diferenca": l[4], "custo_unitario": l[5]} for l in linhas]
+
 
 def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode="", metodo_pago="Efectivo"):
     conexao = get_conexao()
