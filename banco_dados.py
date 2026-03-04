@@ -424,13 +424,25 @@ def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_q
     conexao.commit()
     conexao.close()
 
-def listar_todas_notas(empresa_id, busca=""):
+# ATUALIZADO: Aceita filtros de data de início e fim
+def listar_todas_notas(empresa_id, busca="", data_inicio=None, data_fim=None):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    if busca: 
-        cursor.execute("SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao, metodo_pago FROM notas WHERE empresa_id = %s AND (nome_cliente ILIKE %s OR cdc ILIKE %s) ORDER BY id DESC", (empresa_id, f"%{busca}%", f"%{busca}%"))
-    else: 
-        cursor.execute('SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao, metodo_pago FROM notas WHERE empresa_id = %s ORDER BY id DESC', (empresa_id,))
+    
+    query = "SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao, metodo_pago FROM notas WHERE empresa_id = %s"
+    params = [empresa_id]
+    
+    if data_inicio and data_fim:
+        query += " AND DATE(data_emissao) >= %s AND DATE(data_emissao) <= %s"
+        params.extend([data_inicio, data_fim])
+        
+    if busca:
+        query += " AND (nome_cliente ILIKE %s OR cdc ILIKE %s)"
+        params.extend([f"%{busca}%", f"%{busca}%"])
+        
+    query += " ORDER BY id DESC"
+    
+    cursor.execute(query, tuple(params))
     linhas = cursor.fetchall()
     conexao.close()
     return [{"id": l[0], "nome_cliente": l[1], "valor_total": l[2], "cdc": l[3], "link_pdf": l[4], "data_emissao": l[5], "metodo_pago": l[6]} for l in linhas]
@@ -438,8 +450,6 @@ def listar_todas_notas(empresa_id, busca=""):
 def obter_dados_dashboard(empresa_id):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    
-    # ATUALIZADO: Filtra apenas as vendas do dia corrente
     cursor.execute('SELECT valor_total, itens FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE', (empresa_id,))
     notas = cursor.fetchall()
     conexao.close()
@@ -459,22 +469,27 @@ def obter_dados_dashboard(empresa_id):
     top_produtos = sorted(produtos_vendidos.items(), key=lambda x: x[1], reverse=True)[:5]
     return {"total_vendas": total_vendas, "total_notas": total_notas, "top_produtos": [{"nome": p[0], "quantidade": p[1]} for p in top_produtos]}
 
-def obter_fechamento_caixa(empresa_id):
+# ATUALIZADO: Aceita filtros de data para o Reporte de Fecho/Vendas
+def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute("SELECT valor_total, itens, metodo_pago FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE", (empresa_id,))
-    notas_hoje = cursor.fetchall()
     
-    total_vendas_hoje = 0
-    lucro_bruto_hoje = 0
-    total_notas_hoje = len(notas_hoje)
+    if not data_inicio: data_inicio = str(date.today())
+    if not data_fim: data_fim = str(date.today())
     
-    cursor.execute("SELECT SUM(valor) FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'SANGRIA' AND DATE(data) = CURRENT_DATE", (empresa_id,))
+    cursor.execute("SELECT valor_total, itens, metodo_pago FROM notas WHERE empresa_id = %s AND DATE(data_emissao) >= %s AND DATE(data_emissao) <= %s", (empresa_id, data_inicio, data_fim))
+    notas_periodo = cursor.fetchall()
+    
+    total_vendas_periodo = 0
+    lucro_bruto_periodo = 0
+    total_notas_periodo = len(notas_periodo)
+    
+    cursor.execute("SELECT SUM(valor) FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'SANGRIA' AND DATE(data) >= %s AND DATE(data) <= %s", (empresa_id, data_inicio, data_fim))
     total_sangrias = cursor.fetchone()[0] or 0
     
     itens_agrupados = {}
-    for nota in notas_hoje:
-        total_vendas_hoje += nota[0]
+    for nota in notas_periodo:
+        total_vendas_periodo += nota[0]
         itens = json.loads(nota[1])
         for item in itens:
             preco_venda = item.get('preco_unitario', 0)
@@ -483,7 +498,7 @@ def obter_fechamento_caixa(empresa_id):
             
             receita_item = preco_venda * qtd
             lucro_item = (preco_venda - preco_custo) * qtd
-            lucro_bruto_hoje += lucro_item
+            lucro_bruto_periodo += lucro_item
             
             cod = item.get('codigo_barras')
             desc = item.get('descricao', 'Manual / Otros')
@@ -512,4 +527,4 @@ def obter_fechamento_caixa(empresa_id):
     lista_detalhada.sort(key=lambda x: x["receita_total"], reverse=True)
     conexao.close()
     
-    return {"vendas_hoje": total_vendas_hoje, "lucro_bruto": lucro_bruto_hoje, "notas_emitidas": total_notas_hoje, "total_sangrias": total_sangrias, "detalhes_itens": lista_detalhada}
+    return {"vendas_hoje": total_vendas_periodo, "lucro_bruto": lucro_bruto_periodo, "notas_emitidas": total_notas_periodo, "total_sangrias": total_sangrias, "detalhes_itens": lista_detalhada}

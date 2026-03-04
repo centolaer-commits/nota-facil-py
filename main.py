@@ -67,7 +67,6 @@ class DadosSangria(BaseModel):
 class AmbienteUpdate(BaseModel):
     ambiente: str
 
-# NOVOS MODELOS DE STOCK TAKE
 class ItemAuditoria(BaseModel):
     codigo_barras: str
     qtd_fisica: int
@@ -187,7 +186,6 @@ def deletar_produto(codigo_barras: str, x_empresa_id: int = Header(...)):
     banco_dados.deletar_produto(x_empresa_id, codigo_barras)
     return {"mensaje": "Producto eliminado"}
 
-# --- NOVAS ROTAS: STOCK TAKE ---
 @app.post("/salvar-auditoria")
 def api_salvar_auditoria(dados: DadosAuditoria, x_empresa_id: int = Header(...)):
     itens_dicts = [{"codigo_barras": i.codigo_barras, "qtd_fisica": i.qtd_fisica} for i in dados.itens]
@@ -256,14 +254,16 @@ def baixar_pdf(id_nota: str):
     if os.path.exists(caminho): return FileResponse(caminho, media_type='application/pdf', filename=f"Factura_{id_nota}.pdf")
     raise HTTPException(status_code=404, detail="PDF no encontrado")
 
+# ATUALIZADO: Recebe as datas de início e fim
 @app.get("/listar-notas")
-def listar_notas(busca: Optional[str] = "", x_empresa_id: int = Header(...)):
-    historico = banco_dados.listar_todas_notas(x_empresa_id, busca)
+def listar_notas(busca: Optional[str] = "", inicio: Optional[str] = None, fim: Optional[str] = None, x_empresa_id: int = Header(...)):
+    historico = banco_dados.listar_todas_notas(x_empresa_id, busca, inicio, fim)
     return {"total": len(historico), "historico": historico}
 
+# ATUALIZADO: Recebe as datas de início e fim
 @app.get("/cierre-caja")
-def api_cierre_caja(x_empresa_id: int = Header(...)):
-    return banco_dados.obter_fechamento_caixa(x_empresa_id)
+def api_cierre_caja(inicio: Optional[str] = None, fim: Optional[str] = None, x_empresa_id: int = Header(...)):
+    return banco_dados.obter_fechamento_caixa(x_empresa_id, inicio, fim)
 
 @app.get("/painel")
 def abrir_painel():

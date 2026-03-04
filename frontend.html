@@ -30,6 +30,7 @@
     .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 300ms ease-in; }
     input::placeholder, select::placeholder { color: #94a3b8; opacity: 1; }
     input, select, textarea { color: #f1f5f9; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
   </style>
 </head>
 <body class="bg-slate-900 font-sans h-[100dvh] overflow-hidden flex flex-col md:flex-row text-gray-100 relative">
@@ -55,18 +56,10 @@
         <h3 class="text-xl font-bold text-white">Términos y Condiciones Legales</h3>
         <button type="button" onclick="fecharModalLegal()" class="text-gray-400 hover:text-red-400 font-bold text-2xl leading-none transition">&times;</button>
       </div>
-      
       <div class="overflow-y-auto pr-4 space-y-4 text-sm text-gray-300 scrollbar-thin scrollbar-thumb-slate-600 pb-4">
           <p class="font-extrabold text-white text-center mb-6 text-base">ACUERDO MARCO DE TÉRMINOS DE SERVICIO, PRIVACIDAD Y SUSCRIPCIÓN SAAS – NubePY</p>
-          <p>El presente documento establece las condiciones legales, operativas y comerciales que rigen el uso del sistema de Planificación de Recursos Empresariales (ERP) y Facturación Electrónica provisto por NubePY. Al crear una cuenta y utilizar nuestros servicios, el USUARIO acepta íntegramente las siguientes disposiciones.</p>
-          <h4 class="font-bold text-brand-accent mt-8 border-b border-slate-700 pb-2">PARTE I: TÉRMINOS Y CONDICIONES DE USO (ToS)</h4>
-          <p><strong class="text-white">1. Responsabilidad Fiscal y Emisión de Comprobantes Electrónicos (SIFEN)</strong></p>
-          <p><strong>1.1. Naturaleza del Servicio:</strong> NubePY actúa de manera exclusiva como un proveedor de infraestructura tecnológica e intermediario de software (SaaS). NubePY NO presta servicios de asesoría contable, fiscal o tributaria.</p>
-          <p><strong>1.2. Responsabilidad sobre la Información:</strong> El USUARIO declara y acepta que es el único y exclusivo responsable de la veracidad de todos los datos ingresados en la plataforma.</p>
-          <p><strong>1.3. Exención de Sanciones:</strong> NubePY no será responsable, bajo ninguna circunstancia, por multas, recargos, auditorías o bloqueos de RUC.</p>
-          <p><strong>1.4. Custodia del Certificado Digital:</strong> El USUARIO es el único responsable de la adquisición y uso de su Certificado Cualificado de Firma Electrónica (.p12).</p>
+          <p>El presente documento establece las condiciones legales, operativas y comerciales que rigen el uso del sistema de Planificación de Recursos Empresariales (ERP) y Facturación Electrónica provisto por NubePY.</p>
       </div>
-      
       <div class="pt-4 mt-4 border-t border-slate-700 shrink-0 text-center">
         <button type="button" onclick="fecharModalLegal()" class="bg-brand-accent text-white font-bold py-3 px-8 rounded-xl hover:bg-brand-accentHover transition shadow-md w-full md:w-auto">Cerrar Documento</button>
       </div>
@@ -76,7 +69,7 @@
   <div id="modal-audit-details" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-700 flex flex-col max-h-[90vh]">
         <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700 shrink-0">
-            <h3 class="text-xl font-bold text-white">Detalles de Auditoría (Stock Take)</h3>
+            <h3 class="text-xl font-bold text-white">Detalles de Auditoría</h3>
             <button type="button" onclick="fecharModalAudit()" class="text-gray-400 hover:text-red-400 font-bold text-2xl leading-none transition">&times;</button>
         </div>
         <div class="overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 rounded-lg border border-slate-700">
@@ -158,12 +151,9 @@
           <button id="nav-btn-dashboard" type="button" onclick="mudarTela('dashboard', this)" class="nav-btn border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-slate-700/50 transition flex items-center mt-2 text-gray-200 hover:text-white"><span class="mr-3 text-lg">📊</span> Dashboard (Hoy)</button>
           
           <div id="nav-group-reportes" class="mt-2">
-            <button type="button" onclick="toggleAcordeao('menu-rep', 'seta-rep')" class="w-full p-3 rounded-r-lg text-left hover:bg-slate-700/50 transition flex justify-between items-center border-l-4 border-transparent group text-gray-200 hover:text-white">
-              <div class="flex items-center"><span class="mr-3 text-lg">📈</span> Reportes</div> 
-              <span id="seta-rep" class="text-xs text-gray-500 group-hover:text-brand-accent">▼</span>
-            </button>
+            <button type="button" onclick="toggleAcordeao('menu-rep', 'seta-rep')" class="w-full p-3 rounded-r-lg text-left hover:bg-slate-700/50 transition flex justify-between items-center border-l-4 border-transparent group text-gray-200 hover:text-white"><div class="flex items-center"><span class="mr-3 text-lg">📈</span> Reportes</div> <span id="seta-rep" class="text-xs text-gray-500 group-hover:text-brand-accent">▼</span></button>
             <div id="menu-rep" class="hidden flex-col pl-4 mt-1 space-y-1">
-              <button type="button" onclick="mudarTela('cierre', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-gray-300 hover:text-white">Cierre de Caja</button>
+              <button type="button" onclick="mudarTela('cierre', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-gray-300 hover:text-white">Ventas y Cierre</button>
               <button type="button" onclick="mudarTela('reportes', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-gray-300 hover:text-white">Historial SIFEN</button>
               <button type="button" onclick="mudarTela('stocktakereport', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-gray-300 hover:text-white">Reportes de Stock</button>
             </div>
@@ -187,20 +177,28 @@
       <div id="tela-restock" class="max-w-3xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700 section-tela hidden"><header class="mb-6"><h1 class="text-2xl font-bold text-white">Entrada de Stock Rápida</h1><p class="text-sm text-gray-400">Agregue mercadería recibida a productos existentes.</p></header><div class="border border-slate-700 p-4 sm:p-6 rounded-xl bg-slate-700/50 shadow-inner mb-6"><label class="text-sm font-bold text-white block mb-2">Escanear o Buscar por Nombre</label><div class="relative w-full mb-6"><div class="flex items-center bg-slate-700 rounded-lg border-2 border-brand-accent/30 overflow-hidden focus-within:border-brand-accent transition-all"><span class="text-lg sm:text-xl pl-3 py-3 shrink-0 text-brand-accent">🔎</span><input type="text" id="restock-cod" placeholder="Buscar producto..." autocomplete="off" class="w-full flex-1 bg-transparent p-3 sm:p-4 text-sm sm:text-lg font-bold focus:outline-none text-white min-w-0 truncate placeholder-gray-500" oninput="filtrarRestock()" onkeypress="buscarParaRestock(event)"><button type="button" onclick="abrirCamera('restock-cod')" class="bg-brand-accent text-white px-4 py-3 sm:px-5 sm:py-4 font-bold hover:bg-brand-accentHover transition shrink-0">📷</button></div><div id="restock-dropdown" class="absolute z-50 w-full bg-slate-700 border border-slate-600 shadow-xl rounded-lg mt-1 hidden max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-500"></div></div><div id="restock-ficha" class="hidden bg-slate-800 p-4 sm:p-6 rounded-xl border border-brand-accent/30 shadow-sm relative overflow-hidden"><div class="absolute left-0 top-0 w-2 h-full bg-brand-accent"></div><h3 id="restock-desc" class="text-xl font-bold text-white mb-1">Nombre</h3><p class="text-sm text-gray-400 mb-6">Stock actual: <span id="restock-atual" class="font-bold text-brand-accent text-lg">0</span> unid.</p><div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end"><div class="md:col-span-2"><label class="text-xs font-bold text-green-400 uppercase mb-1 block">Cantidad Recibida (+)</label><input type="number" id="restock-add" class="w-full border-2 border-green-500/50 p-3 rounded-lg text-lg font-bold focus:border-green-500 outline-none text-center bg-slate-700 text-white placeholder-gray-500" placeholder="Ej: 50" onkeypress="if(event.key === 'Enter') salvarRestock()"></div><div class="md:col-span-1"><button type="button" onclick="salvarRestock()" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 shadow-md transition whitespace-nowrap">💾 Guardar Ingreso</button></div></div></div></div></div>
       <div id="tela-categorias" class="max-w-4xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700 section-tela hidden"><header class="mb-6"><h1 class="text-2xl font-bold text-white">Categorías</h1></header><div class="flex gap-3 mb-8 bg-slate-700/50 p-5 rounded-xl border border-slate-700 items-end"><div class="flex-1"><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Nueva Categoría</label><input type="text" id="nova-cat-nome" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-800 text-white focus:border-brand-accent outline-none"></div><button type="button" onclick="adicionarCategoria()" class="bg-brand-accent text-white px-6 py-3 rounded-lg font-bold hover:bg-brand-accentHover transition">Crear</button></div><table class="w-full text-left bg-slate-800 border border-slate-700 rounded-xl overflow-hidden"><thead class="bg-slate-900 border-b border-slate-700"><tr><th class="p-4 text-xs font-bold uppercase text-gray-400">Nombre</th><th class="p-4 text-xs font-bold uppercase text-center text-gray-400 w-24">Acción</th></tr></thead><tbody id="tabela-categorias" class="divide-y divide-slate-700 text-sm text-gray-300"></tbody></table></div>
       
-      <div id="tela-dashboard" class="max-w-6xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700 section-tela hidden"><header class="mb-6"><h1 class="text-2xl font-bold text-white">Dashboard (Hoy)</h1></header><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"><div onclick="mudarTela('cierre', null)" class="bg-gradient-to-br from-slate-700 to-slate-900 p-6 rounded-2xl shadow-lg text-white cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group border border-slate-600/50"><div class="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity text-brand-accent"><span class="text-2xl">→</span></div><h3 class="text-sm font-medium uppercase tracking-wider opacity-80 mb-3 text-brand-accent">Ingresos de Hoy</h3><p class="text-4xl font-extrabold">Gs. <span id="dash-vendas">0</span></p><p class="text-xs mt-3 opacity-60 group-hover:opacity-100 transition-opacity flex items-center">📊 Ver Cierre de Caja y Gross Profit</p></div><div onclick="mudarTela('reportes', null)" class="bg-gradient-to-br from-brand-accent/80 to-brand-accentHover/80 p-6 rounded-2xl shadow-lg text-white cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group border border-brand-accent/20"><div class="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-2xl">→</span></div><h3 class="text-sm font-medium uppercase tracking-wider opacity-90 mb-3">Facturas de Hoy</h3><p class="text-4xl font-extrabold"><span id="dash-notas">0</span></p><p class="text-xs mt-3 opacity-70 group-hover:opacity-100 transition-opacity flex items-center">📄 Ver historial y reimprimir SIFEN</p></div></div><div class="bg-slate-800 p-6 border border-slate-700 rounded-2xl shadow-sm"><h3 class="font-bold text-white mb-6">Top 5 Productos Más Vendidos Hoy</h3><div class="relative h-80 w-full"><canvas id="grafico-produtos"></canvas></div></div></div>
+      <div id="tela-dashboard" class="max-w-6xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700 section-tela hidden"><header class="mb-6"><h1 class="text-2xl font-bold text-white">Dashboard (Hoy)</h1></header><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"><div onclick="mudarTela('cierre', null)" class="bg-gradient-to-br from-slate-700 to-slate-900 p-6 rounded-2xl shadow-lg text-white cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group border border-slate-600/50"><div class="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity text-brand-accent"><span class="text-2xl">→</span></div><h3 class="text-sm font-medium uppercase tracking-wider opacity-80 mb-3 text-brand-accent">Ingresos de Hoy</h3><p class="text-4xl font-extrabold">Gs. <span id="dash-vendas">0</span></p><p class="text-xs mt-3 opacity-60 group-hover:opacity-100 transition-opacity flex items-center">📊 Ver Reporte de Ventas</p></div><div onclick="mudarTela('reportes', null)" class="bg-gradient-to-br from-brand-accent/80 to-brand-accentHover/80 p-6 rounded-2xl shadow-lg text-white cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group border border-brand-accent/20"><div class="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity"><span class="text-2xl">→</span></div><h3 class="text-sm font-medium uppercase tracking-wider opacity-90 mb-3">Facturas de Hoy</h3><p class="text-4xl font-extrabold"><span id="dash-notas">0</span></p><p class="text-xs mt-3 opacity-70 group-hover:opacity-100 transition-opacity flex items-center">📄 Ver historial SIFEN</p></div></div><div class="bg-slate-800 p-6 border border-slate-700 rounded-2xl shadow-sm"><h3 class="font-bold text-white mb-6">Top 5 Productos Más Vendidos Hoy</h3><div class="relative h-80 w-full"><canvas id="grafico-produtos"></canvas></div></div></div>
       
       <div id="tela-cierre" class="max-w-6xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700 section-tela hidden">
         <header class="mb-8 border-b border-slate-700 pb-4">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div><h1 class="text-3xl font-extrabold text-white">Cierre de Caja</h1><p class="text-sm text-gray-400">Resumen financiero y rentabilidad de ventas de hoy.</p></div>
-            <div class="flex gap-2 w-full sm:w-auto">
-              <button id="btn-cerrar-turno" onclick="fecharTurnoCaixa()" class="flex-1 sm:flex-none bg-red-600 text-white hover:bg-red-700 transition font-bold text-sm px-6 py-3 rounded-lg shadow-md flex items-center justify-center">🔒 Cerrar Turno</button>
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div><h1 class="text-3xl font-extrabold text-white">Reporte de Ventas & Cierre</h1><p class="text-sm text-gray-400">Resumen financiero y rentabilidad por periodo.</p></div>
+            
+            <div class="flex flex-wrap gap-2 w-full md:w-auto items-center bg-slate-900 p-2 rounded-xl border border-slate-700">
+                <input type="date" id="filtro-data-inicio-cierre" class="bg-slate-800 border border-slate-600 text-white text-sm rounded-lg p-2 focus:border-brand-accent outline-none">
+                <span class="text-gray-400 text-sm font-bold">a</span>
+                <input type="date" id="filtro-data-fim-cierre" class="bg-slate-800 border border-slate-600 text-white text-sm rounded-lg p-2 focus:border-brand-accent outline-none">
+                <button onclick="carregarCierreCaja()" class="bg-brand-accent hover:bg-brand-accentHover text-white font-bold text-sm px-4 py-2 rounded-lg transition shadow-md">Filtrar</button>
             </div>
           </div>
         </header>
         
+        <div class="flex justify-end mb-4">
+            <button id="btn-cerrar-turno" onclick="fecharTurnoCaixa()" class="bg-red-600/20 text-red-400 border border-red-600 hover:bg-red-600 hover:text-white transition font-bold text-sm px-4 py-2 rounded-lg shadow-sm flex items-center">🔒 Cerrar Turno (Caja Actual)</button>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div class="bg-slate-700/50 p-5 rounded-xl border border-slate-700"><p class="text-xs font-bold text-gray-400 uppercase mb-1">Ingresos de Hoy</p><p class="text-2xl font-bold text-white">Gs. <span id="cierre-vendas">0</span></p></div>
+          <div class="bg-slate-700/50 p-5 rounded-xl border border-slate-700"><p class="text-xs font-bold text-gray-400 uppercase mb-1">Ingresos</p><p class="text-2xl font-bold text-white">Gs. <span id="cierre-vendas">0</span></p></div>
           <div class="bg-green-900/20 p-5 rounded-xl border border-green-800/50 shadow-sm relative overflow-hidden"><div class="absolute right-0 top-0 h-full w-1 bg-green-500"></div><p class="text-xs font-bold text-green-400 uppercase mb-1 flex items-center">Gross Profit (GP)</p><p class="text-2xl font-extrabold text-green-400">Gs. <span id="cierre-gp">0</span></p></div>
           <div class="bg-red-900/20 p-5 rounded-xl border border-red-800/50 shadow-sm"><p class="text-xs font-bold text-red-400 uppercase mb-1">Retiros (Sangrías)</p><p class="text-2xl font-bold text-red-400">Gs. <span id="cierre-sangrias">0</span></p></div>
           <div class="bg-slate-700/50 p-5 rounded-xl border border-slate-700"><p class="text-xs font-bold text-gray-400 uppercase mb-1">Notas Emitidas</p><p class="text-2xl font-bold text-white"><span id="cierre-notas">0</span></p></div>
@@ -210,27 +208,33 @@
           <div class="bg-slate-900 text-gray-300 p-4 font-bold text-sm border-b border-slate-700 flex justify-between items-center">
             <span>Detalle de Rendimiento de Ventas</span>
             <div class="flex gap-2">
-                <button onclick="exportarTabelaParaCSV('tabela-cierre-itens', 'Cierre_de_Caja')" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition border border-slate-600">📥 CSV Raw</button>
-                <button onclick="imprimirReporteCierre()" class="bg-brand-accent hover:bg-brand-accentHover text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-md">🖨️ PDF / Imprimir Reporte</button>
+                <button onclick="exportarTabelaParaCSV('tabela-cierre-itens', 'Reporte_Ventas')" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition border border-slate-600">📥 CSV Raw</button>
+                <button onclick="imprimirReporteCierre()" class="bg-brand-accent hover:bg-brand-accentHover text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-md">🖨️ PDF / Imprimir</button>
             </div>
           </div>
           <table class="w-full text-left bg-slate-800 min-w-[800px]">
             <thead class="bg-slate-900 border-b border-slate-700 text-gray-400">
-              <tr>
-                <th class="p-3 text-xs font-bold uppercase">Producto</th>
-                <th class="p-3 text-xs font-bold uppercase text-center">Cant.</th>
-                <th class="p-3 text-xs font-bold uppercase text-right">Precio Venta</th>
-                <th class="p-3 text-xs font-bold uppercase text-right">Ingreso Total</th>
-                <th class="p-3 text-xs font-bold uppercase text-right">Ganancia (GP)</th>
-                <th class="p-3 text-xs font-bold uppercase text-center">Margen</th>
-              </tr>
+              <tr><th class="p-3 text-xs font-bold uppercase">Producto</th><th class="p-3 text-xs font-bold uppercase text-center">Cant.</th><th class="p-3 text-xs font-bold uppercase text-right">Precio Venta</th><th class="p-3 text-xs font-bold uppercase text-right">Ingreso Total</th><th class="p-3 text-xs font-bold uppercase text-right">Ganancia (GP)</th><th class="p-3 text-xs font-bold uppercase text-center">Margen</th></tr>
             </thead>
             <tbody id="tabela-cierre-itens" class="divide-y divide-slate-700 text-sm text-gray-300"></tbody>
           </table>
         </div>
       </div>
 
-      <div id="tela-reportes" class="max-w-6xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700 section-tela hidden"><header class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"><h1 class="text-2xl font-bold text-white">Historial SIFEN</h1><div class="flex gap-2 w-full sm:w-auto"><button onclick="exportarTabelaParaCSV('tabela-historico', 'Historial_SIFEN')" class="flex-1 sm:flex-none bg-slate-700 hover:bg-slate-600 text-white transition font-bold text-sm px-4 py-2 rounded-lg border border-slate-600">📥 CSV</button></div></header><div class="flex gap-3 mb-6 bg-slate-700/50 p-4 rounded-xl border border-slate-700"><input type="text" id="busca" placeholder="Buscar por cliente o CDC..." class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-800 text-white focus:border-brand-accent outline-none placeholder-gray-500" onkeyup="buscarNotas()"></div><div class="border border-slate-700 rounded-xl overflow-x-auto shadow-sm"><table class="w-full text-left min-w-[800px] bg-slate-800"><thead class="bg-slate-900 text-gray-400"><tr><th class="p-4 text-xs font-bold uppercase">Fecha / CDC</th><th class="p-4 text-xs font-bold uppercase">Cliente</th><th class="p-4 text-xs font-bold uppercase text-right">Total (Gs)</th><th class="p-4 text-xs font-bold uppercase text-center">Metodo</th><th class="p-4 text-xs font-bold uppercase text-center">Acciones</th></tr></thead><tbody id="tabela-historico" class="divide-y divide-slate-700 text-sm text-gray-300"></tbody></table></div></div>
+      <div id="tela-reportes" class="max-w-6xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700 section-tela hidden">
+        <header class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-700 pb-4">
+          <h1 class="text-2xl font-bold text-white">Historial SIFEN</h1>
+          <div class="flex flex-wrap gap-2 w-full md:w-auto items-center bg-slate-900 p-2 rounded-xl border border-slate-700">
+             <input type="date" id="filtro-data-inicio-hist" class="bg-slate-800 border border-slate-600 text-white text-sm rounded-lg p-2 focus:border-brand-accent outline-none">
+             <span class="text-gray-400 text-sm font-bold">a</span>
+             <input type="date" id="filtro-data-fim-hist" class="bg-slate-800 border border-slate-600 text-white text-sm rounded-lg p-2 focus:border-brand-accent outline-none">
+             <button onclick="buscarNotas()" class="bg-brand-accent hover:bg-brand-accentHover text-white font-bold text-sm px-4 py-2 rounded-lg transition shadow-md">Filtrar</button>
+             <button onclick="exportarTabelaParaCSV('tabela-historico', 'Historial_SIFEN')" class="bg-slate-700 hover:bg-slate-600 text-white transition font-bold text-sm px-4 py-2 rounded-lg border border-slate-600 ml-2">📥 CSV</button>
+          </div>
+        </header>
+        <div class="flex gap-3 mb-6 bg-slate-700/50 p-4 rounded-xl border border-slate-700"><input type="text" id="busca" placeholder="Buscar por cliente o CDC..." class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-800 text-white focus:border-brand-accent outline-none placeholder-gray-500" onkeyup="if(event.key === 'Enter') buscarNotas()"></div>
+        <div class="border border-slate-700 rounded-xl overflow-x-auto shadow-sm"><table class="w-full text-left min-w-[800px] bg-slate-800"><thead class="bg-slate-900 text-gray-400"><tr><th class="p-4 text-xs font-bold uppercase">Fecha / CDC</th><th class="p-4 text-xs font-bold uppercase">Cliente</th><th class="p-4 text-xs font-bold uppercase text-right">Total (Gs)</th><th class="p-4 text-xs font-bold uppercase text-center">Metodo</th><th class="p-4 text-xs font-bold uppercase text-center">Acciones</th></tr></thead><tbody id="tabela-historico" class="divide-y divide-slate-700 text-sm text-gray-300"></tbody></table></div>
+      </div>
       
       <div id="tela-stocktake" class="max-w-6xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700 section-tela hidden"><header class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-700 pb-4"><div><h1 class="text-2xl font-bold text-white text-yellow-400">Auditoría (Stock Take)</h1><p class="text-sm text-gray-400">Ajuste el stock real contando físicamente los productos.</p></div><button type="button" onclick="salvarStockTake()" class="bg-yellow-500 text-slate-900 font-bold py-2.5 px-8 rounded-lg hover:bg-yellow-400 transition shadow-md whitespace-nowrap">💾 Guardar Ajustes</button></header><div class="flex flex-col sm:flex-row gap-4 mb-6 bg-slate-700/50 p-4 rounded-xl border border-slate-700 items-center shadow-sm"><div class="flex-1 w-full relative"><span class="absolute left-3 top-3 text-gray-400">🔎</span><input type="text" id="busca-st" placeholder="Filtrar producto para auditar..." class="w-full border border-slate-600 p-3 pl-10 rounded-lg text-sm focus:border-brand-accent outline-none bg-slate-800 text-white placeholder-gray-500" oninput="filtrarListaStockTake()"></div></div><div class="border border-slate-700 rounded-xl overflow-x-auto shadow-sm"><table class="w-full text-left bg-slate-800 min-w-[800px]"><thead class="bg-slate-900 text-gray-400"><tr><th class="p-4 text-xs font-bold uppercase">Producto</th><th class="p-4 text-xs font-bold uppercase text-center">Stock Sistema</th><th class="p-4 text-xs font-bold uppercase text-center w-48">Conteo Físico</th><th class="p-4 text-xs font-bold uppercase text-center w-32">Diferencia</th></tr></thead><tbody id="tabela-stocktake" class="divide-y divide-slate-700 text-sm text-gray-300"></tbody></table></div></div>
       <div id="tela-stocktakereport" class="max-w-5xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-700 section-tela hidden"><header class="mb-6 border-b border-slate-700 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"><div><h1 class="text-2xl font-bold text-white">Reportes de Stock Take</h1><p class="text-sm text-gray-400">Historial de auditorías y su impacto financiero.</p></div><button onclick="exportarTabelaParaCSV('tabela-stocktakereport', 'Reporte_Stock_Take')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition border border-slate-600 whitespace-nowrap">📥 CSV</button></header><div class="border border-slate-700 rounded-xl overflow-x-auto shadow-sm"><table class="w-full text-left bg-slate-800 min-w-[600px]"><thead class="bg-slate-900 text-gray-400"><tr><th class="p-4 text-xs font-bold uppercase">ID / Fecha</th><th class="p-4 text-xs font-bold uppercase text-center">Ítems Ajustados</th><th class="p-4 text-xs font-bold uppercase text-right">Impacto Financiero</th><th class="p-4 text-xs font-bold uppercase text-center">Acción</th></tr></thead><tbody id="tabela-stocktakereport" class="divide-y divide-slate-700 text-sm text-gray-300"></tbody></table></div></div>
@@ -244,21 +248,30 @@
     let empresaAtualId = null; let rolUsuario = null; let productosGlobais = []; let productosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]');
     const getSaaSHeaders = (extraHeaders = {}) => { return { 'Content-Type': 'application/json', 'X-Empresa-ID': empresaAtualId ? empresaAtualId.toString() : "1", ...extraHeaders }; };
     
-    // --- GERAÇÃO DE RELATÓRIO PDF ESTILIZADO (NUBEPY BRAND) ---
+    document.addEventListener("DOMContentLoaded", () => {
+        const dataHoje = new Date().toISOString().split('T')[0];
+        
+        const inCierre = document.getElementById('filtro-data-inicio-cierre');
+        const outCierre = document.getElementById('filtro-data-fim-cierre');
+        if(inCierre && !inCierre.value) inCierre.value = dataHoje;
+        if(outCierre && !outCierre.value) outCierre.value = dataHoje;
+    });
+
     function imprimirReporteCierre() {
         const vendas = document.getElementById('cierre-vendas').innerText;
         const gp = document.getElementById('cierre-gp').innerText;
         const sangrias = document.getElementById('cierre-sangrias').innerText;
         const notas = document.getElementById('cierre-notas').innerText;
-        const dataHoje = new Date().toLocaleDateString('es-PY');
+        
+        const dataIni = document.getElementById('filtro-data-inicio-cierre').value;
+        const dataFim = document.getElementById('filtro-data-fim-cierre').value;
+        let periodoStr = (dataIni === dataFim) ? `Día: ${dataIni}` : `Del ${dataIni} al ${dataFim}`;
+        
         const nomeLoja = document.getElementById('sidebar-nome-loja').innerText;
-
         const linhasTabela = document.getElementById('tabela-cierre-itens').innerHTML;
 
         let html = `
-        <html>
-        <head>
-            <title>Reporte de Cierre - NubePY</title>
+        <html><head><title>Reporte de Ventas - NubePY</title>
             <style>
                 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 30px; background: white; }
                 .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 4px solid #0d9488; padding-bottom: 15px; margin-bottom: 30px; }
@@ -280,49 +293,25 @@
                 th { background: #0f172a; color: white; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
                 td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; color: #334155; }
                 tr:nth-child(even) { background-color: #f8fafc; }
-                .text-right { text-align: right; }
-                .text-center { text-align: center; }
-                .text-green { color: #16a34a; font-weight: bold; }
-                .text-brand { color: #0d9488; font-weight: bold; }
+                .text-right { text-align: right; } .text-center { text-align: center; }
                 .footer { margin-top: 50px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px; }
                 @media print { body { -webkit-print-color-adjust: exact; padding: 0; } .card { break-inside: avoid; } }
             </style>
-        </head>
-        <body>
+        </head><body>
             <div class="header">
                 <div class="logo">NubePY <span>| Reportes</span></div>
-                <div class="title-box">
-                    <h2>Cierre de Caja Oficial</h2>
-                    <p>Comercio: <b>${nomeLoja}</b></p>
-                    <p>Fecha de Cierre: <b>${dataHoje}</b></p>
-                </div>
+                <div class="title-box"><h2>Reporte de Ventas & Cierre</h2><p>Comercio: <b>${nomeLoja}</b></p><p>Periodo: <b>${periodoStr}</b></p></div>
             </div>
-            
             <div class="summary-grid">
-                <div class="card"><small>Ventas Totales</small><b>Gs. ${vendas}</b></div>
+                <div class="card"><small>Ingresos Totales</small><b>Gs. ${vendas}</b></div>
                 <div class="card success"><small>Ganancia Neta (GP)</small><b>Gs. ${gp}</b></div>
                 <div class="card alert"><small>Retiros (Sangrías)</small><b>Gs. ${sangrias}</b></div>
                 <div class="card"><small>Notas Emitidas</small><b>${notas}</b></div>
             </div>
-
             <h3>Detalle de Rendimiento por Producto</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Producto / SKU</th>
-                        <th class="text-center">Cant.</th>
-                        <th class="text-right">Precio Venta</th>
-                        <th class="text-right">Ingreso Total</th>
-                        <th class="text-right">Ganancia (GP)</th>
-                        <th class="text-center">Margen %</th>
-                    </tr>
-                </thead>
-                <tbody>${linhasTabela}</tbody>
-            </table>
-            
+            <table><thead><tr><th>Producto / SKU</th><th class="text-center">Cant.</th><th class="text-right">Precio Venta</th><th class="text-right">Ingreso Total</th><th class="text-right">Ganancia (GP)</th><th class="text-center">Margen %</th></tr></thead><tbody>${linhasTabela}</tbody></table>
             <div class="footer">Generado por NubePY - El Sistema SaaS de Facturación SIFEN para Paraguay.<br>Uso interno gerencial. Valores sujetos a auditoría.</div>
-        </body>
-        </html>`;
+        </body></html>`;
 
         const janela = window.open('', '', 'width=900,height=700');
         janela.document.write(html);
@@ -331,43 +320,7 @@
         setTimeout(() => { janela.print(); }, 500);
     }
     
-    function exportarTabelaParaCSV(idTbody, nomeBase) {
-        const tbody = document.getElementById(idTbody);
-        if(!tbody) return;
-        const tabela = tbody.closest('table');
-        if(!tabela) return;
-
-        let csv = [];
-        const linhas = tabela.querySelectorAll('tr');
-        
-        for (let i = 0; i < linhas.length; i++) {
-            let linha = [];
-            const cols = linhas[i].querySelectorAll('td, th');
-            for (let j = 0; j < cols.length; j++) {
-                let texto = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""');
-                linha.push('"' + texto.trim() + '"');
-            }
-            csv.push(linha.join(','));
-        }
-        
-        const dataHoje = new Date().toISOString().split('T')[0];
-        const nomeArquivo = `${nomeBase}_${dataHoje}.csv`;
-        
-        const csvString = csv.join('\n');
-        const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
-        
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", nomeArquivo);
-        link.style.visibility = 'hidden';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast("✅ Descarga de CSV completada.");
-    }
-    
+    function exportarTabelaParaCSV(idTbody, nomeBase) { const tbody = document.getElementById(idTbody); if(!tbody) return; const tabela = tbody.closest('table'); if(!tabela) return; let csv = []; const linhas = tabela.querySelectorAll('tr'); for (let i = 0; i < linhas.length; i++) { let linha = []; const cols = linhas[i].querySelectorAll('td, th'); for (let j = 0; j < cols.length; j++) { let texto = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""'); linha.push('"' + texto.trim() + '"'); } csv.push(linha.join(',')); } const dataHoje = new Date().toISOString().split('T')[0]; const nomeArquivo = `${nomeBase}_${dataHoje}.csv`; const csvString = csv.join('\n'); const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", nomeArquivo); link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast("✅ Descarga de CSV completada."); }
     function abrirModalLegal() { document.getElementById('modal-legal').classList.remove('hidden'); document.getElementById('modal-legal').classList.add('flex'); }
     function fecharModalLegal() { document.getElementById('modal-legal').classList.add('hidden'); document.getElementById('modal-legal').classList.remove('flex'); }
     function fecharModalAudit() { document.getElementById('modal-audit-details').classList.add('hidden'); document.getElementById('modal-audit-details').classList.remove('flex'); }
@@ -381,7 +334,6 @@
         if(elementoBotao !== null) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); elementoBotao.classList.add('menu-ativo'); } 
         if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); } 
         const sidebar = document.getElementById('sidebar'); const mobileHeader = document.getElementById('mobile-header'); 
-        if (telaId === 'cierre' || telaId === 'reportes') { sidebar.style.display = ''; mobileHeader.style.display = ''; } else { sidebar.style.display = ''; mobileHeader.style.display = ''; } 
         
         if(telaId === 'inventario' || telaId === 'restock' || telaId === 'pos') { carregarEstoque(); } 
         if(telaId === 'stocktake') { carregarStockTake(); }
@@ -407,7 +359,7 @@
     function actualizarTroco() { const metodo = document.getElementById('checkout-metodo').value; const boxVuelto = document.getElementById('box-vuelto'); if(metodo === "Efectivo") { boxVuelto.classList.remove('hidden'); const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0; let troco = recebido - totalDaVendaAtual; if(troco < 0) troco = 0; document.getElementById('checkout-vuelto').innerText = troco.toLocaleString('es-PY'); } else { boxVuelto.classList.add('hidden'); } }
     async function confirmarVenta() { const metodoPago = document.getElementById('checkout-metodo').value; if(metodoPago === "Efectivo") { const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0; if(recebido > 0 && recebido < totalDaVendaAtual) { return showToast("⚠️ El monto recibido es menor al total.", "error"); } } const btn = document.getElementById('btn-confirmar-venta'); btn.innerHTML = '⏳ Procesando...'; btn.disabled = true; const payloadNota = { ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: totalDaVendaAtual, itens: productosCaixa, metodo_pago: metodoPago }; if (!navigator.onLine) { filaContingencia.push(payloadNota); localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); fecharCheckout(); document.getElementById('resultado').classList.remove('hidden'); document.getElementById('texto-resultado').innerText = "🛜 Guardado Localmente"; document.getElementById('qrcode-img').src = "https://cdn-icons-png.flaticon.com/512/2907/2907150.png"; document.getElementById('btn-pdf').style.display = "none"; document.getElementById('btn-emitir').classList.add('hidden'); productosCaixa = []; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); actualizarStatusConexao(); btn.innerHTML = '✔️ Emitir Factura'; btn.disabled = false; showToast("🔴 Sin internet. Factura guardada en cola de contingencia.", "warning"); return; } try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payloadNota) }); if (!res.ok) { const err = await res.json(); showToast("❌ " + (err.detail || "Error en el servidor."), "error"); btn.disabled = false; btn.innerHTML = '✔️ Emitir Factura'; return; } const dados = await res.json(); btn.innerHTML = '✔️ Emitir Factura'; btn.disabled = false; fecharCheckout(); document.getElementById('resultado').classList.remove('hidden'); document.getElementById('texto-resultado').innerText = "✅ ¡Factura Aprobada!"; document.getElementById('btn-pdf').style.display = "inline-flex"; const linkImagemQR = `https://quickchart.io/qr?text=${encodeURIComponent(dados.link_qrcode)}&size=150`; document.getElementById('qrcode-img').src = linkImagemQR; document.getElementById('btn-pdf').href = dados.link_pdf; document.getElementById('btn-emitir').classList.add('hidden'); productosCaixa = []; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); showToast(dados.mensaje, "success"); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); carregarEstoque(); } catch(e) { btn.disabled = false; btn.innerHTML = '✔️ Emitir Factura'; showToast("❌ Error de red.", "error"); } }
     function novaVenda() { document.getElementById('resultado').classList.add('hidden'); document.getElementById('btn-emitir').classList.remove('hidden'); document.getElementById('cliente').value = ''; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); document.getElementById('scanner-barras').focus(); }
-    async function sincronizarFila() { if (filaContingencia.length === 0 || !navigator.onLine) return; showToast(`Sincronizando ${filaContingencia.length} facturas pendientes...`, "info"); let pendentes = [...filaContingencia]; filaContingencia = []; localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); let sucessoCount = 0; for (let nota of pendentes) { try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(nota) }); if (res.ok) { sucessoCount++; } else { filaContingencia.push(nota); } } catch(e) { filaContingencia.push(nota); } } localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); atualizarStatusConexao(); if(sucessoCount > 0) showToast(`✅ ${sucessoCount} facturas sincronizadas con SIFEN.`, "success"); }
+    async function sincronizarFila() { if (filaContingencia.length === 0 || !navigator.onLine) return; showToast(`Sincronizando ${filaContingencia.length} facturas pendientes...`, "info"); let pendentes = [...filaContingencia]; filaContingencia = []; localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); let sucessoCount = 0; for (let nota of pendentes) { try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(nota) }); if (res.ok) { sucessoCount++; } else { filaContingencia.push(nota); } } catch(e) { filaContingencia.push(nota); } } localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); actualizarStatusConexao(); if(sucessoCount > 0) showToast(`✅ ${sucessoCount} facturas sincronizadas con SIFEN.`, "success"); }
     function abrirCamera(idCampo) { campoDestinoScanner = idCampo; const modal = document.getElementById('camera-modal'); modal.classList.remove('hidden'); modal.classList.add('flex'); if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); } html5QrCode.start( { facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, () => {} ).catch(err => { showToast("Error al activar cámara.", "error"); fecharCamera(); }); } function onScanSucesso(codigoDecodificado) { fecharCamera(); document.getElementById(campoDestinoScanner).value = codigoDecodificado; if (campoDestinoScanner === 'scanner-barras') { verificarScanner({ key: 'Enter', preventDefault: function(){} }); } else if (campoDestinoScanner === 'novo-cod') { document.getElementById('novo-desc').focus(); } else if (campoDestinoScanner === 'restock-cod') { buscarParaRestock({ key: 'Enter', preventDefault: function(){} }); } } function fecharCamera() { const modal = document.getElementById('camera-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); if (html5QrCode) { try { html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(e => { html5QrCode = null; }); } catch (err) { html5QrCode = null; } } }
     let isScanning = false; function filtrarPOS() { const input = document.getElementById('scanner-barras').value.toLowerCase(); const dropdown = document.getElementById('pos-dropdown'); dropdown.innerHTML = ''; if (input.length < 2) { dropdown.classList.add('hidden'); return; } const resultados = productosGlobais.filter(p => p.descricao.toLowerCase().includes(input) || p.codigo_barras.toLowerCase().includes(input)).slice(0, 10); if (resultados.length > 0) { dropdown.classList.remove('hidden'); resultados.forEach(p => { const div = document.createElement('div'); div.className = 'p-4 hover:bg-slate-700/50 cursor-pointer border-b border-slate-700 flex justify-between items-center transition text-gray-200'; div.innerHTML = `<div><span class="font-bold text-sm text-white block">${p.descricao}</span><span class="text-xs text-gray-400 font-mono">${p.codigo_barras}</span></div><span class="text-sm text-brand-accent font-bold">Gs. ${p.preco_venda.toLocaleString('es-PY')}</span>`; div.onclick = () => seleccionarProductoPOS(p); dropdown.appendChild(div); }); } else { dropdown.classList.add('hidden'); } }
     function seleccionarProductoPOS(prod) { document.getElementById('pos-dropdown').classList.add('hidden'); document.getElementById('scanner-barras').value = ''; const indexExistente = productosCaixa.findIndex(p => p.codigo_barras === prod.codigo_barras); if (indexExistente !== -1) { productosCaixa[indexExistente].quantidade += 1; } else { productosCaixa.push({ codigo_barras: prod.codigo_barras, descricao: prod.descricao, quantidade: 1, preco_unitario: Number(prod.preco_venda) || 0 }); } actualizarInterfaceCaixa(); showToast(`✅ ${prod.descricao} agregado.`, 'success'); document.getElementById('scanner-barras').focus(); }
@@ -426,15 +378,98 @@
     function renderizarTabelaEstoque(lista) { const tbody = document.getElementById('tabela-estoque'); const emptyState = document.getElementById('estoque-vazio'); tbody.innerHTML = ''; if (lista.length === 0) { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } else { tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); lista.forEach(p => { let corStock = p.quantidade > 5 ? 'text-green-400 font-bold' : 'text-red-400 font-bold'; let prov = p.codigo_proveedor ? `<span class="bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded text-xs border border-blue-800/50">${p.codigo_proveedor}</span>` : `<span class="text-gray-600">-</span>`; tbody.innerHTML += `<tr class="hover:bg-slate-700/50 transition border-b border-slate-700"><td class="p-4"><div class="font-bold text-white text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td><td class="p-4"><span class="bg-slate-800 text-brand-accent border border-brand-accent/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td><td class="p-4">${prov}</td><td class="p-4 text-right"><div class="font-bold text-white text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-400 mt-1">Costo: Gs. ${p.preco_custo.toLocaleString('es-PY')}</div></td><td class="p-4 text-center ${corStock} text-lg">${p.quantidade}</td><td class="p-4 text-center flex justify-center gap-2"><button type="button" onclick="deletarProduto('${p.codigo_barras}')" class="text-red-400 bg-red-900/20 hover:bg-red-900/40 p-2 rounded transition border border-red-900/30" title="Eliminar">🗑️</button></td></tr>`; }); } }
     async function carregarEstoque() { try { const res = await fetch('/listar-produtos', { headers: getSaaSHeaders() }); productosGlobais = await res.json(); filtrarEstoque(); if(document.getElementById('tela-stocktake') && !document.getElementById('tela-stocktake').classList.contains('hidden')) { renderTabelaStockTake(productosGlobais); } } catch(e) { console.error(e); } }
     function calcularLucro() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const venta = parseFloat(document.getElementById('novo-preco').value) || 0; const divInfo = document.getElementById('info-lucro'); if (venta > 0 && costo >= 0) { const lucro = venta - costo; const margem = (lucro / venta) * 100; if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}%`; divInfo.className = "h-4 mt-1 text-xs font-bold text-green-400"; } else if (lucro === 0) { divInfo.innerHTML = `Sin margen`; divInfo.className = "h-4 mt-1 text-xs font-bold text-yellow-400"; } else { divInfo.innerHTML = `Pérdida`; divInfo.className = "h-4 mt-1 text-xs font-bold text-red-400"; } } else { divInfo.innerHTML = ""; } }
-    async function cadastrarProduto() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const precio = parseFloat(document.getElementById('novo-preco').value) || 0; const cantidad = parseInt(document.getElementById('novo-qtd').value) || 0; const datos = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: costo, preco_venda: precio, cantidad: cantidad, codigo_proveedor: document.getElementById('novo-prov').value.trim() }; if(!datos.codigo_barras || !datos.descricao || precio === 0) { return showToast("Complete Código, Descripción y Precio.", "info"); } try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(datos) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; toggleFormProducto(); carregarEstoque(); showToast("✅ Producto guardado."); } else { showToast("❌ El código ya existe.", "error"); } } catch (e) { showToast("❌ Error al guardar.", "error"); } }
+    async function cadastrarProduto() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const precio = parseFloat(document.getElementById('novo-preco').value) || 0; const cantidad = parseInt(document.getElementById('novo-qtd').value) || 0; const datos = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: document.getElementById('novo-subcat').value.trim() || "-", preco_custo: costo, preco_venda: precio, quantidade: cantidad, codigo_proveedor: document.getElementById('novo-prov').value.trim() }; if(!datos.codigo_barras || !datos.descricao || precio === 0) { return showToast("Complete Código, Descripción y Precio.", "info"); } try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(datos) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-subcat', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => document.getElementById(id).value = ''); document.getElementById('info-lucro').innerHTML = ''; toggleFormProducto(); carregarEstoque(); showToast("✅ Producto guardado."); } else { showToast("❌ El código ya existe.", "error"); } } catch (e) { showToast("❌ Error al guardar.", "error"); } }
     async function deletarProduto(codigo) { if(confirm("¿Seguro que desea eliminar?")) { try { await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE', headers: getSaaSHeaders() }); carregarEstoque(); showToast("✅ Eliminado."); } catch(e) { showToast("❌ Error.", "error"); } } }
     
-    async function carregarDashboard() { try { const res = await fetch('/dados-dashboard', { headers: getSaaSHeaders() }); const dados = await res.json(); document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText = dados.total_notas; const nomes = dados.top_produtos.map(p => p.nome); const quantidades = dados.top_produtos.map(p => p.quantidade); if (nomes.length === 0) { nomes.push("Sin ventas aún"); quantidades.push(0); } const ctx = document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) graficoAtual.destroy(); graficoAtual = new Chart(ctx, { type: 'bar', data: { labels: nomes, datasets: [{ label: 'Unidades', data: quantidades, backgroundColor: '#0d9488', borderColor: '#0f766e', borderWidth: 1, borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0, color: '#94a3b8' }, grid: { color: '#334155' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8' } } } } }); } catch (error) { console.error("Error Dashboard"); } }
+    // --- LÓGICA ATUALIZADA PARA REPORTES COM DATAS ---
+    async function carregarCierreCaja() { 
+        const inicio = document.getElementById('filtro-data-inicio-cierre').value;
+        const fim = document.getElementById('filtro-data-fim-cierre').value;
+        let url = '/cierre-caja';
+        if(inicio && fim) url += `?inicio=${inicio}&fim=${fim}`;
+
+        try { 
+            const res = await fetch(url, { headers: getSaaSHeaders() }); 
+            if(res.ok) { 
+                const dados = await res.json(); 
+                document.getElementById('cierre-vendas').innerText = dados.vendas_hoje.toLocaleString('es-PY'); 
+                document.getElementById('cierre-gp').innerText = dados.lucro_bruto.toLocaleString('es-PY'); 
+                document.getElementById('cierre-notas').innerText = dados.notas_emitidas; 
+                document.getElementById('cierre-sangrias').innerText = dados.total_sangrias.toLocaleString('es-PY'); 
+                
+                const tbody = document.getElementById('tabela-cierre-itens'); 
+                tbody.innerHTML = ''; 
+                
+                if(dados.detalhes_itens.length === 0) { 
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500 font-medium">No hay ventas en este periodo.</td></tr>'; 
+                } else { 
+                    dados.detalhes_itens.forEach(item => { 
+                        let corMargem = item.margem > 20 ? 'text-green-400' : (item.margem > 0 ? 'text-yellow-400' : 'text-red-400');
+                        
+                        tbody.innerHTML += `
+                        <tr class="hover:bg-slate-700/50 transition border-b border-slate-700">
+                            <td class="p-3">
+                                <div class="font-bold text-white text-sm">${item.descricao}</div>
+                                <div class="text-[10px] text-gray-500 font-mono">${item.codigo_barras || '-'}</div>
+                            </td>
+                            <td class="p-3 text-center">
+                                <span class="bg-slate-800 text-brand-accent px-2 py-1 rounded-md font-bold border border-brand-accent/20">${item.vendidos}</span>
+                            </td>
+                            <td class="p-3 text-right">
+                                <div class="text-white text-sm">Gs. ${item.preco_venda.toLocaleString('es-PY')}</div>
+                                <div class="text-[10px] text-gray-500">Costo: Gs. ${item.custo_unitario ? item.custo_unitario.toLocaleString('es-PY') : '0'}</div>
+                            </td>
+                            <td class="p-3 text-right font-bold text-white text-sm">Gs. ${item.receita_total.toLocaleString('es-PY')}</td>
+                            <td class="p-3 text-right font-bold text-green-400 text-sm">Gs. ${item.lucro_total.toLocaleString('es-PY')}</td>
+                            <td class="p-3 text-center font-bold ${corMargem} text-sm bg-slate-800/30">${item.margem}%</td>
+                        </tr>`; 
+                    }); 
+                } 
+            } 
+        } catch(e) { showToast("❌ Error al cargar reporte.", "error"); } 
+    }
+    
+    async function carregarHistorico(termoBusca = "") { 
+        const inicio = document.getElementById('filtro-data-inicio-hist')?.value || '';
+        const fim = document.getElementById('filtro-data-fim-hist')?.value || '';
+        
+        let url = `/listar-notas?busca=${encodeURIComponent(termoBusca)}`;
+        if(inicio && fim) url += `&inicio=${inicio}&fim=${fim}`;
+
+        try { 
+            const res = await fetch(url, { headers: getSaaSHeaders() }); 
+            const datos = await res.json(); 
+            const tbody = document.getElementById('tabela-historico'); 
+            tbody.innerHTML = ''; 
+            
+            if(datos.historico.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-500 font-medium">No se encontraron facturas.</td></tr>'; 
+                 return;
+            }
+
+            datos.historico.forEach(nota => { 
+                const fechaFormatada = new Date(nota.data_emissao).toLocaleString('es-PY', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}); 
+                let btns = `<span class="text-xs text-gray-500">Sin archivo</span>`; 
+                if(nota.link_pdf && nota.link_pdf !== "") { 
+                    btns = `<div class="flex gap-2 justify-center"><a href="${nota.link_pdf}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1.5 rounded-lg border border-slate-600 text-xs flex items-center shadow-sm transition">📄 PDF</a><a href="https://ekuatia.set.gov.py/consultas/qr?nId=${nota.cdc}" target="_blank" class="bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white font-bold px-3 py-1.5 rounded-lg border border-brand-accent/30 text-xs flex items-center shadow-sm transition">🔗 QR</a></div>`; 
+                } 
+                tbody.innerHTML += `
+                <tr class="hover:bg-slate-700/50 transition border-b border-slate-700">
+                    <td class="p-4"><div class="text-xs font-bold text-gray-400 mb-1">${fechaFormatada}</div><div class="text-[10px] text-gray-500 font-mono break-all">${nota.cdc.substring(0,30)}...</div></td>
+                    <td class="p-4 font-bold text-white text-sm">${nota.nome_cliente}</td>
+                    <td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td>
+                    <td class="p-4 text-center font-bold text-gray-400 text-xs">${nota.metodo_pago || 'Efectivo'}</td>
+                    <td class="p-4 text-center">${btns}</td>
+                </tr>`; 
+            }); 
+        } catch(e) { console.error(e); } 
+    }
+    function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
+
+    async function carregarDashboard() { try { const res = await fetch('/dados-dashboard', { headers: getSaaSHeaders() }); const dados = await res.json(); document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText = dados.total_notas; const nomes = dados.top_produtos.map(p => p.nome); const quantidades = dados.top_produtos.map(p => p.quantidade); if (nomes.length === 0) { nomes.push("Sin ventas hoy"); quantidades.push(0); } const ctx = document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) graficoAtual.destroy(); graficoAtual = new Chart(ctx, { type: 'bar', data: { labels: nomes, datasets: [{ label: 'Unidades', data: quantidades, backgroundColor: '#0d9488', borderColor: '#0f766e', borderWidth: 1, borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0, color: '#94a3b8' }, grid: { color: '#334155' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8' } } } } }); } catch (error) { console.error("Error Dashboard"); } }
     async function carregarCategorias() { try { const res = await fetch('/listar-categorias', { headers: getSaaSHeaders() }); const categorias = await res.json(); const selectForm = document.getElementById('novo-cat'); const selectFiltro = document.getElementById('filtro-cat-inventario'); if(selectForm) { selectForm.innerHTML = ''; categorias.forEach(c => { selectForm.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); } if(selectFiltro) { selectFiltro.innerHTML = '<option value="">📁 Todas las Categorías</option>'; categorias.forEach(c => { selectFiltro.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); } const tbody = document.getElementById('tabela-categorias'); if(tbody) { tbody.innerHTML = ''; categorias.forEach(c => { let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-500 font-medium bg-slate-700 px-2 py-1 rounded border border-slate-600">Fijo</span>` : `<button type="button" onclick="deletarCategoria(${c.id})" class="text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/40 px-3 py-1 rounded text-sm transition border border-red-900/30">🗑️</button>`; tbody.innerHTML += `<tr class="hover:bg-slate-700/50 transition"><td class="p-4 font-bold text-white">${c.nome}</td><td class="p-4 text-center">${btnDelete}</td></tr>`; }); } } catch(e) { console.error(e); } }
     async function adicionarCategoria() { const nome = document.getElementById('nova-cat-nome').value.trim(); if(!nome) return showToast("Escriba el nombre.", "info"); try { const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({nome: nome}) }); if(res.ok) { document.getElementById('nova-cat-nome').value = ''; carregarCategorias(); showToast("✅ Categoría creada."); } else { showToast("❌ Ya existe.", "error"); } } catch(e) { showToast("❌ Error.", "error"); } }
     async function deletarCategoria(id) { if(confirm("¿Seguro que desea eliminar?")) { try { await fetch(`/deletar-categoria/${id}`, {method: 'DELETE', headers: getSaaSHeaders() }); carregarCategorias(); showToast("✅ Eliminada."); } catch(e) { showToast("❌ Error.", "error"); } } }
-    async function carregarHistorico(termoBusca = "") { try { const res = await fetch(`/listar-notas?busca=${termoBusca}`, { headers: getSaaSHeaders() }); const datos = await res.json(); const tbody = document.getElementById('tabela-historico'); tbody.innerHTML = ''; datos.historico.forEach(nota => { const fechaFormatada = new Date(nota.data_emissao).toLocaleString('es-PY', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}); let btns = `<span class="text-xs text-gray-500">Sin archivo</span>`; if(nota.link_pdf && nota.link_pdf !== "") { btns = `<div class="flex gap-2 justify-center"><a href="${nota.link_pdf}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1.5 rounded-lg border border-slate-600 text-xs flex items-center shadow-sm transition">📄 PDF</a><a href="https://ekuatia.set.gov.py/consultas/qr?nId=${nota.cdc}" target="_blank" class="bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white font-bold px-3 py-1.5 rounded-lg border border-brand-accent/30 text-xs flex items-center shadow-sm transition">🔗 QR SIFEN</a></div>`; } tbody.innerHTML += `<tr class="hover:bg-slate-700/50 transition border-b border-slate-700"><td class="p-4"><div class="text-xs font-bold text-gray-400 mb-1">${fechaFormatada}</div><div class="text-[10px] text-gray-500 font-mono break-all">${nota.cdc.substring(0,30)}...</div></td><td class="p-4 font-bold text-white text-sm">${nota.nome_cliente}</td><td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td><td class="p-4 text-center font-bold text-gray-400 text-xs">${nota.metodo_pago || 'Efectivo'}</td><td class="p-4 text-center">${btns}</td></tr>`; }); } catch(e) { console.error(e); } }
-    function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
     
     async function carregarConfiguracao() { try { const res = await fetch('/obter-configuracao', { headers: getSaaSHeaders() }); const dados = await res.json(); if(dados) { document.getElementById('conf-nome').value = dados.nome_empresa || ''; document.getElementById('conf-ruc').value = dados.ruc || ''; document.getElementById('conf-endereco').value = dados.endereco || ''; document.getElementById('conf-senha-cert').value = dados.senha_certificado || ''; if (document.getElementById('conf-csc')) { document.getElementById('conf-csc').value = dados.csc || ''; } document.getElementById('ruc').value = dados.ruc || 'Falta RUC'; document.getElementById('conf-ambiente').value = dados.ambiente_sifen || 'testes'; document.getElementById('sidebar-nome-loja').innerText = dados.nome_empresa || 'NubePY App'; const status = document.getElementById('status-cert'); if(dados.caminho_certificado) { status.classList.remove('hidden'); status.classList.add('bg-green-900/30', 'text-green-400', 'border-green-800/50'); status.innerHTML = `✅ Certificado Activo: <b>${dados.caminho_certificado.split('/').pop()}</b>`; } } } catch(e) { console.error(e); } }
     async function alterarAmbienteSifen() { const ambiente = document.getElementById('conf-ambiente').value; try { const res = await fetch('/alternar-ambiente', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({ambiente: ambiente}) }); if(res.ok) { showToast(`✅ Ambiente cambiado a ${ambiente.toUpperCase()}`); } else { showToast("❌ Error al cambiar ambiente.", "error"); } } catch(e) { showToast("❌ Error de red.", "error"); } }
