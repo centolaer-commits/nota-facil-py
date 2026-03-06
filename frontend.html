@@ -59,6 +59,12 @@
       <div class="overflow-y-auto pr-4 space-y-4 text-sm text-gray-300 scrollbar-thin scrollbar-thumb-slate-600 pb-4">
           <p class="font-extrabold text-white text-center mb-6 text-base">ACUERDO MARCO DE TÉRMINOS DE SERVICIO, PRIVACIDAD Y SUSCRIPCIÓN SAAS – NubePY</p>
           <p>El presente documento establece las condiciones legales, operativas y comerciales que rigen el uso del sistema de Planificación de Recursos Empresariales (ERP) y Facturación Electrónica provisto por NubePY.</p>
+          <h4 class="font-bold text-brand-accent mt-8 border-b border-slate-700 pb-2">PARTE I: TÉRMINOS Y CONDICIONES DE USO (ToS)</h4>
+          <p><strong class="text-white">1. Responsabilidad Fiscal y Emisión de Comprobantes Electrónicos (SIFEN)</strong></p>
+          <p><strong>1.1. Naturaleza del Servicio:</strong> NubePY actúa de manera exclusiva como un proveedor de infraestructura tecnológica e intermediario de software (SaaS). NubePY NO presta servicios de asesoría contable, fiscal o tributaria.</p>
+          <p><strong>1.2. Responsabilidad sobre la Información:</strong> El USUARIO declara y acepta que es el único y exclusivo responsable de la veracidad de todos los datos ingresados en la plataforma.</p>
+          <p><strong>1.3. Exención de Sanciones:</strong> NubePY no será responsable, bajo ninguna circunstancia, por multas, recargos, auditorías o bloqueos de RUC.</p>
+          <p><strong>1.4. Custodia del Certificado Digital:</strong> El USUARIO es el único responsable de la adquisición y uso de su Certificado Cualificado de Firma Electrónica (.p12).</p>
       </div>
       <div class="pt-4 mt-4 border-t border-slate-700 shrink-0 text-center">
         <button type="button" onclick="fecharModalLegal()" class="bg-brand-accent text-white font-bold py-3 px-8 rounded-xl hover:bg-brand-accentHover transition shadow-md w-full md:w-auto">Cerrar Documento</button>
@@ -113,7 +119,17 @@
           <div class="space-y-4">
             <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Nombre Comercial</label><input type="text" id="sa-nome" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white focus:border-brand-accent outline-none"></div>
             <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">RUC</label><input type="text" id="sa-ruc" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white font-mono focus:border-brand-accent outline-none"></div>
-            <div class="grid grid-cols-2 gap-3"><div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Plan</label><select id="sa-plano" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white outline-none"><option value="Básico">Básico</option><option value="Pro">Pro</option><option value="Premium">Premium</option></select></div><div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Mensualidad (Gs)</label><input type="number" id="sa-valor" placeholder="150000" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white outline-none"></div></div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Plan</label>
+                <select id="sa-plano" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white outline-none">
+                  <option value="Essential">Essential (150.000 Gs)</option>
+                  <option value="Growth">Growth (350.000 Gs)</option>
+                  <option value="Premium">Premium (750.000 Gs)</option>
+                </select>
+              </div>
+              <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Mensualidad (Gs)</label><input type="number" id="sa-valor" placeholder="150000" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white outline-none"></div>
+            </div>
             <div class="pt-4 border-t border-slate-700"><label class="text-xs font-bold text-brand-accent uppercase block mb-1">Contraseña Administrador</label><input type="text" id="sa-pass-admin" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-slate-700 font-bold text-white focus:border-brand-accent outline-none mb-3"><label class="text-xs font-bold text-brand-accent uppercase block mb-1">Contraseña Cajero</label><input type="text" id="sa-pass-caja" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-slate-700 font-bold text-white focus:border-brand-accent outline-none"></div>
             <button onclick="criarEmpresaSaaS()" class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl hover:bg-brand-accentHover transition shadow-md mt-2">Crear Instancia y Facturar</button>
           </div>
@@ -135,6 +151,7 @@
     <div id="sidebar" class="absolute md:relative inset-y-0 left-0 w-64 bg-slate-800 border-r border-slate-700 shadow-xl flex flex-col justify-between z-30 transform -translate-x-full md:translate-x-0 transition duration-300 ease-in-out h-full font-medium text-gray-300">
       <div class="overflow-y-auto">
         <div class="p-6 flex flex-col justify-center border-b border-slate-700 hidden md:flex bg-slate-800/50"><h2 class="text-xl font-extrabold text-white leading-none">NubePY</h2><p class="text-[10px] text-brand-accent uppercase tracking-wider font-bold mt-1">Facturación SIFEN</p><div class="mt-4 bg-slate-700/50 border border-slate-600 p-2 rounded-lg text-xs text-center shadow-sm"><p class="font-bold text-white truncate" id="sidebar-nome-loja">Cargando...</p><p class="text-gray-400" id="sidebar-rol-loja">Admin</p></div></div>
+        
         <nav class="mt-4 flex flex-col p-2 space-y-1">
           <button type="button" onclick="mudarTela('pos', this)" class="nav-btn menu-ativo border-l-4 border-transparent p-3 rounded-r-lg text-left hover:bg-slate-700/50 transition flex items-center text-gray-200 hover:text-white"><span class="mr-3 text-lg">🛒</span> Punto de Venta</button>
           
@@ -144,7 +161,7 @@
               <button type="button" onclick="mudarTela('inventario', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-gray-300 hover:text-white">Productos</button>
               <button type="button" onclick="mudarTela('restock', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-brand-accent font-bold hover:text-brand-accentHover">Entrada de Stock</button>
               <button type="button" onclick="mudarTela('categorias', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-gray-300 hover:text-white">Categorías</button>
-              <button type="button" onclick="mudarTela('stocktake', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-yellow-400 font-bold hover:text-yellow-300">Auditoría (Stock Take)</button>
+              <button id="btn-nav-stocktake" type="button" onclick="mudarTela('stocktake', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-yellow-400 font-bold hover:text-yellow-300">Auditoría (Stock Take)</button>
             </div>
           </div>
           
@@ -155,7 +172,7 @@
             <div id="menu-rep" class="hidden flex-col pl-4 mt-1 space-y-1">
               <button type="button" onclick="mudarTela('cierre', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-gray-300 hover:text-white">Ventas y Cierre</button>
               <button type="button" onclick="mudarTela('reportes', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-gray-300 hover:text-white">Historial SIFEN</button>
-              <button type="button" onclick="mudarTela('stocktakereport', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-gray-300 hover:text-white">Reportes de Stock</button>
+              <button id="btn-nav-stocktakereport" type="button" onclick="mudarTela('stocktakereport', this)" class="nav-btn border-l-2 border-slate-600 w-full p-2 pl-4 text-sm text-left hover:bg-slate-700/50 hover:border-brand-accent transition rounded-r-lg text-gray-300 hover:text-white">Reportes de Stock</button>
             </div>
           </div>
 
@@ -183,7 +200,6 @@
         <header class="mb-8 border-b border-slate-700 pb-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div><h1 class="text-3xl font-extrabold text-white">Reporte de Ventas & Cierre</h1><p class="text-sm text-gray-400">Resumen financiero y rentabilidad por periodo.</p></div>
-            
             <div class="flex flex-wrap gap-2 w-full md:w-auto items-center bg-slate-900 p-2 rounded-xl border border-slate-700">
                 <input type="date" id="filtro-data-inicio-cierre" class="bg-slate-800 border border-slate-600 text-white text-sm rounded-lg p-2 focus:border-brand-accent outline-none">
                 <span class="text-gray-400 text-sm font-bold">a</span>
@@ -192,18 +208,15 @@
             </div>
           </div>
         </header>
-        
         <div class="flex justify-end mb-4">
             <button id="btn-cerrar-turno" onclick="fecharTurnoCaixa()" class="bg-red-600/20 text-red-400 border border-red-600 hover:bg-red-600 hover:text-white transition font-bold text-sm px-4 py-2 rounded-lg shadow-sm flex items-center">🔒 Cerrar Turno (Caja Actual)</button>
         </div>
-
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div class="bg-slate-700/50 p-5 rounded-xl border border-slate-700"><p class="text-xs font-bold text-gray-400 uppercase mb-1">Ingresos</p><p class="text-2xl font-bold text-white">Gs. <span id="cierre-vendas">0</span></p></div>
           <div class="bg-green-900/20 p-5 rounded-xl border border-green-800/50 shadow-sm relative overflow-hidden"><div class="absolute right-0 top-0 h-full w-1 bg-green-500"></div><p class="text-xs font-bold text-green-400 uppercase mb-1 flex items-center">Gross Profit (GP)</p><p class="text-2xl font-extrabold text-green-400">Gs. <span id="cierre-gp">0</span></p></div>
           <div class="bg-red-900/20 p-5 rounded-xl border border-red-800/50 shadow-sm"><p class="text-xs font-bold text-red-400 uppercase mb-1">Retiros (Sangrías)</p><p class="text-2xl font-bold text-red-400">Gs. <span id="cierre-sangrias">0</span></p></div>
           <div class="bg-slate-700/50 p-5 rounded-xl border border-slate-700"><p class="text-xs font-bold text-gray-400 uppercase mb-1">Notas Emitidas</p><p class="text-2xl font-bold text-white"><span id="cierre-notas">0</span></p></div>
         </div>
-        
         <div class="border border-slate-700 rounded-xl overflow-x-auto shadow-sm">
           <div class="bg-slate-900 text-gray-300 p-4 font-bold text-sm border-b border-slate-700 flex justify-between items-center">
             <span>Detalle de Rendimiento de Ventas</span>
@@ -250,23 +263,100 @@
     
     document.addEventListener("DOMContentLoaded", () => {
         const dataHoje = new Date().toISOString().split('T')[0];
-        
         const inCierre = document.getElementById('filtro-data-inicio-cierre');
         const outCierre = document.getElementById('filtro-data-fim-cierre');
         if(inCierre && !inCierre.value) inCierre.value = dataHoje;
         if(outCierre && !outCierre.value) outCierre.value = dataHoje;
     });
 
+    // --- NOVA LOGICA DE LOGIN (SAAS PAYWALL) ---
+    async function fazerLogin() { 
+        const ruc = document.getElementById('login-ruc').value.trim(); 
+        const senha = document.getElementById('login-senha').value; 
+        const btn = document.getElementById('btn-login'); 
+        const erroBox = document.getElementById('erro-login'); 
+        
+        if(!ruc || !senha) { erroBox.innerText = "Complete todos los campos."; erroBox.classList.remove('hidden'); return; } 
+        btn.innerText = "Verificando..."; btn.disabled = true; 
+        
+        try { 
+            const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ruc: ruc, senha: senha}) }); 
+            
+            if (res.ok) { 
+                const dados = await res.json(); 
+                empresaAtualId = dados.empresa_id; 
+                rolUsuario = dados.rol; 
+                const planoEmpresa = dados.plano || 'Growth'; 
+                
+                document.getElementById('login-screen').classList.add('hidden'); 
+                
+                if (rolUsuario === 'superadmin') { 
+                    document.getElementById('app-screen').classList.add('hidden'); 
+                    document.getElementById('superadmin-screen').classList.remove('hidden'); 
+                    carregarEmpresasSaaS(); 
+                    showToast("¡Bienvenido al Panel Super Admin!"); 
+                } else { 
+                    document.getElementById('app-screen').classList.remove('hidden'); 
+                    document.getElementById('app-screen').classList.add('flex'); 
+                    document.getElementById('mobile-header').classList.remove('hidden'); 
+                    
+                    document.getElementById('sidebar-rol-loja').innerText = (rolUsuario === 'admin') ? `Dueño | Plan ${planoEmpresa.split(' ')[0]}` : `Cajero | Plan ${planoEmpresa.split(' ')[0]}`; 
+                    
+                    // Reset CSS Display 
+                    document.getElementById('nav-group-inventario').style.display = ''; 
+                    document.getElementById('nav-btn-dashboard').style.display = ''; 
+                    document.getElementById('nav-group-reportes').style.display = '';
+                    document.getElementById('btn-nav-stocktake').style.display = '';
+                    document.getElementById('btn-nav-stocktakereport').style.display = '';
+                    document.getElementById('nav-btn-config').style.display = ''; 
+                    document.getElementById('btn-cerrar-turno').style.display = ''; 
+                    
+                    // Feature Flagging (Paywall)
+                    const isEssential = planoEmpresa.includes('Essential') || planoEmpresa.includes('Básico') || planoEmpresa.includes('Esencial');
+                    
+                    if (isEssential && rolUsuario === 'admin') {
+                        document.getElementById('nav-btn-dashboard').style.display = 'none'; 
+                        document.getElementById('nav-group-reportes').style.display = 'none';
+                        document.getElementById('btn-nav-stocktake').style.display = 'none';
+                        document.getElementById('btn-nav-stocktakereport').style.display = 'none';
+                    }
+
+                    if (rolUsuario === 'cajero') { 
+                        document.getElementById('nav-group-inventario').style.display = 'none'; 
+                        document.getElementById('nav-btn-dashboard').style.display = 'none'; 
+                        document.getElementById('nav-group-reportes').style.display = 'none';
+                        document.getElementById('nav-btn-config').style.display = 'none'; 
+                        document.getElementById('btn-cerrar-turno').style.display = 'none'; 
+                    } 
+                    
+                    await carregarConfiguracao(); 
+                    await carregarCategorias(); 
+                    await carregarEstoque(); 
+                    checarStatusCaixa(); 
+                    atualizarStatusConexao(); 
+                    showToast(`¡Sesión Iniciada! Tienes el Plan ${planoEmpresa.split(' ')[0]}`); 
+                } 
+            } else { 
+                const err = await res.json(); 
+                erroBox.innerText = err.detail || err.mensagem || "Credenciales incorrectas."; 
+                erroBox.classList.remove('hidden'); 
+            } 
+        } catch(e) { 
+            erroBox.innerText = "Error de red al conectar al servidor."; 
+            erroBox.classList.remove('hidden'); 
+        } finally { 
+            btn.innerText = "Ingresar al Sistema"; btn.disabled = false; 
+        } 
+    }
+
     function imprimirReporteCierre() {
         const vendas = document.getElementById('cierre-vendas').innerText;
         const gp = document.getElementById('cierre-gp').innerText;
         const sangrias = document.getElementById('cierre-sangrias').innerText;
         const notas = document.getElementById('cierre-notas').innerText;
-        
         const dataIni = document.getElementById('filtro-data-inicio-cierre').value;
         const dataFim = document.getElementById('filtro-data-fim-cierre').value;
         let periodoStr = (dataIni === dataFim) ? `Día: ${dataIni}` : `Del ${dataIni} al ${dataFim}`;
-        
         const nomeLoja = document.getElementById('sidebar-nome-loja').innerText;
         const linhasTabela = document.getElementById('tabela-cierre-itens').innerHTML;
 
@@ -347,7 +437,6 @@
         if(telaId === 'pos') { checarStatusCaixa(); document.getElementById('scanner-barras').focus(); atualizarStatusConexao(); } 
     }
     
-    async function fazerLogin() { const ruc = document.getElementById('login-ruc').value.trim(); const senha = document.getElementById('login-senha').value; const btn = document.getElementById('btn-login'); const erroBox = document.getElementById('erro-login'); if(!ruc || !senha) { erroBox.innerText = "Complete todos los campos."; erroBox.classList.remove('hidden'); return; } btn.innerText = "Verificando..."; btn.disabled = true; try { const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ruc: ruc, senha: senha}) }); if (res.ok) { const dados = await res.json(); empresaAtualId = dados.empresa_id; rolUsuario = dados.rol; document.getElementById('login-screen').classList.add('hidden'); if (rolUsuario === 'superadmin') { document.getElementById('app-screen').classList.add('hidden'); document.getElementById('superadmin-screen').classList.remove('hidden'); carregarEmpresasSaaS(); showToast("¡Bienvenido al Panel Super Admin!"); } else { document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); document.getElementById('sidebar-rol-loja').innerText = (rolUsuario === 'admin') ? "Dueño / Admin" : "Cajero"; if (rolUsuario === 'cajero') { document.getElementById('nav-group-inventario').style.display = 'none'; document.getElementById('nav-btn-dashboard').style.display = 'none'; document.getElementById('nav-btn-config').style.display = 'none'; document.getElementById('nav-group-reportes').style.display = 'none'; document.getElementById('btn-cerrar-turno').style.display = 'none'; } await carregarConfiguracao(); await carregarCategorias(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); showToast("¡Sesión Iniciada con éxito!"); } } else { const err = await res.json(); erroBox.innerText = err.detail || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); } } catch(e) { erroBox.innerText = "Error de red al conectar al servidor."; erroBox.classList.remove('hidden'); } finally { btn.innerText = "Ingresar al Sistema"; btn.disabled = false; } }
     async function carregarEmpresasSaaS() { try { const resMet = await fetch('/super-admin/metricas'); if (resMet.ok) { const met = await resMet.json(); document.getElementById('saas-mrr').innerText = met.mrr.toLocaleString('es-PY'); document.getElementById('saas-ativos').innerText = met.clientes_ativos; document.getElementById('saas-vencidos').innerText = met.clientes_vencidos; } const res = await fetch('/super-admin/empresas'); if (res.ok) { const empresas = await res.json(); const tbody = document.getElementById('tabela-saas'); tbody.innerHTML = ''; empresas.forEach(emp => { let corStatus = emp.status === 'Activo' ? 'text-green-400 bg-green-900/30 border border-green-800/50' : 'text-red-400 bg-red-900/30 border border-red-800/50'; tbody.innerHTML += `<tr class="hover:bg-slate-700/50 transition border-b border-slate-700"><td class="p-4 font-bold text-white">${emp.nome}</td><td class="p-4"><span class="font-mono text-sm text-gray-400 block">${emp.ruc}</span><span class="text-[10px] text-gray-500 uppercase">${emp.ambiente}</span></td><td class="p-4"><span class="text-brand-accent font-bold block">${emp.plano}</span><span class="text-xs text-gray-400">Gs. ${emp.valor.toLocaleString('es-PY')}</span></td><td class="p-4 text-sm text-gray-300">${emp.vencimento}</td><td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold uppercase ${corStatus}">${emp.status}</span></td></tr>`; }); } } catch(e) { console.error("Error al cargar panel SaaS", e); } }
     async function criarEmpresaSaaS() { const nome = document.getElementById('sa-nome').value.trim(); const ruc = document.getElementById('sa-ruc').value.trim(); const s_admin = document.getElementById('sa-pass-admin').value.trim(); const s_caja = document.getElementById('sa-pass-caja').value.trim(); const plano = document.getElementById('sa-plano').value; const valor = parseFloat(document.getElementById('sa-valor').value) || 0; if(!nome || !ruc || !s_admin || !s_caja) { return showToast("Complete todos los campos.", "error"); } try { const res = await fetch('/super-admin/criar-empresa', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome, ruc: ruc, senha_admin: s_admin, senha_caixa: s_caja, plano: plano, valor_mensalidade: valor}) }); if (res.ok) { showToast("✅ Suscripción creada y facturada."); ['sa-nome', 'sa-ruc', 'sa-pass-admin', 'sa-pass-caja', 'sa-valor'].forEach(id => document.getElementById(id).value = ''); carregarEmpresasSaaS(); } else { const err = await res.json(); showToast("❌ " + err.detail, "error"); } } catch(e) { showToast("❌ Error de red.", "error"); } }
     async function checarStatusCaixa() { try { const res = await fetch('/status-caixa', { headers: getSaaSHeaders() }); const status = await res.json(); const bloqueio = document.getElementById('bloqueio-caixa'); const badge = document.getElementById('badge-caixa'); if(!status.aberto) { bloqueio.classList.remove('hidden'); bloqueio.classList.add('flex'); badge.classList.add('hidden'); } else { bloqueio.classList.add('hidden'); bloqueio.classList.remove('flex'); badge.classList.remove('hidden'); } } catch(e) { console.error("Erro ao checar caixa", e); } }
@@ -359,7 +448,7 @@
     function actualizarTroco() { const metodo = document.getElementById('checkout-metodo').value; const boxVuelto = document.getElementById('box-vuelto'); if(metodo === "Efectivo") { boxVuelto.classList.remove('hidden'); const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0; let troco = recebido - totalDaVendaAtual; if(troco < 0) troco = 0; document.getElementById('checkout-vuelto').innerText = troco.toLocaleString('es-PY'); } else { boxVuelto.classList.add('hidden'); } }
     async function confirmarVenta() { const metodoPago = document.getElementById('checkout-metodo').value; if(metodoPago === "Efectivo") { const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0; if(recebido > 0 && recebido < totalDaVendaAtual) { return showToast("⚠️ El monto recibido es menor al total.", "error"); } } const btn = document.getElementById('btn-confirmar-venta'); btn.innerHTML = '⏳ Procesando...'; btn.disabled = true; const payloadNota = { ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: totalDaVendaAtual, itens: productosCaixa, metodo_pago: metodoPago }; if (!navigator.onLine) { filaContingencia.push(payloadNota); localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); fecharCheckout(); document.getElementById('resultado').classList.remove('hidden'); document.getElementById('texto-resultado').innerText = "🛜 Guardado Localmente"; document.getElementById('qrcode-img').src = "https://cdn-icons-png.flaticon.com/512/2907/2907150.png"; document.getElementById('btn-pdf').style.display = "none"; document.getElementById('btn-emitir').classList.add('hidden'); productosCaixa = []; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); actualizarStatusConexao(); btn.innerHTML = '✔️ Emitir Factura'; btn.disabled = false; showToast("🔴 Sin internet. Factura guardada en cola de contingencia.", "warning"); return; } try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payloadNota) }); if (!res.ok) { const err = await res.json(); showToast("❌ " + (err.detail || "Error en el servidor."), "error"); btn.disabled = false; btn.innerHTML = '✔️ Emitir Factura'; return; } const dados = await res.json(); btn.innerHTML = '✔️ Emitir Factura'; btn.disabled = false; fecharCheckout(); document.getElementById('resultado').classList.remove('hidden'); document.getElementById('texto-resultado').innerText = "✅ ¡Factura Aprobada!"; document.getElementById('btn-pdf').style.display = "inline-flex"; const linkImagemQR = `https://quickchart.io/qr?text=${encodeURIComponent(dados.link_qrcode)}&size=150`; document.getElementById('qrcode-img').src = linkImagemQR; document.getElementById('btn-pdf').href = dados.link_pdf; document.getElementById('btn-emitir').classList.add('hidden'); productosCaixa = []; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); showToast(dados.mensaje, "success"); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); carregarEstoque(); } catch(e) { btn.disabled = false; btn.innerHTML = '✔️ Emitir Factura'; showToast("❌ Error de red.", "error"); } }
     function novaVenda() { document.getElementById('resultado').classList.add('hidden'); document.getElementById('btn-emitir').classList.remove('hidden'); document.getElementById('cliente').value = ''; descuentoPorcentaje = 0; actualizarInterfaceCaixa(); document.getElementById('scanner-barras').focus(); }
-    async function sincronizarFila() { if (filaContingencia.length === 0 || !navigator.onLine) return; showToast(`Sincronizando ${filaContingencia.length} facturas pendientes...`, "info"); let pendentes = [...filaContingencia]; filaContingencia = []; localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); let sucessoCount = 0; for (let nota of pendentes) { try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(nota) }); if (res.ok) { sucessoCount++; } else { filaContingencia.push(nota); } } catch(e) { filaContingencia.push(nota); } } localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); actualizarStatusConexao(); if(sucessoCount > 0) showToast(`✅ ${sucessoCount} facturas sincronizadas con SIFEN.`, "success"); }
+    async function sincronizarFila() { if (filaContingencia.length === 0 || !navigator.onLine) return; showToast(`Sincronizando ${filaContingencia.length} facturas pendientes...`, "info"); let pendentes = [...filaContingencia]; filaContingencia = []; localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); let sucessoCount = 0; for (let nota of pendentes) { try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(nota) }); if (res.ok) { sucessoCount++; } else { filaContingencia.push(nota); } } catch(e) { filaContingencia.push(nota); } } localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); atualizarStatusConexao(); if(sucessoCount > 0) showToast(`✅ ${sucessoCount} facturas sincronizadas con SIFEN.`, "success"); }
     function abrirCamera(idCampo) { campoDestinoScanner = idCampo; const modal = document.getElementById('camera-modal'); modal.classList.remove('hidden'); modal.classList.add('flex'); if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); } html5QrCode.start( { facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, () => {} ).catch(err => { showToast("Error al activar cámara.", "error"); fecharCamera(); }); } function onScanSucesso(codigoDecodificado) { fecharCamera(); document.getElementById(campoDestinoScanner).value = codigoDecodificado; if (campoDestinoScanner === 'scanner-barras') { verificarScanner({ key: 'Enter', preventDefault: function(){} }); } else if (campoDestinoScanner === 'novo-cod') { document.getElementById('novo-desc').focus(); } else if (campoDestinoScanner === 'restock-cod') { buscarParaRestock({ key: 'Enter', preventDefault: function(){} }); } } function fecharCamera() { const modal = document.getElementById('camera-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); if (html5QrCode) { try { html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(e => { html5QrCode = null; }); } catch (err) { html5QrCode = null; } } }
     let isScanning = false; function filtrarPOS() { const input = document.getElementById('scanner-barras').value.toLowerCase(); const dropdown = document.getElementById('pos-dropdown'); dropdown.innerHTML = ''; if (input.length < 2) { dropdown.classList.add('hidden'); return; } const resultados = productosGlobais.filter(p => p.descricao.toLowerCase().includes(input) || p.codigo_barras.toLowerCase().includes(input)).slice(0, 10); if (resultados.length > 0) { dropdown.classList.remove('hidden'); resultados.forEach(p => { const div = document.createElement('div'); div.className = 'p-4 hover:bg-slate-700/50 cursor-pointer border-b border-slate-700 flex justify-between items-center transition text-gray-200'; div.innerHTML = `<div><span class="font-bold text-sm text-white block">${p.descricao}</span><span class="text-xs text-gray-400 font-mono">${p.codigo_barras}</span></div><span class="text-sm text-brand-accent font-bold">Gs. ${p.preco_venda.toLocaleString('es-PY')}</span>`; div.onclick = () => seleccionarProductoPOS(p); dropdown.appendChild(div); }); } else { dropdown.classList.add('hidden'); } }
     function seleccionarProductoPOS(prod) { document.getElementById('pos-dropdown').classList.add('hidden'); document.getElementById('scanner-barras').value = ''; const indexExistente = productosCaixa.findIndex(p => p.codigo_barras === prod.codigo_barras); if (indexExistente !== -1) { productosCaixa[indexExistente].quantidade += 1; } else { productosCaixa.push({ codigo_barras: prod.codigo_barras, descricao: prod.descricao, quantidade: 1, preco_unitario: Number(prod.preco_venda) || 0 }); } actualizarInterfaceCaixa(); showToast(`✅ ${prod.descricao} agregado.`, 'success'); document.getElementById('scanner-barras').focus(); }
@@ -378,10 +467,42 @@
     function renderizarTabelaEstoque(lista) { const tbody = document.getElementById('tabela-estoque'); const emptyState = document.getElementById('estoque-vazio'); tbody.innerHTML = ''; if (lista.length === 0) { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } else { tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); lista.forEach(p => { let corStock = p.quantidade > 5 ? 'text-green-400 font-bold' : 'text-red-400 font-bold'; let prov = p.codigo_proveedor ? `<span class="bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded text-xs border border-blue-800/50">${p.codigo_proveedor}</span>` : `<span class="text-gray-600">-</span>`; tbody.innerHTML += `<tr class="hover:bg-slate-700/50 transition border-b border-slate-700"><td class="p-4"><div class="font-bold text-white text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td><td class="p-4"><span class="bg-slate-800 text-brand-accent border border-brand-accent/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td><td class="p-4">${prov}</td><td class="p-4 text-right"><div class="font-bold text-white text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-400 mt-1">Costo: Gs. ${p.preco_custo.toLocaleString('es-PY')}</div></td><td class="p-4 text-center ${corStock} text-lg">${p.quantidade}</td><td class="p-4 text-center flex justify-center gap-2"><button type="button" onclick="deletarProduto('${p.codigo_barras}')" class="text-red-400 bg-red-900/20 hover:bg-red-900/40 p-2 rounded transition border border-red-900/30" title="Eliminar">🗑️</button></td></tr>`; }); } }
     async function carregarEstoque() { try { const res = await fetch('/listar-produtos', { headers: getSaaSHeaders() }); productosGlobais = await res.json(); filtrarEstoque(); if(document.getElementById('tela-stocktake') && !document.getElementById('tela-stocktake').classList.contains('hidden')) { renderTabelaStockTake(productosGlobais); } } catch(e) { console.error(e); } }
     function calcularLucro() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const venta = parseFloat(document.getElementById('novo-preco').value) || 0; const divInfo = document.getElementById('info-lucro'); if (venta > 0 && costo >= 0) { const lucro = venta - costo; const margem = (lucro / venta) * 100; if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}%`; divInfo.className = "h-4 mt-1 text-xs font-bold text-green-400"; } else if (lucro === 0) { divInfo.innerHTML = `Sin margen`; divInfo.className = "h-4 mt-1 text-xs font-bold text-yellow-400"; } else { divInfo.innerHTML = `Pérdida`; divInfo.className = "h-4 mt-1 text-xs font-bold text-red-400"; } } else { divInfo.innerHTML = ""; } }
-   async function cadastrarProduto() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const precio = parseFloat(document.getElementById('novo-preco').value) || 0; const cantidad = parseInt(document.getElementById('novo-qtd').value) || 0; const datos = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: "-", preco_custo: costo, preco_venda: precio, quantidade: cantidad, codigo_proveedor: document.getElementById('novo-prov').value.trim() }; if(!datos.codigo_barras || !datos.descricao || precio === 0) { return showToast("Complete Código, Descripción y Precio.", "info"); } try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(datos) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; }); document.getElementById('info-lucro').innerHTML = ''; toggleFormProducto(); carregarEstoque(); showToast("✅ Producto guardado."); } else { showToast("❌ El código ya existe.", "error"); } } catch (e) { showToast("❌ Error al guardar.", "error"); } }
+    
+    // ATUALIZADO: Correção do erro no 'novo-subcat' que travava o botão de guardar produto.
+    async function cadastrarProduto() { 
+        const costo = parseFloat(document.getElementById('novo-custo').value) || 0; 
+        const precio = parseFloat(document.getElementById('novo-preco').value) || 0; 
+        const cantidad = parseInt(document.getElementById('novo-qtd').value) || 0; 
+        const datos = { 
+            codigo_barras: document.getElementById('novo-cod').value.trim(), 
+            descricao: document.getElementById('novo-desc').value.trim(), 
+            categoria: document.getElementById('novo-cat').value, 
+            subcategoria: "-", 
+            preco_custo: costo, 
+            preco_venda: precio, 
+            quantidade: cantidad, 
+            codigo_proveedor: document.getElementById('novo-prov').value.trim() 
+        }; 
+        if(!datos.codigo_barras || !datos.descricao || precio === 0) { return showToast("Complete Código, Descripción y Precio.", "info"); } 
+        try { 
+            const res = await fetch('/cadastrar-produto', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(datos) }); 
+            if (res.ok) { 
+                ['novo-cod', 'novo-desc', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => { 
+                    const el = document.getElementById(id); 
+                    if(el) el.value = ''; 
+                }); 
+                document.getElementById('info-lucro').innerHTML = ''; 
+                toggleFormProducto(); 
+                carregarEstoque(); 
+                showToast("✅ Producto guardado."); 
+            } else { 
+                showToast("❌ El código ya existe.", "error"); 
+            } 
+        } catch (e) { showToast("❌ Error al guardar.", "error"); } 
+    }
+    
     async function deletarProduto(codigo) { if(confirm("¿Seguro que desea eliminar?")) { try { await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE', headers: getSaaSHeaders() }); carregarEstoque(); showToast("✅ Eliminado."); } catch(e) { showToast("❌ Error.", "error"); } } }
     
-    // --- LÓGICA ATUALIZADA PARA REPORTES COM DATAS ---
     async function carregarCierreCaja() { 
         const inicio = document.getElementById('filtro-data-inicio-cierre').value;
         const fim = document.getElementById('filtro-data-fim-cierre').value;
@@ -405,20 +526,11 @@
                 } else { 
                     dados.detalhes_itens.forEach(item => { 
                         let corMargem = item.margem > 20 ? 'text-green-400' : (item.margem > 0 ? 'text-yellow-400' : 'text-red-400');
-                        
                         tbody.innerHTML += `
                         <tr class="hover:bg-slate-700/50 transition border-b border-slate-700">
-                            <td class="p-3">
-                                <div class="font-bold text-white text-sm">${item.descricao}</div>
-                                <div class="text-[10px] text-gray-500 font-mono">${item.codigo_barras || '-'}</div>
-                            </td>
-                            <td class="p-3 text-center">
-                                <span class="bg-slate-800 text-brand-accent px-2 py-1 rounded-md font-bold border border-brand-accent/20">${item.vendidos}</span>
-                            </td>
-                            <td class="p-3 text-right">
-                                <div class="text-white text-sm">Gs. ${item.preco_venda.toLocaleString('es-PY')}</div>
-                                <div class="text-[10px] text-gray-500">Costo: Gs. ${item.custo_unitario ? item.custo_unitario.toLocaleString('es-PY') : '0'}</div>
-                            </td>
+                            <td class="p-3"><div class="font-bold text-white text-sm">${item.descricao}</div><div class="text-[10px] text-gray-500 font-mono">${item.codigo_barras || '-'}</div></td>
+                            <td class="p-3 text-center"><span class="bg-slate-800 text-brand-accent px-2 py-1 rounded-md font-bold border border-brand-accent/20">${item.vendidos}</span></td>
+                            <td class="p-3 text-right"><div class="text-white text-sm">Gs. ${item.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-500">Costo: Gs. ${item.custo_unitario ? item.custo_unitario.toLocaleString('es-PY') : '0'}</div></td>
                             <td class="p-3 text-right font-bold text-white text-sm">Gs. ${item.receita_total.toLocaleString('es-PY')}</td>
                             <td class="p-3 text-right font-bold text-green-400 text-sm">Gs. ${item.lucro_total.toLocaleString('es-PY')}</td>
                             <td class="p-3 text-center font-bold ${corMargem} text-sm bg-slate-800/30">${item.margem}%</td>

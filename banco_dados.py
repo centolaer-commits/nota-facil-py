@@ -150,22 +150,33 @@ if DATABASE_URL:
 
 def autenticar_usuario(ruc, senha):
     if ruc == "NUBE" and senha == "nube2026":
-        return {"sucesso": True, "empresa_id": 0, "rol": "superadmin"}
+        return {"sucesso": True, "empresa_id": 0, "rol": "superadmin", "plano": "Premium"}
 
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute("SELECT id, senha_admin, senha_caixa, status_assinatura FROM empresas WHERE ruc = %s", (ruc,))
+    # Adicionamos a busca da coluna 'plano'
+    cursor.execute("SELECT id, senha_admin, senha_caixa, status_assinatura, plano FROM empresas WHERE ruc = %s", (ruc,))
     empresa = cursor.fetchone()
     conexao.close()
 
     if not empresa: return {"sucesso": False, "mensagem": "Empresa (RUC) no encontrada"}
 
-    emp_id, s_admin, s_caixa, status_ass = empresa
-    if status_ass == 'Cancelado': return {"sucesso": False, "mensagem": "Su suscripción está cancelada."}
+    emp_id, s_admin, s_caixa, status_ass, plano = empresa
+    
+    if status_ass == 'Cancelado': 
+        return {"sucesso": False, "mensagem": "Su suscripción está cancelada."}
 
-    if senha == s_admin: return {"sucesso": True, "empresa_id": emp_id, "rol": "admin"}
-    elif senha == s_caixa: return {"sucesso": True, "empresa_id": emp_id, "rol": "cajero"}
-    else: return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
+    if senha == s_admin: 
+        return {"sucesso": True, "empresa_id": emp_id, "rol": "admin", "plano": plano}
+        
+    elif senha == s_caixa: 
+        # REGRA DE NEGÓCIO TIER 1: Bloqueia o Cajero no plano Essential
+        if plano == "Essential" or plano == "Básico":
+            return {"sucesso": False, "mensagem": "Tu plan (Essential) es para 1 solo usuario. Actualiza al plan Growth para añadir Cajeros."}
+        return {"sucesso": True, "empresa_id": emp_id, "rol": "cajero", "plano": plano}
+        
+    else: 
+        return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
 
 def obter_metricas_saas():
     conexao = get_conexao()
