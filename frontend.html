@@ -93,6 +93,29 @@
     </div>
   </div>
 
+  <div id="modal-editar-empresa" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-700">
+      <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
+        <h3 class="text-xl font-bold text-white">Upgrade de Plan</h3>
+        <button type="button" onclick="fecharModalEditarEmpresa()" class="text-gray-400 hover:text-red-400 font-bold text-2xl leading-none transition">&times;</button>
+      </div>
+      <input type="hidden" id="edit-empresa-id">
+      <div class="mb-4">
+        <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Nuevo Plan</label>
+        <select id="edit-plano" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white outline-none">
+          <option value="Essential">Essential (150.000 Gs)</option>
+          <option value="Growth">Growth (350.000 Gs)</option>
+          <option value="Premium">Premium (750.000 Gs)</option>
+        </select>
+      </div>
+      <div class="mb-6">
+        <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Nueva Mensualidad (Gs)</label>
+        <input type="number" id="edit-valor" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white outline-none">
+      </div>
+      <button onclick="salvarEdicaoEmpresa()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-xl hover:bg-brand-accentHover transition shadow-md">Guardar Cambios</button>
+    </div>
+  </div>
+
   <div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center z-50 px-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
     <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-slate-700">
       <div class="flex items-center justify-center mb-6 text-brand-accent"><h1 class="text-4xl font-extrabold text-white tracking-tight">NubePY</h1></div>
@@ -139,7 +162,7 @@
              <h3 class="text-xl font-bold text-white">🏢 Suscripciones Activas</h3>
              <button type="button" onclick="exportarTabelaParaCSV('tabela-saas', 'Suscripciones_SaaS')" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded-lg text-xs font-bold transition border border-slate-600">📥 Exportar CSV</button>
           </div>
-          <div class="overflow-x-auto rounded-lg border border-slate-700"><table class="w-full text-left"><thead class="bg-slate-900 text-gray-400 text-xs uppercase font-bold"><tr><th class="p-4">Empresa</th><th class="p-4">RUC / SIFEN</th><th class="p-4">Plan / Mensual</th><th class="p-4">Vencimiento</th><th class="p-4">Estado</th></tr></thead><tbody id="tabela-saas" class="divide-y divide-slate-700 text-sm text-gray-300"></tbody></table></div>
+          <div class="overflow-x-auto rounded-lg border border-slate-700"><table class="w-full text-left"><thead class="bg-slate-900 text-gray-400 text-xs uppercase font-bold"><tr><th class="p-4">Empresa</th><th class="p-4">RUC / SIFEN</th><th class="p-4">Plan / Mensual</th><th class="p-4">Vencimiento</th><th class="p-4">Estado</th><th class="p-4">Acción</th></tr></thead><tbody id="tabela-saas" class="divide-y divide-slate-700 text-sm text-gray-300"></tbody></table></div>
         </div>
       </div>
     </div>
@@ -200,6 +223,7 @@
         <header class="mb-8 border-b border-slate-700 pb-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div><h1 class="text-3xl font-extrabold text-white">Reporte de Ventas & Cierre</h1><p class="text-sm text-gray-400">Resumen financiero y rentabilidad por periodo.</p></div>
+            
             <div class="flex flex-wrap gap-2 w-full md:w-auto items-center bg-slate-900 p-2 rounded-xl border border-slate-700">
                 <input type="date" id="filtro-data-inicio-cierre" class="bg-slate-800 border border-slate-600 text-white text-sm rounded-lg p-2 focus:border-brand-accent outline-none">
                 <span class="text-gray-400 text-sm font-bold">a</span>
@@ -208,15 +232,18 @@
             </div>
           </div>
         </header>
+        
         <div class="flex justify-end mb-4">
             <button id="btn-cerrar-turno" onclick="fecharTurnoCaixa()" class="bg-red-600/20 text-red-400 border border-red-600 hover:bg-red-600 hover:text-white transition font-bold text-sm px-4 py-2 rounded-lg shadow-sm flex items-center">🔒 Cerrar Turno (Caja Actual)</button>
         </div>
+
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div class="bg-slate-700/50 p-5 rounded-xl border border-slate-700"><p class="text-xs font-bold text-gray-400 uppercase mb-1">Ingresos</p><p class="text-2xl font-bold text-white">Gs. <span id="cierre-vendas">0</span></p></div>
           <div class="bg-green-900/20 p-5 rounded-xl border border-green-800/50 shadow-sm relative overflow-hidden"><div class="absolute right-0 top-0 h-full w-1 bg-green-500"></div><p class="text-xs font-bold text-green-400 uppercase mb-1 flex items-center">Gross Profit (GP)</p><p class="text-2xl font-extrabold text-green-400">Gs. <span id="cierre-gp">0</span></p></div>
           <div class="bg-red-900/20 p-5 rounded-xl border border-red-800/50 shadow-sm"><p class="text-xs font-bold text-red-400 uppercase mb-1">Retiros (Sangrías)</p><p class="text-2xl font-bold text-red-400">Gs. <span id="cierre-sangrias">0</span></p></div>
           <div class="bg-slate-700/50 p-5 rounded-xl border border-slate-700"><p class="text-xs font-bold text-gray-400 uppercase mb-1">Notas Emitidas</p><p class="text-2xl font-bold text-white"><span id="cierre-notas">0</span></p></div>
         </div>
+        
         <div class="border border-slate-700 rounded-xl overflow-x-auto shadow-sm">
           <div class="bg-slate-900 text-gray-300 p-4 font-bold text-sm border-b border-slate-700 flex justify-between items-center">
             <span>Detalle de Rendimiento de Ventas</span>
@@ -269,7 +296,6 @@
         if(outCierre && !outCierre.value) outCierre.value = dataHoje;
     });
 
-    // --- NOVA LOGICA DE LOGIN (SAAS PAYWALL) ---
     async function fazerLogin() { 
         const ruc = document.getElementById('login-ruc').value.trim(); 
         const senha = document.getElementById('login-senha').value; 
@@ -302,7 +328,6 @@
                     
                     document.getElementById('sidebar-rol-loja').innerText = (rolUsuario === 'admin') ? `Dueño | Plan ${planoEmpresa.split(' ')[0]}` : `Cajero | Plan ${planoEmpresa.split(' ')[0]}`; 
                     
-                    // Reset CSS Display 
                     document.getElementById('nav-group-inventario').style.display = ''; 
                     document.getElementById('nav-btn-dashboard').style.display = ''; 
                     document.getElementById('nav-group-reportes').style.display = '';
@@ -311,7 +336,6 @@
                     document.getElementById('nav-btn-config').style.display = ''; 
                     document.getElementById('btn-cerrar-turno').style.display = ''; 
                     
-                    // Feature Flagging (Paywall)
                     const isEssential = planoEmpresa.includes('Essential') || planoEmpresa.includes('Básico') || planoEmpresa.includes('Esencial');
                     
                     if (isEssential && rolUsuario === 'admin') {
@@ -349,67 +373,53 @@
         } 
     }
 
-    function imprimirReporteCierre() {
-        const vendas = document.getElementById('cierre-vendas').innerText;
-        const gp = document.getElementById('cierre-gp').innerText;
-        const sangrias = document.getElementById('cierre-sangrias').innerText;
-        const notas = document.getElementById('cierre-notas').innerText;
-        const dataIni = document.getElementById('filtro-data-inicio-cierre').value;
-        const dataFim = document.getElementById('filtro-data-fim-cierre').value;
-        let periodoStr = (dataIni === dataFim) ? `Día: ${dataIni}` : `Del ${dataIni} al ${dataFim}`;
-        const nomeLoja = document.getElementById('sidebar-nome-loja').innerText;
-        const linhasTabela = document.getElementById('tabela-cierre-itens').innerHTML;
+    // --- NOVA LOGICA EDICAO EMPRESA SUPER ADMIN ---
+    function abrirModalEditarEmpresa(id, planoAtual, valorAtual) {
+        document.getElementById('edit-empresa-id').value = id;
+        
+        let planSelect = document.getElementById('edit-plano');
+        if(planoAtual.includes('Essential') || planoAtual.includes('Básico')) planSelect.value = 'Essential';
+        else if(planoAtual.includes('Growth') || planoAtual.includes('Pro')) planSelect.value = 'Growth';
+        else if(planoAtual.includes('Premium')) planSelect.value = 'Premium';
+        else planSelect.value = 'Essential';
 
-        let html = `
-        <html><head><title>Reporte de Ventas - NubePY</title>
-            <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 30px; background: white; }
-                .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 4px solid #0d9488; padding-bottom: 15px; margin-bottom: 30px; }
-                .logo { font-size: 32px; font-weight: 900; color: #0f172a; letter-spacing: -1px; margin: 0; }
-                .logo span { color: #0d9488; }
-                .title-box { text-align: right; }
-                .title-box h2 { margin: 0 0 5px 0; color: #0f172a; text-transform: uppercase; font-size: 18px; }
-                .title-box p { margin: 0; font-size: 12px; color: #64748b; }
-                .summary-grid { display: flex; gap: 15px; margin-bottom: 40px; }
-                .card { background: #f8fafc; padding: 15px 20px; border-radius: 8px; border-left: 5px solid #0d9488; flex: 1; }
-                .card.alert { border-left-color: #ef4444; }
-                .card.success { border-left-color: #22c55e; }
-                .card small { color: #64748b; text-transform: uppercase; font-size: 10px; font-weight: bold; letter-spacing: 1px; display: block; margin-bottom: 5px; }
-                .card b { font-size: 20px; color: #0f172a; }
-                .card.success b { color: #16a34a; }
-                .card.alert b { color: #dc2626; }
-                h3 { font-size: 14px; text-transform: uppercase; color: #0f172a; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-                th { background: #0f172a; color: white; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-                td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; color: #334155; }
-                tr:nth-child(even) { background-color: #f8fafc; }
-                .text-right { text-align: right; } .text-center { text-align: center; }
-                .footer { margin-top: 50px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px; }
-                @media print { body { -webkit-print-color-adjust: exact; padding: 0; } .card { break-inside: avoid; } }
-            </style>
-        </head><body>
-            <div class="header">
-                <div class="logo">NubePY <span>| Reportes</span></div>
-                <div class="title-box"><h2>Reporte de Ventas & Cierre</h2><p>Comercio: <b>${nomeLoja}</b></p><p>Periodo: <b>${periodoStr}</b></p></div>
-            </div>
-            <div class="summary-grid">
-                <div class="card"><small>Ingresos Totales</small><b>Gs. ${vendas}</b></div>
-                <div class="card success"><small>Ganancia Neta (GP)</small><b>Gs. ${gp}</b></div>
-                <div class="card alert"><small>Retiros (Sangrías)</small><b>Gs. ${sangrias}</b></div>
-                <div class="card"><small>Notas Emitidas</small><b>${notas}</b></div>
-            </div>
-            <h3>Detalle de Rendimiento por Producto</h3>
-            <table><thead><tr><th>Producto / SKU</th><th class="text-center">Cant.</th><th class="text-right">Precio Venta</th><th class="text-right">Ingreso Total</th><th class="text-right">Ganancia (GP)</th><th class="text-center">Margen %</th></tr></thead><tbody>${linhasTabela}</tbody></table>
-            <div class="footer">Generado por NubePY - El Sistema SaaS de Facturación SIFEN para Paraguay.<br>Uso interno gerencial. Valores sujetos a auditoría.</div>
-        </body></html>`;
-
-        const janela = window.open('', '', 'width=900,height=700');
-        janela.document.write(html);
-        janela.document.close();
-        janela.focus();
-        setTimeout(() => { janela.print(); }, 500);
+        document.getElementById('edit-valor').value = valorAtual;
+        
+        document.getElementById('modal-editar-empresa').classList.remove('hidden');
+        document.getElementById('modal-editar-empresa').classList.add('flex');
     }
+
+    function fecharModalEditarEmpresa() {
+        document.getElementById('modal-editar-empresa').classList.add('hidden');
+        document.getElementById('modal-editar-empresa').classList.remove('flex');
+    }
+
+    async function salvarEdicaoEmpresa() {
+        const id = document.getElementById('edit-empresa-id').value;
+        const plano = document.getElementById('edit-plano').value;
+        const valor = parseFloat(document.getElementById('edit-valor').value) || 0;
+        
+        try {
+            const res = await fetch(`/super-admin/editar-empresa/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({plano: plano, valor_mensalidade: valor})
+            });
+            if(res.ok) {
+                showToast("✅ Plan actualizado con éxito.");
+                fecharModalEditarEmpresa();
+                carregarEmpresasSaaS();
+            } else {
+                showToast("❌ Error al actualizar.", "error");
+            }
+        } catch(e) {
+            showToast("❌ Error de red.", "error");
+        }
+    }
+
+    async function carregarEmpresasSaaS() { try { const resMet = await fetch('/super-admin/metricas'); if (resMet.ok) { const met = await resMet.json(); document.getElementById('saas-mrr').innerText = met.mrr.toLocaleString('es-PY'); document.getElementById('saas-ativos').innerText = met.clientes_ativos; document.getElementById('saas-vencidos').innerText = met.clientes_vencidos; } const res = await fetch('/super-admin/empresas'); if (res.ok) { const empresas = await res.json(); const tbody = document.getElementById('tabela-saas'); tbody.innerHTML = ''; empresas.forEach(emp => { let corStatus = emp.status === 'Activo' ? 'text-green-400 bg-green-900/30 border border-green-800/50' : 'text-red-400 bg-red-900/30 border border-red-800/50'; tbody.innerHTML += `<tr class="hover:bg-slate-700/50 transition border-b border-slate-700"><td class="p-4 font-bold text-white">${emp.nome}</td><td class="p-4"><span class="font-mono text-sm text-gray-400 block">${emp.ruc}</span><span class="text-[10px] text-gray-500 uppercase">${emp.ambiente}</span></td><td class="p-4"><span class="text-brand-accent font-bold block">${emp.plano}</span><span class="text-xs text-gray-400">Gs. ${emp.valor.toLocaleString('es-PY')}</span></td><td class="p-4 text-sm text-gray-300">${emp.vencimento}</td><td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold uppercase ${corStatus}">${emp.status}</span></td><td class="p-4"><button onclick="abrirModalEditarEmpresa(${emp.id}, '${emp.plano}', ${emp.valor})" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded-lg text-xs font-bold transition border border-slate-600">✏️ Editar</button></td></tr>`; }); } } catch(e) { console.error("Error al cargar panel SaaS", e); } }
     
+    function imprimirReporteCierre() { const vendas = document.getElementById('cierre-vendas').innerText; const gp = document.getElementById('cierre-gp').innerText; const sangrias = document.getElementById('cierre-sangrias').innerText; const notas = document.getElementById('cierre-notas').innerText; const dataIni = document.getElementById('filtro-data-inicio-cierre').value; const dataFim = document.getElementById('filtro-data-fim-cierre').value; let periodoStr = (dataIni === dataFim) ? `Día: ${dataIni}` : `Del ${dataIni} al ${dataFim}`; const nomeLoja = document.getElementById('sidebar-nome-loja').innerText; const linhasTabela = document.getElementById('tabela-cierre-itens').innerHTML; let html = ` <html><head><title>Reporte de Ventas - NubePY</title> <style> body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 30px; background: white; } .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 4px solid #0d9488; padding-bottom: 15px; margin-bottom: 30px; } .logo { font-size: 32px; font-weight: 900; color: #0f172a; letter-spacing: -1px; margin: 0; } .logo span { color: #0d9488; } .title-box { text-align: right; } .title-box h2 { margin: 0 0 5px 0; color: #0f172a; text-transform: uppercase; font-size: 18px; } .title-box p { margin: 0; font-size: 12px; color: #64748b; } .summary-grid { display: flex; gap: 15px; margin-bottom: 40px; } .card { background: #f8fafc; padding: 15px 20px; border-radius: 8px; border-left: 5px solid #0d9488; flex: 1; } .card.alert { border-left-color: #ef4444; } .card.success { border-left-color: #22c55e; } .card small { color: #64748b; text-transform: uppercase; font-size: 10px; font-weight: bold; letter-spacing: 1px; display: block; margin-bottom: 5px; } .card b { font-size: 20px; color: #0f172a; } .card.success b { color: #16a34a; } .card.alert b { color: #dc2626; } h3 { font-size: 14px; text-transform: uppercase; color: #0f172a; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px; } table { width: 100%; border-collapse: collapse; margin-bottom: 30px; } th { background: #0f172a; color: white; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; } td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; color: #334155; } tr:nth-child(even) { background-color: #f8fafc; } .text-right { text-align: right; } .text-center { text-align: center; } .footer { margin-top: 50px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px; } @media print { body { -webkit-print-color-adjust: exact; padding: 0; } .card { break-inside: avoid; } } </style> </head><body> <div class="header"> <div class="logo">NubePY <span>| Reportes</span></div> <div class="title-box"><h2>Reporte de Ventas & Cierre</h2><p>Comercio: <b>${nomeLoja}</b></p><p>Periodo: <b>${periodoStr}</b></p></div> </div> <div class="summary-grid"> <div class="card"><small>Ingresos Totales</small><b>Gs. ${vendas}</b></div> <div class="card success"><small>Ganancia Neta (GP)</small><b>Gs. ${gp}</b></div> <div class="card alert"><small>Retiros (Sangrías)</small><b>Gs. ${sangrias}</b></div> <div class="card"><small>Notas Emitidas</small><b>${notas}</b></div> </div> <h3>Detalle de Rendimiento por Producto</h3> <table><thead><tr><th>Producto / SKU</th><th class="text-center">Cant.</th><th class="text-right">Precio Venta</th><th class="text-right">Ingreso Total</th><th class="text-right">Ganancia (GP)</th><th class="text-center">Margen %</th></tr></thead><tbody>${linhasTabela}</tbody></table> <div class="footer">Generado por NubePY - El Sistema SaaS de Facturación SIFEN para Paraguay.<br>Uso interno gerencial. Valores sujetos a auditoría.</div> </body></html>`; const janela = window.open('', '', 'width=900,height=700'); janela.document.write(html); janela.document.close(); janela.focus(); setTimeout(() => { janela.print(); }, 500); }
     function exportarTabelaParaCSV(idTbody, nomeBase) { const tbody = document.getElementById(idTbody); if(!tbody) return; const tabela = tbody.closest('table'); if(!tabela) return; let csv = []; const linhas = tabela.querySelectorAll('tr'); for (let i = 0; i < linhas.length; i++) { let linha = []; const cols = linhas[i].querySelectorAll('td, th'); for (let j = 0; j < cols.length; j++) { let texto = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""'); linha.push('"' + texto.trim() + '"'); } csv.push(linha.join(',')); } const dataHoje = new Date().toISOString().split('T')[0]; const nomeArquivo = `${nomeBase}_${dataHoje}.csv`; const csvString = csv.join('\n'); const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", nomeArquivo); link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast("✅ Descarga de CSV completada."); }
     function abrirModalLegal() { document.getElementById('modal-legal').classList.remove('hidden'); document.getElementById('modal-legal').classList.add('flex'); }
     function fecharModalLegal() { document.getElementById('modal-legal').classList.add('hidden'); document.getElementById('modal-legal').classList.remove('flex'); }
@@ -437,7 +447,6 @@
         if(telaId === 'pos') { checarStatusCaixa(); document.getElementById('scanner-barras').focus(); atualizarStatusConexao(); } 
     }
     
-    async function carregarEmpresasSaaS() { try { const resMet = await fetch('/super-admin/metricas'); if (resMet.ok) { const met = await resMet.json(); document.getElementById('saas-mrr').innerText = met.mrr.toLocaleString('es-PY'); document.getElementById('saas-ativos').innerText = met.clientes_ativos; document.getElementById('saas-vencidos').innerText = met.clientes_vencidos; } const res = await fetch('/super-admin/empresas'); if (res.ok) { const empresas = await res.json(); const tbody = document.getElementById('tabela-saas'); tbody.innerHTML = ''; empresas.forEach(emp => { let corStatus = emp.status === 'Activo' ? 'text-green-400 bg-green-900/30 border border-green-800/50' : 'text-red-400 bg-red-900/30 border border-red-800/50'; tbody.innerHTML += `<tr class="hover:bg-slate-700/50 transition border-b border-slate-700"><td class="p-4 font-bold text-white">${emp.nome}</td><td class="p-4"><span class="font-mono text-sm text-gray-400 block">${emp.ruc}</span><span class="text-[10px] text-gray-500 uppercase">${emp.ambiente}</span></td><td class="p-4"><span class="text-brand-accent font-bold block">${emp.plano}</span><span class="text-xs text-gray-400">Gs. ${emp.valor.toLocaleString('es-PY')}</span></td><td class="p-4 text-sm text-gray-300">${emp.vencimento}</td><td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold uppercase ${corStatus}">${emp.status}</span></td></tr>`; }); } } catch(e) { console.error("Error al cargar panel SaaS", e); } }
     async function criarEmpresaSaaS() { const nome = document.getElementById('sa-nome').value.trim(); const ruc = document.getElementById('sa-ruc').value.trim(); const s_admin = document.getElementById('sa-pass-admin').value.trim(); const s_caja = document.getElementById('sa-pass-caja').value.trim(); const plano = document.getElementById('sa-plano').value; const valor = parseFloat(document.getElementById('sa-valor').value) || 0; if(!nome || !ruc || !s_admin || !s_caja) { return showToast("Complete todos los campos.", "error"); } try { const res = await fetch('/super-admin/criar-empresa', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nome: nome, ruc: ruc, senha_admin: s_admin, senha_caixa: s_caja, plano: plano, valor_mensalidade: valor}) }); if (res.ok) { showToast("✅ Suscripción creada y facturada."); ['sa-nome', 'sa-ruc', 'sa-pass-admin', 'sa-pass-caja', 'sa-valor'].forEach(id => document.getElementById(id).value = ''); carregarEmpresasSaaS(); } else { const err = await res.json(); showToast("❌ " + err.detail, "error"); } } catch(e) { showToast("❌ Error de red.", "error"); } }
     async function checarStatusCaixa() { try { const res = await fetch('/status-caixa', { headers: getSaaSHeaders() }); const status = await res.json(); const bloqueio = document.getElementById('bloqueio-caixa'); const badge = document.getElementById('badge-caixa'); if(!status.aberto) { bloqueio.classList.remove('hidden'); bloqueio.classList.add('flex'); badge.classList.add('hidden'); } else { bloqueio.classList.add('hidden'); bloqueio.classList.remove('flex'); badge.classList.remove('hidden'); } } catch(e) { console.error("Erro ao checar caixa", e); } }
     async function abrirTurnoCaixa() { const valorStr = document.getElementById('valor-abertura-caixa').value; const valor = parseFloat(valorStr) || 0; try { const res = await fetch('/abrir-caixa', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({valor_inicial: valor}) }); if(res.ok) { showToast("✅ Turno abierto con éxito."); checarStatusCaixa(); } else { const err = await res.json(); showToast("❌ " + err.detail, "error"); } } catch(e) { showToast("❌ Error de red.", "error"); } }
@@ -467,136 +476,26 @@
     function renderizarTabelaEstoque(lista) { const tbody = document.getElementById('tabela-estoque'); const emptyState = document.getElementById('estoque-vazio'); tbody.innerHTML = ''; if (lista.length === 0) { tbody.closest('table').classList.add('hidden'); emptyState.classList.remove('hidden'); emptyState.classList.add('flex'); } else { tbody.closest('table').classList.remove('hidden'); emptyState.classList.add('hidden'); emptyState.classList.remove('flex'); lista.forEach(p => { let corStock = p.quantidade > 5 ? 'text-green-400 font-bold' : 'text-red-400 font-bold'; let prov = p.codigo_proveedor ? `<span class="bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded text-xs border border-blue-800/50">${p.codigo_proveedor}</span>` : `<span class="text-gray-600">-</span>`; tbody.innerHTML += `<tr class="hover:bg-slate-700/50 transition border-b border-slate-700"><td class="p-4"><div class="font-bold text-white text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td><td class="p-4"><span class="bg-slate-800 text-brand-accent border border-brand-accent/20 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">${p.categoria}</span></td><td class="p-4">${prov}</td><td class="p-4 text-right"><div class="font-bold text-white text-sm">Gs. ${p.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-400 mt-1">Costo: Gs. ${p.preco_custo.toLocaleString('es-PY')}</div></td><td class="p-4 text-center ${corStock} text-lg">${p.quantidade}</td><td class="p-4 text-center flex justify-center gap-2"><button type="button" onclick="deletarProduto('${p.codigo_barras}')" class="text-red-400 bg-red-900/20 hover:bg-red-900/40 p-2 rounded transition border border-red-900/30" title="Eliminar">🗑️</button></td></tr>`; }); } }
     async function carregarEstoque() { try { const res = await fetch('/listar-produtos', { headers: getSaaSHeaders() }); productosGlobais = await res.json(); filtrarEstoque(); if(document.getElementById('tela-stocktake') && !document.getElementById('tela-stocktake').classList.contains('hidden')) { renderTabelaStockTake(productosGlobais); } } catch(e) { console.error(e); } }
     function calcularLucro() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const venta = parseFloat(document.getElementById('novo-preco').value) || 0; const divInfo = document.getElementById('info-lucro'); if (venta > 0 && costo >= 0) { const lucro = venta - costo; const margem = (lucro / venta) * 100; if (lucro > 0) { divInfo.innerHTML = `GP: ${margem.toFixed(1)}%`; divInfo.className = "h-4 mt-1 text-xs font-bold text-green-400"; } else if (lucro === 0) { divInfo.innerHTML = `Sin margen`; divInfo.className = "h-4 mt-1 text-xs font-bold text-yellow-400"; } else { divInfo.innerHTML = `Pérdida`; divInfo.className = "h-4 mt-1 text-xs font-bold text-red-400"; } } else { divInfo.innerHTML = ""; } }
-    
-    // ATUALIZADO: Correção do erro no 'novo-subcat' que travava o botão de guardar produto.
-    async function cadastrarProduto() { 
-        const costo = parseFloat(document.getElementById('novo-custo').value) || 0; 
-        const precio = parseFloat(document.getElementById('novo-preco').value) || 0; 
-        const cantidad = parseInt(document.getElementById('novo-qtd').value) || 0; 
-        const datos = { 
-            codigo_barras: document.getElementById('novo-cod').value.trim(), 
-            descricao: document.getElementById('novo-desc').value.trim(), 
-            categoria: document.getElementById('novo-cat').value, 
-            subcategoria: "-", 
-            preco_custo: costo, 
-            preco_venda: precio, 
-            quantidade: cantidad, 
-            codigo_proveedor: document.getElementById('novo-prov').value.trim() 
-        }; 
-        if(!datos.codigo_barras || !datos.descricao || precio === 0) { return showToast("Complete Código, Descripción y Precio.", "info"); } 
-        try { 
-            const res = await fetch('/cadastrar-produto', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(datos) }); 
-            if (res.ok) { 
-                ['novo-cod', 'novo-desc', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => { 
-                    const el = document.getElementById(id); 
-                    if(el) el.value = ''; 
-                }); 
-                document.getElementById('info-lucro').innerHTML = ''; 
-                toggleFormProducto(); 
-                carregarEstoque(); 
-                showToast("✅ Producto guardado."); 
-            } else { 
-                showToast("❌ El código ya existe.", "error"); 
-            } 
-        } catch (e) { showToast("❌ Error al guardar.", "error"); } 
-    }
-    
+    async function cadastrarProduto() { const costo = parseFloat(document.getElementById('novo-custo').value) || 0; const precio = parseFloat(document.getElementById('novo-preco').value) || 0; const cantidad = parseInt(document.getElementById('novo-qtd').value) || 0; const datos = { codigo_barras: document.getElementById('novo-cod').value.trim(), descricao: document.getElementById('novo-desc').value.trim(), categoria: document.getElementById('novo-cat').value, subcategoria: "-", preco_custo: costo, preco_venda: precio, quantidade: cantidad, codigo_proveedor: document.getElementById('novo-prov').value.trim() }; if(!datos.codigo_barras || !datos.descricao || precio === 0) { return showToast("Complete Código, Descripción y Precio.", "info"); } try { const res = await fetch('/cadastrar-produto', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(datos) }); if (res.ok) { ['novo-cod', 'novo-desc', 'novo-custo', 'novo-preco', 'novo-qtd', 'novo-prov'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; }); document.getElementById('info-lucro').innerHTML = ''; toggleFormProducto(); carregarEstoque(); showToast("✅ Producto guardado."); } else { showToast("❌ El código ya existe.", "error"); } } catch (e) { showToast("❌ Error al guardar.", "error"); } }
     async function deletarProduto(codigo) { if(confirm("¿Seguro que desea eliminar?")) { try { await fetch(`/deletar-produto/${codigo}`, { method: 'DELETE', headers: getSaaSHeaders() }); carregarEstoque(); showToast("✅ Eliminado."); } catch(e) { showToast("❌ Error.", "error"); } } }
-    
-    async function carregarCierreCaja() { 
-        const inicio = document.getElementById('filtro-data-inicio-cierre').value;
-        const fim = document.getElementById('filtro-data-fim-cierre').value;
-        let url = '/cierre-caja';
-        if(inicio && fim) url += `?inicio=${inicio}&fim=${fim}`;
-
-        try { 
-            const res = await fetch(url, { headers: getSaaSHeaders() }); 
-            if(res.ok) { 
-                const dados = await res.json(); 
-                document.getElementById('cierre-vendas').innerText = dados.vendas_hoje.toLocaleString('es-PY'); 
-                document.getElementById('cierre-gp').innerText = dados.lucro_bruto.toLocaleString('es-PY'); 
-                document.getElementById('cierre-notas').innerText = dados.notas_emitidas; 
-                document.getElementById('cierre-sangrias').innerText = dados.total_sangrias.toLocaleString('es-PY'); 
-                
-                const tbody = document.getElementById('tabela-cierre-itens'); 
-                tbody.innerHTML = ''; 
-                
-                if(dados.detalhes_itens.length === 0) { 
-                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500 font-medium">No hay ventas en este periodo.</td></tr>'; 
-                } else { 
-                    dados.detalhes_itens.forEach(item => { 
-                        let corMargem = item.margem > 20 ? 'text-green-400' : (item.margem > 0 ? 'text-yellow-400' : 'text-red-400');
-                        tbody.innerHTML += `
-                        <tr class="hover:bg-slate-700/50 transition border-b border-slate-700">
-                            <td class="p-3"><div class="font-bold text-white text-sm">${item.descricao}</div><div class="text-[10px] text-gray-500 font-mono">${item.codigo_barras || '-'}</div></td>
-                            <td class="p-3 text-center"><span class="bg-slate-800 text-brand-accent px-2 py-1 rounded-md font-bold border border-brand-accent/20">${item.vendidos}</span></td>
-                            <td class="p-3 text-right"><div class="text-white text-sm">Gs. ${item.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-500">Costo: Gs. ${item.custo_unitario ? item.custo_unitario.toLocaleString('es-PY') : '0'}</div></td>
-                            <td class="p-3 text-right font-bold text-white text-sm">Gs. ${item.receita_total.toLocaleString('es-PY')}</td>
-                            <td class="p-3 text-right font-bold text-green-400 text-sm">Gs. ${item.lucro_total.toLocaleString('es-PY')}</td>
-                            <td class="p-3 text-center font-bold ${corMargem} text-sm bg-slate-800/30">${item.margem}%</td>
-                        </tr>`; 
-                    }); 
-                } 
-            } 
-        } catch(e) { showToast("❌ Error al cargar reporte.", "error"); } 
-    }
-    
-    async function carregarHistorico(termoBusca = "") { 
-        const inicio = document.getElementById('filtro-data-inicio-hist')?.value || '';
-        const fim = document.getElementById('filtro-data-fim-hist')?.value || '';
-        
-        let url = `/listar-notas?busca=${encodeURIComponent(termoBusca)}`;
-        if(inicio && fim) url += `&inicio=${inicio}&fim=${fim}`;
-
-        try { 
-            const res = await fetch(url, { headers: getSaaSHeaders() }); 
-            const datos = await res.json(); 
-            const tbody = document.getElementById('tabela-historico'); 
-            tbody.innerHTML = ''; 
-            
-            if(datos.historico.length === 0) {
-                 tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-500 font-medium">No se encontraron facturas.</td></tr>'; 
-                 return;
-            }
-
-            datos.historico.forEach(nota => { 
-                const fechaFormatada = new Date(nota.data_emissao).toLocaleString('es-PY', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}); 
-                let btns = `<span class="text-xs text-gray-500">Sin archivo</span>`; 
-                if(nota.link_pdf && nota.link_pdf !== "") { 
-                    btns = `<div class="flex gap-2 justify-center"><a href="${nota.link_pdf}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1.5 rounded-lg border border-slate-600 text-xs flex items-center shadow-sm transition">📄 PDF</a><a href="https://ekuatia.set.gov.py/consultas/qr?nId=${nota.cdc}" target="_blank" class="bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white font-bold px-3 py-1.5 rounded-lg border border-brand-accent/30 text-xs flex items-center shadow-sm transition">🔗 QR</a></div>`; 
-                } 
-                tbody.innerHTML += `
-                <tr class="hover:bg-slate-700/50 transition border-b border-slate-700">
-                    <td class="p-4"><div class="text-xs font-bold text-gray-400 mb-1">${fechaFormatada}</div><div class="text-[10px] text-gray-500 font-mono break-all">${nota.cdc.substring(0,30)}...</div></td>
-                    <td class="p-4 font-bold text-white text-sm">${nota.nome_cliente}</td>
-                    <td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td>
-                    <td class="p-4 text-center font-bold text-gray-400 text-xs">${nota.metodo_pago || 'Efectivo'}</td>
-                    <td class="p-4 text-center">${btns}</td>
-                </tr>`; 
-            }); 
-        } catch(e) { console.error(e); } 
-    }
+    async function carregarCierreCaja() { const inicio = document.getElementById('filtro-data-inicio-cierre').value; const fim = document.getElementById('filtro-data-fim-cierre').value; let url = '/cierre-caja'; if(inicio && fim) url += `?inicio=${inicio}&fim=${fim}`; try { const res = await fetch(url, { headers: getSaaSHeaders() }); if(res.ok) { const dados = await res.json(); document.getElementById('cierre-vendas').innerText = dados.vendas_hoje.toLocaleString('es-PY'); document.getElementById('cierre-gp').innerText = dados.lucro_bruto.toLocaleString('es-PY'); document.getElementById('cierre-notas').innerText = dados.notas_emitidas; document.getElementById('cierre-sangrias').innerText = dados.total_sangrias.toLocaleString('es-PY'); const tbody = document.getElementById('tabela-cierre-itens'); tbody.innerHTML = ''; if(dados.detalhes_itens.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500 font-medium">No hay ventas en este periodo.</td></tr>'; } else { dados.detalhes_itens.forEach(item => { let corMargem = item.margem > 20 ? 'text-green-400' : (item.margem > 0 ? 'text-yellow-400' : 'text-red-400'); tbody.innerHTML += ` <tr class="hover:bg-slate-700/50 transition border-b border-slate-700"> <td class="p-3"><div class="font-bold text-white text-sm">${item.descricao}</div><div class="text-[10px] text-gray-500 font-mono">${item.codigo_barras || '-'}</div></td> <td class="p-3 text-center"><span class="bg-slate-800 text-brand-accent px-2 py-1 rounded-md font-bold border border-brand-accent/20">${item.vendidos}</span></td> <td class="p-3 text-right"><div class="text-white text-sm">Gs. ${item.preco_venda.toLocaleString('es-PY')}</div><div class="text-[10px] text-gray-500">Costo: Gs. ${item.custo_unitario ? item.custo_unitario.toLocaleString('es-PY') : '0'}</div></td> <td class="p-3 text-right font-bold text-white text-sm">Gs. ${item.receita_total.toLocaleString('es-PY')}</td> <td class="p-3 text-right font-bold text-green-400 text-sm">Gs. ${item.lucro_total.toLocaleString('es-PY')}</td> <td class="p-3 text-center font-bold ${corMargem} text-sm bg-slate-800/30">${item.margem}%</td> </tr>`; }); } } } catch(e) { showToast("❌ Error al cargar reporte.", "error"); } }
+    async function carregarHistorico(termoBusca = "") { const inicio = document.getElementById('filtro-data-inicio-hist')?.value || ''; const fim = document.getElementById('filtro-data-fim-hist')?.value || ''; let url = `/listar-notas?busca=${encodeURIComponent(termoBusca)}`; if(inicio && fim) url += `&inicio=${inicio}&fim=${fim}`; try { const res = await fetch(url, { headers: getSaaSHeaders() }); const datos = await res.json(); const tbody = document.getElementById('tabela-historico'); tbody.innerHTML = ''; if(datos.historico.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-500 font-medium">No se encontraron facturas.</td></tr>'; return; } datos.historico.forEach(nota => { const fechaFormatada = new Date(nota.data_emissao).toLocaleString('es-PY', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}); let btns = `<span class="text-xs text-gray-500">Sin archivo</span>`; if(nota.link_pdf && nota.link_pdf !== "") { btns = `<div class="flex gap-2 justify-center"><a href="${nota.link_pdf}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1.5 rounded-lg border border-slate-600 text-xs flex items-center shadow-sm transition">📄 PDF</a><a href="https://ekuatia.set.gov.py/consultas/qr?nId=${nota.cdc}" target="_blank" class="bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white font-bold px-3 py-1.5 rounded-lg border border-brand-accent/30 text-xs flex items-center shadow-sm transition">🔗 QR</a></div>`; } tbody.innerHTML += ` <tr class="hover:bg-slate-700/50 transition border-b border-slate-700"> <td class="p-4"><div class="text-xs font-bold text-gray-400 mb-1">${fechaFormatada}</div><div class="text-[10px] text-gray-500 font-mono break-all">${nota.cdc.substring(0,30)}...</div></td> <td class="p-4 font-bold text-white text-sm">${nota.nome_cliente}</td> <td class="p-4 text-right font-extrabold text-brand-accent whitespace-nowrap text-sm">Gs. ${nota.valor_total.toLocaleString('es-PY')}</td> <td class="p-4 text-center font-bold text-gray-400 text-xs">${nota.metodo_pago || 'Efectivo'}</td> <td class="p-4 text-center">${btns}</td> </tr>`; }); } catch(e) { console.error(e); } }
     function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
-
     async function carregarDashboard() { try { const res = await fetch('/dados-dashboard', { headers: getSaaSHeaders() }); const dados = await res.json(); document.getElementById('dash-vendas').innerText = dados.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText = dados.total_notas; const nomes = dados.top_produtos.map(p => p.nome); const quantidades = dados.top_produtos.map(p => p.quantidade); if (nomes.length === 0) { nomes.push("Sin ventas hoy"); quantidades.push(0); } const ctx = document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) graficoAtual.destroy(); graficoAtual = new Chart(ctx, { type: 'bar', data: { labels: nomes, datasets: [{ label: 'Unidades', data: quantidades, backgroundColor: '#0d9488', borderColor: '#0f766e', borderWidth: 1, borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0, color: '#94a3b8' }, grid: { color: '#334155' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8' } } } } }); } catch (error) { console.error("Error Dashboard"); } }
     async function carregarCategorias() { try { const res = await fetch('/listar-categorias', { headers: getSaaSHeaders() }); const categorias = await res.json(); const selectForm = document.getElementById('novo-cat'); const selectFiltro = document.getElementById('filtro-cat-inventario'); if(selectForm) { selectForm.innerHTML = ''; categorias.forEach(c => { selectForm.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); } if(selectFiltro) { selectFiltro.innerHTML = '<option value="">📁 Todas las Categorías</option>'; categorias.forEach(c => { selectFiltro.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); } const tbody = document.getElementById('tabela-categorias'); if(tbody) { tbody.innerHTML = ''; categorias.forEach(c => { let btnDelete = c.nome === 'General' ? `<span class="text-xs text-gray-500 font-medium bg-slate-700 px-2 py-1 rounded border border-slate-600">Fijo</span>` : `<button type="button" onclick="deletarCategoria(${c.id})" class="text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/40 px-3 py-1 rounded text-sm transition border border-red-900/30">🗑️</button>`; tbody.innerHTML += `<tr class="hover:bg-slate-700/50 transition"><td class="p-4 font-bold text-white">${c.nome}</td><td class="p-4 text-center">${btnDelete}</td></tr>`; }); } } catch(e) { console.error(e); } }
     async function adicionarCategoria() { const nome = document.getElementById('nova-cat-nome').value.trim(); if(!nome) return showToast("Escriba el nombre.", "info"); try { const res = await fetch('/cadastrar-categoria', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({nome: nome}) }); if(res.ok) { document.getElementById('nova-cat-nome').value = ''; carregarCategorias(); showToast("✅ Categoría creada."); } else { showToast("❌ Ya existe.", "error"); } } catch(e) { showToast("❌ Error.", "error"); } }
     async function deletarCategoria(id) { if(confirm("¿Seguro que desea eliminar?")) { try { await fetch(`/deletar-categoria/${id}`, {method: 'DELETE', headers: getSaaSHeaders() }); carregarCategorias(); showToast("✅ Eliminada."); } catch(e) { showToast("❌ Error.", "error"); } } }
-    
     async function carregarConfiguracao() { try { const res = await fetch('/obter-configuracao', { headers: getSaaSHeaders() }); const dados = await res.json(); if(dados) { document.getElementById('conf-nome').value = dados.nome_empresa || ''; document.getElementById('conf-ruc').value = dados.ruc || ''; document.getElementById('conf-endereco').value = dados.endereco || ''; document.getElementById('conf-senha-cert').value = dados.senha_certificado || ''; if (document.getElementById('conf-csc')) { document.getElementById('conf-csc').value = dados.csc || ''; } document.getElementById('ruc').value = dados.ruc || 'Falta RUC'; document.getElementById('conf-ambiente').value = dados.ambiente_sifen || 'testes'; document.getElementById('sidebar-nome-loja').innerText = dados.nome_empresa || 'NubePY App'; const status = document.getElementById('status-cert'); if(dados.caminho_certificado) { status.classList.remove('hidden'); status.classList.add('bg-green-900/30', 'text-green-400', 'border-green-800/50'); status.innerHTML = `✅ Certificado Activo: <b>${dados.caminho_certificado.split('/').pop()}</b>`; } } } catch(e) { console.error(e); } }
     async function alterarAmbienteSifen() { const ambiente = document.getElementById('conf-ambiente').value; try { const res = await fetch('/alternar-ambiente', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({ambiente: ambiente}) }); if(res.ok) { showToast(`✅ Ambiente cambiado a ${ambiente.toUpperCase()}`); } else { showToast("❌ Error al cambiar ambiente.", "error"); } } catch(e) { showToast("❌ Error de red.", "error"); } }
     async function salvarConfiguracao() { const formData = new FormData(); formData.append('nome_empresa', document.getElementById('conf-nome').value); formData.append('ruc', document.getElementById('conf-ruc').value); formData.append('endereco', document.getElementById('conf-endereco').value); formData.append('senha_certificado', document.getElementById('conf-senha-cert').value); if (document.getElementById('conf-csc')) { formData.append('csc', document.getElementById('conf-csc').value); } try { const res = await fetch('/salvar-configuracao', { method: 'POST', headers: { 'X-Empresa-ID': empresaAtualId.toString() }, body: formData }); if(res.ok) { showToast("✅ Guardados."); carregarConfiguracao(); } else { showToast("❌ Error.", "error"); } } catch(e) { showToast("❌ Error.", "error"); } }
     async function fazerUploadCertificado() { const archivoInput = document.getElementById('arquivo-cert'); if(archivoInput.files.length === 0) return showToast("Seleccione un archivo.", "info"); const formData = new FormData(); formData.append('arquivo', archivoInput.files[0]); try { const res = await fetch('/upload-certificado', { method: 'POST', headers: { 'X-Empresa-ID': empresaAtualId.toString() }, body: formData }); if(res.ok) { showToast("✅ Subido."); archivoInput.value = ''; carregarConfiguracao(); } else { showToast("❌ Error.", "error"); } } catch(e) { showToast("❌ Error.", "error"); } }
-
     async function carregarStockTake() { await carregarEstoque(); renderTabelaStockTake(productosGlobais); }
     function filtrarListaStockTake() { const termo = document.getElementById('busca-st').value.toLowerCase(); const filtrados = productosGlobais.filter(p => p.descricao.toLowerCase().includes(termo) || p.codigo_barras.toLowerCase().includes(termo)); renderTabelaStockTake(filtrados); }
     function renderTabelaStockTake(lista) { const tbody = document.getElementById('tabela-stocktake'); tbody.innerHTML = ''; lista.forEach(p => { let valorSalvo = ''; let valInput = document.getElementById(`st-input-${p.codigo_barras}`); if(valInput && valInput.value !== '') valorSalvo = valInput.value; tbody.innerHTML += ` <tr class="hover:bg-slate-700/50 transition border-b border-slate-700"> <td class="p-4"><div class="font-bold text-white text-sm">${p.descricao}</div><div class="text-xs text-gray-400 font-mono mt-1">${p.codigo_barras}</div></td> <td class="p-4 text-center text-lg font-bold text-brand-accent">${p.quantidade}</td> <td class="p-4 text-center"> <input type="number" id="st-input-${p.codigo_barras}" value="${valorSalvo}" placeholder="-" class="w-full border-2 border-slate-600 p-2 rounded-lg text-lg font-bold text-center bg-slate-800 text-white focus:border-yellow-400 outline-none transition-all" oninput="atualizarDiffST('${p.codigo_barras}', ${p.quantidade})"> </td> <td class="p-4 text-center"> <span id="st-diff-${p.codigo_barras}" class="text-gray-500 font-bold">-</span> </td> </tr> `; if(valorSalvo !== '') atualizarDiffST(p.codigo_barras, p.quantidade); }); }
     function atualizarDiffST(cod, qtdSis) { let input = document.getElementById(`st-input-${cod}`).value; let span = document.getElementById(`st-diff-${cod}`); if(input === '') { span.innerText = '-'; span.className = 'text-gray-500 font-bold text-lg'; return; } let diff = parseInt(input) - qtdSis; if(diff > 0) { span.innerText = `+${diff}`; span.className = 'text-green-400 font-bold text-lg'; } else if(diff < 0) { span.innerText = diff; span.className = 'text-red-400 font-bold text-lg'; } else { span.innerText = 'OK'; span.className = 'text-gray-400 font-bold text-lg'; } }
     async function salvarStockTake() { let payload = []; productosGlobais.forEach(p => { let input = document.getElementById(`st-input-${p.codigo_barras}`); if(input && input.value !== '') { if(parseInt(input.value) !== p.quantidade) { payload.push({codigo_barras: p.codigo_barras, qtd_fisica: parseInt(input.value)}); } } }); if(payload.length === 0) return showToast("No hay diferencias para guardar.", "info"); try { const res = await fetch('/salvar-auditoria', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({itens: payload}) }); if(res.ok) { showToast("✅ Auditoría completada. Stock actualizado."); document.getElementById('busca-st').value = ''; carregarStockTake(); } else { showToast("❌ Error al guardar auditoría.", "error"); } } catch(e) { showToast("❌ Error de red.", "error"); } }
-
     async function carregarRelatoriosStock() { try { const res = await fetch('/listar-auditorias', { headers: getSaaSHeaders() }); const dados = await res.json(); const tbody = document.getElementById('tabela-stocktakereport'); tbody.innerHTML = ''; if(dados.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500">No hay auditorías registradas.</td></tr>'; return; } dados.forEach(a => { let corImpacto = a.impacto_financeiro > 0 ? 'text-green-400' : (a.impacto_financeiro < 0 ? 'text-red-400' : 'text-gray-400'); let sinal = a.impacto_financeiro > 0 ? '+' : ''; tbody.innerHTML += ` <tr class="hover:bg-slate-700/50 transition border-b border-slate-700"> <td class="p-4"><div class="font-bold text-white">#${a.id}</div><div class="text-xs text-gray-400">${a.data}</div></td> <td class="p-4 text-center font-bold text-brand-accent">${a.total_itens}</td> <td class="p-4 text-right font-extrabold ${corImpacto}">${sinal}${a.impacto_financeiro.toLocaleString('es-PY')} Gs</td> <td class="p-4 text-center"><button onclick="abrirDetallesAuditoria(${a.id})" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition border border-slate-600">Ver Detalles</button></td> </tr> `; }); } catch(e) { console.error("Erro relatórios", e); } }
     async function abrirDetallesAuditoria(id) { try { const res = await fetch(`/detalhes-auditoria/${id}`, { headers: getSaaSHeaders() }); const itens = await res.json(); const tbody = document.getElementById('tabela-audit-detalhes'); tbody.innerHTML = ''; itens.forEach(i => { let corDiff = i.diferenca > 0 ? 'text-green-400' : 'text-red-400'; let sinal = i.diferenca > 0 ? '+' : ''; let impacto = i.diferenca * i.custo_unitario; tbody.innerHTML += ` <tr class="border-b border-slate-700 hover:bg-slate-700/30"> <td class="p-3"><div class="font-bold">${i.descricao}</div><div class="text-[10px] text-gray-500 font-mono">${i.codigo_barras}</div></td> <td class="p-3 text-center text-gray-400">${i.qtd_sistema}</td> <td class="p-3 text-center font-bold text-white">${i.qtd_fisica}</td> <td class="p-3 text-center font-bold ${corDiff}">${sinal}${i.diferenca}</td> <td class="p-3 text-right font-bold ${corDiff}">${sinal}${impacto.toLocaleString('es-PY')}</td> </tr> `; }); document.getElementById('modal-audit-details').classList.remove('hidden'); document.getElementById('modal-audit-details').classList.add('flex'); } catch(e) { showToast("❌ Error al cargar detalles.", "error"); } }
-
     document.head.insertAdjacentHTML('beforeend', `<style>@keyframes toast-progress { from { width: 100%; } to { width: 0%; } }</style>`);
   </script>
 </body>

@@ -154,7 +154,6 @@ def autenticar_usuario(ruc, senha):
 
     conexao = get_conexao()
     cursor = conexao.cursor()
-    # Adicionamos a busca da coluna 'plano'
     cursor.execute("SELECT id, senha_admin, senha_caixa, status_assinatura, plano FROM empresas WHERE ruc = %s", (ruc,))
     empresa = cursor.fetchone()
     conexao.close()
@@ -170,7 +169,6 @@ def autenticar_usuario(ruc, senha):
         return {"sucesso": True, "empresa_id": emp_id, "rol": "admin", "plano": plano}
         
     elif senha == s_caixa: 
-        # REGRA DE NEGÓCIO TIER 1: Bloqueia o Cajero no plano Essential
         if plano == "Essential" or plano == "Básico":
             return {"sucesso": False, "mensagem": "Tu plan (Essential) es para 1 solo usuario. Actualiza al plan Growth para añadir Cajeros."}
         return {"sucesso": True, "empresa_id": emp_id, "rol": "cajero", "plano": plano}
@@ -212,6 +210,14 @@ def criar_nova_empresa(nome, ruc, senha_admin, senha_caixa, plano, valor):
         return False, "Ya existe una empresa con este RUC."
     finally:
         conexao.close()
+
+def atualizar_plano_empresa(empresa_id, novo_plano, novo_valor):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("UPDATE empresas SET plano = %s, valor_mensalidade = %s WHERE id = %s", (novo_plano, novo_valor, empresa_id))
+    conexao.commit()
+    conexao.close()
+    return True
 
 def status_caixa_atual(empresa_id):
     conexao = get_conexao()
@@ -435,7 +441,6 @@ def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_q
     conexao.commit()
     conexao.close()
 
-# ATUALIZADO: Aceita filtros de data de início e fim
 def listar_todas_notas(empresa_id, busca="", data_inicio=None, data_fim=None):
     conexao = get_conexao()
     cursor = conexao.cursor()
@@ -480,7 +485,6 @@ def obter_dados_dashboard(empresa_id):
     top_produtos = sorted(produtos_vendidos.items(), key=lambda x: x[1], reverse=True)[:5]
     return {"total_vendas": total_vendas, "total_notas": total_notas, "top_produtos": [{"nome": p[0], "quantidade": p[1]} for p in top_produtos]}
 
-# ATUALIZADO: Aceita filtros de data para o Reporte de Fecho/Vendas
 def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
     conexao = get_conexao()
     cursor = conexao.cursor()

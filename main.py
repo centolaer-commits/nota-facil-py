@@ -28,6 +28,10 @@ class NovaEmpresa(BaseModel):
     plano: str
     valor_mensalidade: float
 
+class EdicaoEmpresa(BaseModel):
+    plano: str
+    valor_mensalidade: float
+
 class ProdutoNovo(BaseModel):
     codigo_barras: str
     descricao: str
@@ -96,6 +100,11 @@ def criar_empresa(dados: NovaEmpresa):
     if sucesso:
         return {"mensaje": msg}
     raise HTTPException(status_code=400, detail=msg)
+
+@app.put("/super-admin/editar-empresa/{empresa_id}")
+def editar_empresa(empresa_id: int, dados: EdicaoEmpresa):
+    banco_dados.atualizar_plano_empresa(empresa_id, dados.plano, dados.valor_mensalidade)
+    return {"mensaje": "Plan actualizado exitosamente."}
 
 @app.get("/status-caixa")
 def status_caixa(x_empresa_id: int = Header(...)):
@@ -254,13 +263,11 @@ def baixar_pdf(id_nota: str):
     if os.path.exists(caminho): return FileResponse(caminho, media_type='application/pdf', filename=f"Factura_{id_nota}.pdf")
     raise HTTPException(status_code=404, detail="PDF no encontrado")
 
-# ATUALIZADO: Recebe as datas de início e fim
 @app.get("/listar-notas")
 def listar_notas(busca: Optional[str] = "", inicio: Optional[str] = None, fim: Optional[str] = None, x_empresa_id: int = Header(...)):
     historico = banco_dados.listar_todas_notas(x_empresa_id, busca, inicio, fim)
     return {"total": len(historico), "historico": historico}
 
-# ATUALIZADO: Recebe as datas de início e fim
 @app.get("/cierre-caja")
 def api_cierre_caja(inicio: Optional[str] = None, fim: Optional[str] = None, x_empresa_id: int = Header(...)):
     return banco_dados.obter_fechamento_caixa(x_empresa_id, inicio, fim)
