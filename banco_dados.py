@@ -370,4 +370,226 @@ def deletar_produto(empresa_id, codigo_barras):
     conexao.commit()
     conexao.close()
 
-def salvar_auditoria_estoque(empresa_id, itens_audit
+def salvar_auditoria_estoque(empresa_id, itens_auditados):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        cursor.execute("INSERT INTO auditorias (empresa_id) VALUES (%s) RETURNING id", (empresa_id,))
+        auditoria_id = cursor.fetchone()[0]
+
+        impacto_total = 0
+        total_itens = 0
+
+        for item in itens_auditados:
+            cod = item['codigo_barras']
+            fisica = item['qtd_fisica']
+
+            cursor.execute("SELECT descricao, quantidade, preco_custo FROM produtos WHERE empresa_id = %s AND codigo_barras = %s", (empresa_id, cod))
+            linha = cursor.fetchone()
+            if not linha: continue
+
+            desc, qtd_sis, custo = linha
+            diferenca = fisica - qtd_sis
+            impacto = diferenca * custo
+
+            if diferenca != 0:
+                impacto_total += impacto
+                total_itens += 1
+                cursor.execute("UPDATE produtos SET quantidade = %s WHERE empresa_id = %s AND codigo_barras = %s", (fisica, empresa_id, cod))
+                cursor.execute("INSERT INTO auditorias_itens (auditoria_id, codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario) VALUES (%s, %s, %s, %s, %s, %s, %s)", (auditoria_id, cod, desc, qtd_sis, fisica, diferenca, custo))
+
+        cursor.execute("UPDATE auditorias SET impacto_financeiro = %s, total_itens = %s WHERE id = %s", (impacto_total, total_itens, auditoria_id))
+        conexao.commit()
+        return True, "Auditoría completada. Inventario actualizado."
+    except Exception as e:
+        conexao.rollback()
+        return False, str(e)
+    finally:
+        cursor.close()
+        conexao.close()
+
+def listar_auditorias(empresa_id):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT id, data, impacto_financeiro, total_itens FROM auditorias WHERE empresa_id = %s ORDER BY id DESC", (empresa_id,))
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"id": l[0], "data": str(l[1])[:16], "impacto_financeiro": l[2], "total_itens": l[3]} for l in linhas]
+
+def obter_detalhes_auditoria(empresa_id, auditoria_id):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT 1 FROM auditorias WHERE id = %s AND empresa_id = %s", (auditoria_id, empresa_id))
+    if not cursor.fetchone():
+        conexao.close()
+        return []
+    cursor.execute("SELECT codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario FROM auditorias_itens WHERE auditoria_id = %s", (auditoria_id,))
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"codigo_barras": l[0], "descricao": l[1], "qtd_sistema": l[2], "qtd_fisica": l[3], "diferenca": l[4], "custo_unitario": l[5]} for l in linhas]
+
+def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode="", metodo_pago="Efectivo"):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    caixa_atual = status_caixa_atual(empresa_id)
+    caixa_id = caixa_atual["caixa_id"] if caixa_atual["aberto"] else 0
+
+    itens_com_custo = []
+    for item in itens:
+        item_dict = item.dict() if hasattr(item, 'dict') else item
+        if item_dict.get('codigo_barras'):
+            cursor.execute('SELECT preco_custo FROM produtos WHERE empresa_id = %s AND codigo_barras = %s', (empresa_id, item_dict['codigo_barras']))
+            row = cursor.fetchone()
+            item_dict['preco_custo'] = row[0] if row else 0
+            cursor.execute('UPDATE produtos SET quantidade = quantidade - %s WHERE empresa_id = %s AND codigo_barras = %s', (item_dict.get('quantidade', 0), empresa_id, item_dict['codigo_barras']))
+        else:
+            item_dict['preco_custo'] = 0 
+        itens_com_custo.append(item_dict)
+
+    itens_json = json.dumps(itens_com_custo)
+    cursor.execute('''
+        INSERT INTO notas (empresa_id, ruc_emissor, nome_cliente, valor_total, cdc, itens, link_pdf, link_qrcode, metodo_pago, caixa_id) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ''', (empresa_id, ruc, cliente, valor, cdc, itens_json, link_pdf, link_qrcode, metodo_pago, caixa_id))
+    conexao.commit()
+    conexao.close()
+
+def listar_todas_notas(empresa_id, busca="", data_inicio=None, data_fim=None):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    
+    query = "SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao, metodo_pago FROM notas WHERE empresa_id = %s"
+    params = [empresa_id]
+    
+    if data_inicio and data_fim:
+        query += " AND DATE(data_emissao) >= %s AND DATE(data_emissao) <= %s"
+        params.extend([data_inicio, data_fim])
+        
+    if busca:
+        query += " AND (nome_cliente ILIKE %s OR cdc ILIKE %s)"
+        params.extend([f"%{busca}%", f"%{busca}%"])
+        
+    query += " ORDER BY id DESC"
+    
+    cursor.execute(query, tuple(params))
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"id": l[0], "nome_cliente": l[1], "valor_total": l[2], "cdc": l[3], "link_pdf": l[4], "data_emissao": l[5], "metodo_pago": l[6]} for l in linhas]
+
+def obter_dados_dashboard(empresa_id):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute('SELECT valor_total, itens FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE', (empresa_id,))
+    notas = cursor.fetchall()
+    conexao.close()
+    
+    total_vendas = 0
+    total_notas = len(notas)
+    produtos_vendidos = {}
+    
+    for nota in notas:
+        total_vendas += nota[0]
+        itens = json.loads(nota[1]) 
+        for item in itens:
+            nome = item.get("descricao", "Manual / Otros")
+            qtd = item.get("quantidade", 0)
+            produtos_vendidos[nome] = produtos_vendidos.get(nome, 0) + qtd
+                
+    top_produtos = sorted(produtos_vendidos.items(), key=lambda x: x[1], reverse=True)[:5]
+    return {"total_vendas": total_vendas, "total_notas": total_notas, "top_produtos": [{"nome": p[0], "quantidade": p[1]} for p in top_produtos]}
+
+def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    
+    if not data_inicio: data_inicio = str(date.today())
+    if not data_fim: data_fim = str(date.today())
+    
+    cursor.execute("SELECT valor_total, itens, metodo_pago FROM notas WHERE empresa_id = %s AND DATE(data_emissao) >= %s AND DATE(data_emissao) <= %s", (empresa_id, data_inicio, data_fim))
+    notas_periodo = cursor.fetchall()
+    
+    total_vendas_periodo = 0
+    lucro_bruto_periodo = 0
+    total_notas_periodo = len(notas_periodo)
+    
+    cursor.execute("SELECT SUM(valor) FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'SANGRIA' AND DATE(data) >= %s AND DATE(data) <= %s", (empresa_id, data_inicio, data_fim))
+    total_sangrias = cursor.fetchone()[0] or 0
+    
+    itens_agrupados = {}
+    for nota in notas_periodo:
+        total_vendas_periodo += nota[0]
+        itens = json.loads(nota[1])
+        for item in itens:
+            preco_venda = item.get('preco_unitario', 0)
+            preco_custo = item.get('preco_custo', 0)
+            qtd = item.get('quantidade', 0)
+            
+            receita_item = preco_venda * qtd
+            lucro_item = (preco_venda - preco_custo) * qtd
+            lucro_bruto_periodo += lucro_item
+            
+            cod = item.get('codigo_barras')
+            desc = item.get('descricao', 'Manual / Otros')
+            chave = cod if cod else desc
+            
+            if chave not in itens_agrupados:
+                itens_agrupados[chave] = {
+                    "codigo_barras": cod, "descricao": desc, "vendidos": 0, "estoque_restante": 0, "receita_total": 0, "lucro_total": 0, "margem": 0
+                }
+            itens_agrupados[chave]["vendidos"] += qtd
+            itens_agrupados[chave]["receita_total"] += receita_item
+            itens_agrupados[chave]["lucro_total"] += lucro_item
+            
+    lista_detalhada = list(itens_agrupados.values())
+    for item in lista_detalhada:
+        if item["receita_total"] > 0:
+            item["margem"] = round((item["lucro_total"] / item["receita_total"]) * 100, 1)
+            
+        if item["codigo_barras"]:
+            cursor.execute("SELECT quantidade FROM produtos WHERE empresa_id = %s AND codigo_barras = %s", (empresa_id, item["codigo_barras"]))
+            row = cursor.fetchone()
+            item["estoque_restante"] = row[0] if row else 0
+        else:
+            item["estoque_restante"] = "-"
+
+    lista_detalhada.sort(key=lambda x: x["receita_total"], reverse=True)
+    conexao.close()
+    
+    return {"vendas_hoje": total_vendas_periodo, "lucro_bruto": lucro_bruto_periodo, "notas_emitidas": total_notas_periodo, "total_sangrias": total_sangrias, "detalhes_itens": lista_detalhada}
+
+def cadastrar_proveedor(empresa_id, nome, ruc, telefone="", email="", endereco=""):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        cursor.execute('''
+            INSERT INTO proveedores (empresa_id, nome, ruc, telefone, email, endereco)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (empresa_id, ruc) DO UPDATE SET
+            nome = EXCLUDED.nome,
+            telefone = EXCLUDED.telefone,
+            email = EXCLUDED.email,
+            endereco = EXCLUDED.endereco
+        ''', (empresa_id, nome, ruc, telefone, email, endereco))
+        conexao.commit()
+        return True, "Proveedor guardado con éxito."
+    except Exception as e:
+        conexao.rollback()
+        return False, f"Error al guardar: {str(e)}"
+    finally:
+        cursor.close()
+        conexao.close()
+
+def listar_proveedores(empresa_id):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute('SELECT id, nome, ruc, telefone, email, endereco FROM proveedores WHERE empresa_id = %s ORDER BY nome ASC', (empresa_id,))
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"id": l[0], "nome": l[1], "ruc": l[2], "telefone": l[3], "email": l[4], "endereco": l[5]} for l in linhas]
+
+def deletar_proveedor(empresa_id, proveedor_id):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute('DELETE FROM proveedores WHERE empresa_id = %s AND id = %s', (empresa_id, proveedor_id))
+    conexao.commit()
+    conexao.close()
