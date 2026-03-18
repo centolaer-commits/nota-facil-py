@@ -111,6 +111,22 @@ def inicializar_banco():
 
     try:
         cursor.execute('''
+            CREATE TABLE IF NOT EXISTS compras (
+                id SERIAL PRIMARY KEY,
+                empresa_id INTEGER DEFAULT 1,
+                proveedor_id INTEGER,
+                numero_factura TEXT,
+                data_emissao DATE,
+                valor_total REAL,
+                itens TEXT,
+                data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+    except Exception as e:
+        pass
+
+    try:
+        cursor.execute('''
             CREATE TABLE IF NOT EXISTS auditorias (
                 id SERIAL PRIMARY KEY,
                 empresa_id INTEGER DEFAULT 1,
@@ -611,3 +627,38 @@ def deletar_proveedor(empresa_id, proveedor_id):
     cursor.execute('DELETE FROM proveedores WHERE empresa_id = %s AND id = %s', (empresa_id, proveedor_id))
     conexao.commit()
     conexao.close()
+
+def salvar_entrada_factura(empresa_id, proveedor_id, numero_factura, data_emissao, itens):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        valor_total = 0
+        itens_json = json.dumps(itens)
+        
+        for item in itens:
+            cod = item['codigo_barras']
+            qtd = item['quantidade']
+            custo = item['custo_unitario']
+            
+            subtotal = qtd * custo
+            valor_total += subtotal
+            
+            cursor.execute('''
+                UPDATE produtos 
+                SET quantidade = quantidade + %s, preco_custo = %s 
+                WHERE empresa_id = %s AND codigo_barras = %s
+            ''', (qtd, custo, empresa_id, cod))
+        
+        cursor.execute('''
+            INSERT INTO compras (empresa_id, proveedor_id, numero_factura, data_emissao, valor_total, itens)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (empresa_id, proveedor_id, numero_factura, data_emissao, valor_total, itens_json))
+        
+        conexao.commit()
+        return True, "Entrada registrada y stock actualizado."
+    except Exception as e:
+        conexao.rollback()
+        return False, f"Error al guardar entrada: {str(e)}"
+    finally:
+        cursor.close()
+        conexao.close()

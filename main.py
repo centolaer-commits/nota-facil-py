@@ -69,6 +69,18 @@ class DadosNota(BaseModel):
     itens: List[ItemNota]
     metodo_pago: Optional[str] = "Efectivo"
 
+class ItemEntrada(BaseModel):
+    codigo_barras: str
+    descricao: str
+    quantidade: int
+    custo_unitario: float
+
+class DadosEntrada(BaseModel):
+    proveedor_id: int
+    numero_factura: str
+    data_emissao: str
+    itens: List[ItemEntrada]
+
 class CategoriaNova(BaseModel):
     nome: str
 
@@ -177,6 +189,19 @@ def listar_proveedores(x_empresa_id: int = Header(...)):
 def deletar_proveedor(id_prov: int, x_empresa_id: int = Header(...)):
     banco_dados.deletar_proveedor(x_empresa_id, id_prov)
     return {"mensaje": "Proveedor eliminado"}
+
+@app.post("/salvar-entrada")
+def api_salvar_entrada(dados: DadosEntrada, x_empresa_id: int = Header(...)):
+    itens_dicts = [{"codigo_barras": i.codigo_barras, "descricao": i.descricao, "quantidade": i.quantidade, "custo_unitario": i.custo_unitario} for i in dados.itens]
+    sucesso, msg = banco_dados.salvar_entrada_factura(
+        x_empresa_id, 
+        dados.proveedor_id, 
+        dados.numero_factura, 
+        dados.data_emissao, 
+        itens_dicts
+    )
+    if sucesso: return {"mensaje": msg}
+    raise HTTPException(status_code=400, detail=msg)
 
 @app.get("/obter-configuracao")
 def obter_configuracao(x_empresa_id: int = Header(...)):
