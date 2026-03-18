@@ -579,6 +579,24 @@ def cadastrar_proveedor(empresa_id, nome, ruc, telefone="", email="", endereco="
         cursor.close()
         conexao.close()
 
+def editar_proveedor(empresa_id, proveedor_id, nome, ruc, telefone, email, endereco):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        cursor.execute('''
+            UPDATE proveedores 
+            SET nome = %s, ruc = %s, telefone = %s, email = %s, endereco = %s 
+            WHERE id = %s AND empresa_id = %s
+        ''', (nome, ruc, telefone, email, endereco, proveedor_id, empresa_id))
+        conexao.commit()
+        return True, "Proveedor actualizado con éxito."
+    except Exception as e:
+        conexao.rollback()
+        return False, f"Error al actualizar: {str(e)}"
+    finally:
+        cursor.close()
+        conexao.close()
+
 def listar_proveedores(empresa_id):
     conexao = get_conexao()
     cursor = conexao.cursor()

@@ -49,6 +49,13 @@ class ProveedorNovo(BaseModel):
     email: Optional[str] = ""
     endereco: Optional[str] = ""
 
+class ProveedorEdit(BaseModel):
+    nome: str
+    ruc: Optional[str] = ""
+    telefone: Optional[str] = ""
+    email: Optional[str] = ""
+    endereco: Optional[str] = ""
+
 class ItemNota(BaseModel):
     codigo_barras: Optional[str] = None
     descricao: str
@@ -153,6 +160,12 @@ def deletar_categoria(id_categoria: int, x_empresa_id: int = Header(...)):
 @app.post("/cadastrar-proveedor")
 def cadastrar_proveedor(prov: ProveedorNovo, x_empresa_id: int = Header(...)):
     sucesso, msg = banco_dados.cadastrar_proveedor(x_empresa_id, prov.nome, prov.ruc, prov.telefone, prov.email, prov.endereco)
+    if sucesso: return {"mensaje": msg}
+    raise HTTPException(status_code=400, detail=msg)
+
+@app.put("/editar-proveedor/{id_prov}")
+def api_editar_proveedor(id_prov: int, prov: ProveedorEdit, x_empresa_id: int = Header(...)):
+    sucesso, msg = banco_dados.editar_proveedor(x_empresa_id, id_prov, prov.nome, prov.ruc, prov.telefone, prov.email, prov.endereco)
     if sucesso: return {"mensaje": msg}
     raise HTTPException(status_code=400, detail=msg)
 
