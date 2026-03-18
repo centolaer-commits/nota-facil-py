@@ -157,6 +157,26 @@ def inicializar_banco():
         ''')
     except Exception as e:
         pass
+        
+    try:
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS notas_remision (
+                id SERIAL PRIMARY KEY,
+                empresa_id INTEGER DEFAULT 1,
+                ruc_destinatario TEXT,
+                nome_destinatario TEXT,
+                motivo TEXT,
+                chapa_vehiculo TEXT,
+                dados_chofer TEXT,
+                cdc TEXT,
+                itens TEXT,
+                data_emissao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                link_pdf TEXT DEFAULT '',
+                link_qrcode TEXT DEFAULT ''
+            )
+        ''')
+    except Exception as e:
+        pass
 
     try:
         cursor.execute('''
@@ -519,6 +539,26 @@ def listar_mermas(empresa_id):
     linhas = cursor.fetchall()
     conexao.close()
     return [{"id": l[0], "codigo": l[1], "descricao": l[2], "quantidade": l[3], "custo": l[4], "motivo": l[5], "data": str(l[6])[:16]} for l in linhas]
+
+def salvar_nota_remision(empresa_id, ruc_dest, nome_dest, motivo, chapa, chofer, cdc, itens, link_pdf, link_qrcode):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    itens_json = json.dumps(itens)
+    # Apenas salva a nota, NÃO desconta stock
+    cursor.execute('''
+        INSERT INTO notas_remision (empresa_id, ruc_destinatario, nome_destinatario, motivo, chapa_vehiculo, dados_chofer, cdc, itens, link_pdf, link_qrcode)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ''', (empresa_id, ruc_dest, nome_dest, motivo, chapa, chofer, cdc, itens_json, link_pdf, link_qrcode))
+    conexao.commit()
+    conexao.close()
+
+def listar_remisiones(empresa_id):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT id, nome_destinatario, motivo, cdc, link_pdf, data_emissao FROM notas_remision WHERE empresa_id = %s ORDER BY id DESC", (empresa_id,))
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"id": l[0], "destinatario": l[1], "motivo": l[2], "cdc": l[3], "link_pdf": l[4], "data": str(l[5])[:16]} for l in linhas]
 
 def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode="", metodo_pago="Efectivo"):
     conexao = get_conexao()
