@@ -23,7 +23,7 @@ def inicializar_banco():
             ambiente_sifen TEXT DEFAULT 'testes',
             senha_admin TEXT DEFAULT 'admin123',
             senha_caixa TEXT DEFAULT 'caja123',
-            plano TEXT DEFAULT 'Básico',
+            plano TEXT DEFAULT 'Inicial',
             status_assinatura TEXT DEFAULT 'Activo',
             data_vencimento DATE,
             valor_mensalidade REAL DEFAULT 0,
@@ -132,7 +132,7 @@ def inicializar_banco():
             )
         ''')
         
-        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS plano TEXT DEFAULT 'Básico'")
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS plano TEXT DEFAULT 'Inicial'")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS status_assinatura TEXT DEFAULT 'Activo'")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS data_vencimento DATE")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS valor_mensalidade REAL DEFAULT 0")
@@ -144,7 +144,7 @@ def inicializar_banco():
         vencimento_inicial = date.today() + timedelta(days=365)
         cursor.execute('''
             INSERT INTO empresas (id, nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade) 
-            VALUES (1, 'Mi Empresa S.A.', '80012345-6', 'admin123', 'caja123', 'Pro', 'Activo', %s, 0) 
+            VALUES (1, 'Mi Empresa S.A.', '80012345-6', 'admin123', 'caja123', 'VIP', 'Activo', %s, 0) 
             ON CONFLICT DO NOTHING
         ''', (vencimento_inicial,))
         
@@ -163,7 +163,7 @@ if DATABASE_URL:
 
 def autenticar_usuario(ruc, senha):
     if ruc == "NUBE" and senha == "nube2026":
-        return {"sucesso": True, "empresa_id": 0, "rol": "superadmin", "plano": "Premium"}
+        return {"sucesso": True, "empresa_id": 0, "rol": "superadmin", "plano": "VIP"}
 
     conexao = get_conexao()
     cursor = conexao.cursor()
@@ -182,8 +182,8 @@ def autenticar_usuario(ruc, senha):
         return {"sucesso": True, "empresa_id": emp_id, "rol": "admin", "plano": plano}
         
     elif senha == s_caixa: 
-        if plano == "Essential" or plano == "Básico":
-            return {"sucesso": False, "mensagem": "Tu plan (Essential) es para 1 solo usuario. Actualiza al plan Growth para añadir Cajeros."}
+        if plano == "Inicial":
+            return {"sucesso": False, "mensagem": "El Plan Inicial es para 1 solo usuario. Actualiza al Plan Crecimiento."}
         return {"sucesso": True, "empresa_id": emp_id, "rol": "cajero", "plano": plano}
         
     else: 
