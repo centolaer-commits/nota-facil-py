@@ -90,6 +90,19 @@ class DadosEntrada(BaseModel):
     data_emissao: str
     itens: List[ItemEntrada]
 
+class ItemAutofactura(BaseModel):
+    codigo_barras: Optional[str] = ""
+    descricao: str
+    quantidade: int
+    preco_unitario: float
+
+class DadosAutofactura(BaseModel):
+    nome_vendedor: str
+    cedula_vendedor: str
+    endereco_vendedor: str
+    mover_stock: bool
+    itens: List[ItemAutofactura]
+
 class DadosMerma(BaseModel):
     codigo_barras: str
     quantidade: int
@@ -225,6 +238,46 @@ def api_salvar_entrada(dados: DadosEntrada, x_empresa_id: int = Header(...)):
     )
     if sucesso: return {"mensaje": msg}
     raise HTTPException(status_code=400, detail=msg)
+
+@app.post("/emitir-autofactura")
+def api_emitir_autofactura(dados: DadosAutofactura, x_empresa_id: int = Header(...)):
+    caixa_atual = banco_dados.status_caixa_atual(x_empresa_id)
+    if not caixa_atual.get("aberto"):
+        raise HTTPException(status_code=403, detail="Debe abrir la caja antes de emitir Autofacturas (salida de dinero).")
+
+    config = banco_dados.obter_configuracao(x_empresa_id)
+    if not config: raise HTTPException(status_code=400, detail="Configuración no encontrada.")
+
+    ambiente = config.get("ambiente_sifen", "testes")
+
+    import os
+    cdc_real = f"03{x_empresa_id}AUT{os.urandom(8).hex().upper()}"
+    link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
+    if ambiente == "produccion":
+        link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
+    else:
+        link_qrcode = f"https://sifen-test.set.gov.py/consultas/qr?nId={cdc_real}"
+
+    itens_dicts = [{"codigo_barras": i.codigo_barras, "descricao": i.descricao, "quantidade": i.quantidade, "preco_unitario": i.preco_unitario} for i in dados.itens]
+
+    sucesso, msg = banco_dados.salvar_autofactura(
+        x_empresa_id, dados.nome_vendedor, dados.cedula_vendedor, dados.endereco_vendedor,
+        cdc_real, itens_dicts, dados.mover_stock, link_pdf, link_qrcode
+    )
+
+    if not sucesso:
+        raise HTTPException(status_code=400, detail=msg)
+
+    return {
+        "mensaje": "Autofactura generada (Aprobado SIFEN)",
+        "cdc": cdc_real,
+        "link_qrcode": link_qrcode,
+        "link_pdf": link_pdf
+    }
+
+@app.get("/listar-autofacturas")
+def api_listar_autofacturas(x_empresa_id: int = Header(...)):
+    return banco_dados.listar_autofacturas(x_empresa_id)
 
 @app.post("/registrar-merma")
 def api_registrar_merma(dados: DadosMerma, x_empresa_id: int = Header(...)):

@@ -127,6 +127,25 @@ def inicializar_banco():
 
     try:
         cursor.execute('''
+            CREATE TABLE IF NOT EXISTS autofacturas (
+                id SERIAL PRIMARY KEY,
+                empresa_id INTEGER DEFAULT 1,
+                nome_vendedor TEXT,
+                cedula_vendedor TEXT,
+                endereco_vendedor TEXT,
+                cdc TEXT,
+                valor_total REAL,
+                itens TEXT,
+                data_emissao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                link_pdf TEXT DEFAULT '',
+                link_qrcode TEXT DEFAULT ''
+            )
+        ''')
+    except Exception as e:
+        pass
+
+    try:
+        cursor.execute('''
             CREATE TABLE IF NOT EXISTS mermas (
                 id SERIAL PRIMARY KEY,
                 empresa_id INTEGER DEFAULT 1,
@@ -544,7 +563,6 @@ def salvar_nota_remision(empresa_id, ruc_dest, nome_dest, motivo, chapa, chofer,
     conexao = get_conexao()
     cursor = conexao.cursor()
     itens_json = json.dumps(itens)
-    # Apenas salva a nota, NÃO desconta stock
     cursor.execute('''
         INSERT INTO notas_remision (empresa_id, ruc_destinatario, nome_destinatario, motivo, chapa_vehiculo, dados_chofer, cdc, itens, link_pdf, link_qrcode)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -559,6 +577,49 @@ def listar_remisiones(empresa_id):
     linhas = cursor.fetchall()
     conexao.close()
     return [{"id": l[0], "destinatario": l[1], "motivo": l[2], "cdc": l[3], "link_pdf": l[4], "data": str(l[5])[:16]} for l in linhas]
+
+def salvar_autofactura(empresa_id, nome_vendedor, cedula, endereco, cdc, itens, mover_stock, link_pdf, link_qrcode):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        valor_total = sum(i['quantidade'] * i['preco_unitario'] for i in itens)
+        itens_json = json.dumps(itens)
+
+        # Se for para mover o stock, atualiza a quantidade e o custo de cada produto
+        if mover_stock:
+            for item in itens:
+                cod = item.get('codigo_barras')
+                qtd = item.get('quantidade', 0)
+                preco = item.get('preco_unitario', 0)
+                if cod:
+                    cursor.execute('UPDATE produtos SET quantidade = quantidade + %s, preco_custo = %s WHERE empresa_id = %s AND codigo_barras = %s', (qtd, preco, empresa_id, cod))
+
+        cursor.execute('''
+            INSERT INTO autofacturas (empresa_id, nome_vendedor, cedula_vendedor, endereco_vendedor, cdc, valor_total, itens, link_pdf, link_qrcode)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (empresa_id, nome_vendedor, cedula, endereco, cdc, valor_total, itens_json, link_pdf, link_qrcode))
+
+        # A Autofactura representa uma saída de dinheiro vivo do caixa da loja para pagar o vendedor
+        caixa_atual = status_caixa_atual(empresa_id)
+        if caixa_atual["aberto"]:
+            cursor.execute("INSERT INTO caixa_movimentacoes (empresa_id, caixa_id, tipo, valor, motivo) VALUES (%s, %s, 'AUTOFACTURA', %s, %s)", (empresa_id, caixa_atual["caixa_id"], valor_total, f"Autofactura a {nome_vendedor}"))
+
+        conexao.commit()
+        return True, "Autofactura generada con éxito."
+    except Exception as e:
+        conexao.rollback()
+        return False, str(e)
+    finally:
+        cursor.close()
+        conexao.close()
+
+def listar_autofacturas(empresa_id):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT id, nome_vendedor, valor_total, cdc, link_pdf, data_emissao FROM autofacturas WHERE empresa_id = %s ORDER BY id DESC", (empresa_id,))
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"id": l[0], "vendedor": l[1], "valor": l[2], "cdc": l[3], "link_pdf": l[4], "data": str(l[5])[:16]} for l in linhas]
 
 def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode="", metodo_pago="Efectivo"):
     conexao = get_conexao()
@@ -663,6 +724,11 @@ def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
     cursor.execute("SELECT SUM(valor) FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'SANGRIA' AND DATE(data) >= %s AND DATE(data) <= %s", (empresa_id, data_inicio, data_fim))
     total_sangrias = cursor.fetchone()[0] or 0
     
+    cursor.execute("SELECT SUM(valor) FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'AUTOFACTURA' AND DATE(data) >= %s AND DATE(data) <= %s", (empresa_id, data_inicio, data_fim))
+    total_autofacturas = cursor.fetchone()[0] or 0
+    
+    total_sangrias_geral = total_sangrias + total_autofacturas
+    
     itens_agrupados = {}
     for nota in notas_periodo:
         total_vendas_periodo += nota[0]
@@ -703,7 +769,7 @@ def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
     lista_detalhada.sort(key=lambda x: x["receita_total"], reverse=True)
     conexao.close()
     
-    return {"vendas_hoje": total_vendas_periodo, "lucro_bruto": lucro_bruto_periodo, "notas_emitidas": total_notas_periodo, "total_sangrias": total_sangrias, "detalhes_itens": lista_detalhada}
+    return {"vendas_hoje": total_vendas_periodo, "lucro_bruto": lucro_bruto_periodo, "notas_emitidas": total_notas_periodo, "total_sangrias": total_sangrias_geral, "detalhes_itens": lista_detalhada}
 
 def cadastrar_proveedor(empresa_id, nome, ruc, telefone="", email="", endereco=""):
     conexao = get_conexao()
