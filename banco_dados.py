@@ -585,7 +585,6 @@ def salvar_autofactura(empresa_id, nome_vendedor, cedula, endereco, cdc, itens, 
         valor_total = sum(i['quantidade'] * i['preco_unitario'] for i in itens)
         itens_json = json.dumps(itens)
 
-        # Se for para mover o stock, atualiza a quantidade e o custo de cada produto
         if mover_stock:
             for item in itens:
                 cod = item.get('codigo_barras')
@@ -599,7 +598,6 @@ def salvar_autofactura(empresa_id, nome_vendedor, cedula, endereco, cdc, itens, 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', (empresa_id, nome_vendedor, cedula, endereco, cdc, valor_total, itens_json, link_pdf, link_qrcode))
 
-        # A Autofactura representa uma saída de dinheiro vivo do caixa da loja para pagar o vendedor
         caixa_atual = status_caixa_atual(empresa_id)
         if caixa_atual["aberto"]:
             cursor.execute("INSERT INTO caixa_movimentacoes (empresa_id, caixa_id, tipo, valor, motivo) VALUES (%s, %s, 'AUTOFACTURA', %s, %s)", (empresa_id, caixa_atual["caixa_id"], valor_total, f"Autofactura a {nome_vendedor}"))
@@ -870,3 +868,17 @@ def validar_senha_admin(empresa_id, senha):
     if linha and linha[0] == senha:
         return True
     return False
+
+def obter_nota_por_cdc(empresa_id, cdc):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT ruc_emissor, nome_cliente, valor_total, itens, data_emissao, link_qrcode, metodo_pago FROM notas WHERE empresa_id = %s AND cdc = %s", (empresa_id, cdc))
+    linha = cursor.fetchone()
+    conexao.close()
+    if linha:
+        return {
+            "ruc_emissor": linha[0], "nome_cliente": linha[1], "valor_total": linha[2],
+            "itens": json.loads(linha[3]), "data_emissao": str(linha[4])[:16],
+            "link_qrcode": linha[5], "metodo_pago": linha[6]
+        }
+    return None
