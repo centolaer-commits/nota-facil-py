@@ -262,13 +262,9 @@ def api_salvar_auditoria(dados: DadosAuditoria, x_empresa_id: int = Header(...))
     if sucesso: return {"mensaje": msg}
     raise HTTPException(status_code=400, detail=msg)
 
-@app.get("/listar-auditorias")
-def api_listar_auditorias(x_empresa_id: int = Header(...)):
-    return banco_dados.listar_auditorias(x_empresa_id)
-
-@app.get("/detalhes-auditoria/{id_auditoria}")
-def api_detalhes_auditoria(id_auditoria: int, x_empresa_id: int = Header(...)):
-    return banco_dados.obter_detalhes_auditoria(x_empresa_id, id_auditoria)
+@app.get("/relatorio-variancia")
+def api_relatorio_variancia(inicio: str, fim: str, x_empresa_id: int = Header(...)):
+    return banco_dados.obter_relatorio_variancia(x_empresa_id, inicio, fim)
 
 @app.post("/emitir-nota")
 def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):

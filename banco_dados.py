@@ -424,25 +424,36 @@ def salvar_auditoria_estoque(empresa_id, itens_auditados):
         cursor.close()
         conexao.close()
 
-def listar_auditorias(empresa_id):
+def obter_relatorio_variancia(empresa_id, data_inicio, data_fim):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute("SELECT id, data, impacto_financeiro, total_itens FROM auditorias WHERE empresa_id = %s ORDER BY id DESC", (empresa_id,))
+    
+    query = """
+        SELECT 
+            ai.codigo_barras, 
+            ai.descricao, 
+            SUM(ai.diferenca) as total_diferenca, 
+            SUM(ai.diferenca * ai.custo_unitario) as impacto_total
+        FROM auditorias a
+        JOIN auditorias_itens ai ON a.id = ai.auditoria_id
+        WHERE a.empresa_id = %s 
+        AND DATE(a.data) >= %s AND DATE(a.data) <= %s
+        GROUP BY ai.codigo_barras, ai.descricao
+        ORDER BY impacto_total ASC
+    """
+    cursor.execute(query, (empresa_id, data_inicio, data_fim))
     linhas = cursor.fetchall()
     conexao.close()
-    return [{"id": l[0], "data": str(l[1])[:16], "impacto_financeiro": l[2], "total_itens": l[3]} for l in linhas]
-
-def obter_detalhes_auditoria(empresa_id, auditoria_id):
-    conexao = get_conexao()
-    cursor = conexao.cursor()
-    cursor.execute("SELECT 1 FROM auditorias WHERE id = %s AND empresa_id = %s", (auditoria_id, empresa_id))
-    if not cursor.fetchone():
-        conexao.close()
-        return []
-    cursor.execute("SELECT codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario FROM auditorias_itens WHERE auditoria_id = %s", (auditoria_id,))
-    linhas = cursor.fetchall()
-    conexao.close()
-    return [{"codigo_barras": l[0], "descricao": l[1], "qtd_sistema": l[2], "qtd_fisica": l[3], "diferenca": l[4], "custo_unitario": l[5]} for l in linhas]
+    
+    return [
+        {
+            "codigo_barras": l[0],
+            "descricao": l[1],
+            "total_diferenca": l[2],
+            "impacto_total": l[3]
+        }
+        for l in linhas
+    ]
 
 def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode="", metodo_pago="Efectivo"):
     conexao = get_conexao()
