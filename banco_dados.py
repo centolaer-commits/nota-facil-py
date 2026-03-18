@@ -754,3 +754,13 @@ def salvar_entrada_factura(empresa_id, proveedor_id, numero_factura, data_emissa
     finally:
         cursor.close()
         conexao.close()
+
+def validar_senha_admin(empresa_id, senha):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT senha_admin FROM empresas WHERE id = %s", (empresa_id,))
+    linha = cursor.fetchone()
+    conexao.close()
+    if linha and linha[0] == senha:
+        return True
+    return False

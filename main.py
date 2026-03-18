@@ -110,6 +110,9 @@ class ItemAuditoria(BaseModel):
 class DadosAuditoria(BaseModel):
     itens: List[ItemAuditoria]
 
+class ValidacaoAdmin(BaseModel):
+    senha: str
+
 
 @app.post("/api/login")
 def fazer_login(dados: DadosLogin):
@@ -117,6 +120,12 @@ def fazer_login(dados: DadosLogin):
     if resultado["sucesso"]:
         return resultado
     raise HTTPException(status_code=401, detail=resultado["mensagem"])
+
+@app.post("/validar-admin")
+def validar_admin(dados: ValidacaoAdmin, x_empresa_id: int = Header(...)):
+    if banco_dados.validar_senha_admin(x_empresa_id, dados.senha):
+        return {"sucesso": True}
+    raise HTTPException(status_code=401, detail="Contraseña incorrecta")
 
 @app.get("/super-admin/empresas")
 def listar_todas_empresas():
@@ -292,7 +301,7 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
     if not config: raise HTTPException(status_code=400, detail="Configuración no encontrada.")
         
     ambiente = config.get("ambiente_sifen", "testes")
-    xml_bruto, cdc_real = construir_xml_sifen(dados, config) # No futuro, o gerador_xml deve ler dados.cdc_referencia para mudar o Tipo de Documento SIFEN para Nota de Crédito.
+    xml_bruto, cdc_real = construir_xml_sifen(dados, config)
     
     caminho_cert = config.get("caminho_certificado")
     senha_cert = config.get("senha_certificado")
@@ -320,11 +329,9 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
     link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
     
     if dados.cdc_referencia:
-        # É uma Nota de Crédito
         banco_dados.salvar_nota_credito(x_empresa_id, dados.cdc_referencia, cdc_real, dados.nome_cliente, dados.valor_total, dados.itens, link_pdf)
         mensagem_retorno = f"Nota de Crédito generada | SIFEN: {status_sifen}"
     else:
-        # É uma Venda Normal
         banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
         mensagem_retorno = f"Factura generada | SIFEN: {status_sifen}"
 
