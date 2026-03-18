@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Header
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Header, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
@@ -68,6 +68,7 @@ class DadosNota(BaseModel):
     valor_total: float
     itens: List[ItemNota]
     metodo_pago: Optional[str] = "Efectivo"
+    cdc_referencia: Optional[str] = None
 
 class ItemEntrada(BaseModel):
     codigo_barras: str
@@ -80,6 +81,11 @@ class DadosEntrada(BaseModel):
     numero_factura: str
     data_emissao: str
     itens: List[ItemEntrada]
+
+class DadosMerma(BaseModel):
+    codigo_barras: str
+    quantidade: int
+    motivo: str
 
 class CategoriaNova(BaseModel):
     nome: str
@@ -203,6 +209,16 @@ def api_salvar_entrada(dados: DadosEntrada, x_empresa_id: int = Header(...)):
     if sucesso: return {"mensaje": msg}
     raise HTTPException(status_code=400, detail=msg)
 
+@app.post("/registrar-merma")
+def api_registrar_merma(dados: DadosMerma, x_empresa_id: int = Header(...)):
+    sucesso, msg = banco_dados.registrar_merma(x_empresa_id, dados.codigo_barras, dados.quantidade, dados.motivo)
+    if sucesso: return {"mensaje": msg}
+    raise HTTPException(status_code=400, detail=msg)
+
+@app.get("/listar-mermas")
+def api_listar_mermas(x_empresa_id: int = Header(...)):
+    return banco_dados.listar_mermas(x_empresa_id)
+
 @app.get("/obter-configuracao")
 def obter_configuracao(x_empresa_id: int = Header(...)):
     return banco_dados.obter_configuracao(x_empresa_id)
@@ -270,13 +286,13 @@ def api_relatorio_variancia(inicio: str, fim: str, x_empresa_id: int = Header(..
 def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
     caixa_atual = banco_dados.status_caixa_atual(x_empresa_id)
     if not caixa_atual.get("aberto"):
-        raise HTTPException(status_code=403, detail="Debe abrir la caja antes de registrar ventas.")
+        raise HTTPException(status_code=403, detail="Debe abrir la caja antes de registrar ventas/devoluciones.")
 
     config = banco_dados.obter_configuracao(x_empresa_id)
     if not config: raise HTTPException(status_code=400, detail="Configuración no encontrada.")
         
     ambiente = config.get("ambiente_sifen", "testes")
-    xml_bruto, cdc_real = construir_xml_sifen(dados, config)
+    xml_bruto, cdc_real = construir_xml_sifen(dados, config) # No futuro, o gerador_xml deve ler dados.cdc_referencia para mudar o Tipo de Documento SIFEN para Nota de Crédito.
     
     caminho_cert = config.get("caminho_certificado")
     senha_cert = config.get("senha_certificado")
@@ -303,11 +319,19 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
 
     link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
     
-    banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
+    if dados.cdc_referencia:
+        # É uma Nota de Crédito
+        banco_dados.salvar_nota_credito(x_empresa_id, dados.cdc_referencia, cdc_real, dados.nome_cliente, dados.valor_total, dados.itens, link_pdf)
+        mensagem_retorno = f"Nota de Crédito generada | SIFEN: {status_sifen}"
+    else:
+        # É uma Venda Normal
+        banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
+        mensagem_retorno = f"Factura generada | SIFEN: {status_sifen}"
+
     gerar_pdf_nota(dados, cdc_real)
     
     return {
-        "mensaje": f"Factura generada | SIFEN: {status_sifen}", 
+        "mensaje": mensagem_retorno, 
         "cdc": cdc_real,
         "link_qrcode": link_qrcode,
         "link_pdf": link_pdf
@@ -316,7 +340,7 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
 @app.get("/baixar-pdf/{id_nota}")
 def baixar_pdf(id_nota: str):
     caminho = f"notas_pdf/nota_{id_nota}.pdf"
-    if os.path.exists(caminho): return FileResponse(caminho, media_type='application/pdf', filename=f"Factura_{id_nota}.pdf")
+    if os.path.exists(caminho): return FileResponse(caminho, media_type='application/pdf', filename=f"Documento_{id_nota}.pdf")
     raise HTTPException(status_code=404, detail="PDF no encontrado")
 
 @app.get("/listar-notas")

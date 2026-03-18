@@ -127,6 +127,39 @@ def inicializar_banco():
 
     try:
         cursor.execute('''
+            CREATE TABLE IF NOT EXISTS mermas (
+                id SERIAL PRIMARY KEY,
+                empresa_id INTEGER DEFAULT 1,
+                codigo_barras TEXT,
+                descricao TEXT,
+                quantidade INTEGER,
+                custo_unitario REAL,
+                motivo TEXT,
+                data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+    except Exception as e:
+        pass
+
+    try:
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS notas_credito (
+                id SERIAL PRIMARY KEY,
+                empresa_id INTEGER DEFAULT 1,
+                cdc_referencia TEXT,
+                cdc_novo TEXT,
+                nome_cliente TEXT,
+                valor_total REAL,
+                itens TEXT,
+                data_emissao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                link_pdf TEXT DEFAULT ''
+            )
+        ''')
+    except Exception as e:
+        pass
+
+    try:
+        cursor.execute('''
             CREATE TABLE IF NOT EXISTS auditorias (
                 id SERIAL PRIMARY KEY,
                 empresa_id INTEGER DEFAULT 1,
@@ -455,6 +488,38 @@ def obter_relatorio_variancia(empresa_id, data_inicio, data_fim):
         for l in linhas
     ]
 
+def registrar_merma(empresa_id, codigo_barras, quantidade, motivo):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        cursor.execute('SELECT descricao, preco_custo, quantidade FROM produtos WHERE empresa_id = %s AND codigo_barras = %s', (empresa_id, codigo_barras))
+        prod = cursor.fetchone()
+        if not prod: return False, "Producto no encontrado."
+        desc, custo, qtd_atual = prod
+        
+        if qtd_atual < quantidade:
+            return False, f"Stock insuficiente (Solo tienes {qtd_atual})."
+
+        cursor.execute('UPDATE produtos SET quantidade = quantidade - %s WHERE empresa_id = %s AND codigo_barras = %s', (quantidade, empresa_id, codigo_barras))
+        cursor.execute('INSERT INTO mermas (empresa_id, codigo_barras, descricao, quantidade, custo_unitario, motivo) VALUES (%s, %s, %s, %s, %s, %s)', (empresa_id, codigo_barras, desc, quantidade, custo, motivo))
+        
+        conexao.commit()
+        return True, "Baja de producto registrada correctamente."
+    except Exception as e:
+        conexao.rollback()
+        return False, str(e)
+    finally:
+        cursor.close()
+        conexao.close()
+
+def listar_mermas(empresa_id):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute('SELECT id, codigo_barras, descricao, quantidade, custo_unitario, motivo, data_registro FROM mermas WHERE empresa_id = %s ORDER BY id DESC', (empresa_id,))
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"id": l[0], "codigo": l[1], "descricao": l[2], "quantidade": l[3], "custo": l[4], "motivo": l[5], "data": str(l[6])[:16]} for l in linhas]
+
 def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_qrcode="", metodo_pago="Efectivo"):
     conexao = get_conexao()
     cursor = conexao.cursor()
@@ -478,6 +543,22 @@ def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_q
         INSERT INTO notas (empresa_id, ruc_emissor, nome_cliente, valor_total, cdc, itens, link_pdf, link_qrcode, metodo_pago, caixa_id) 
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (empresa_id, ruc, cliente, valor, cdc, itens_json, link_pdf, link_qrcode, metodo_pago, caixa_id))
+    conexao.commit()
+    conexao.close()
+
+def salvar_nota_credito(empresa_id, cdc_ref, cdc_novo, cliente, valor, itens, link_pdf=""):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    itens_json = json.dumps(itens)
+    
+    for item in itens:
+        if item.get('codigo_barras'):
+            cursor.execute('UPDATE produtos SET quantidade = quantidade + %s WHERE empresa_id = %s AND codigo_barras = %s', (item.get('quantidade', 0), empresa_id, item['codigo_barras']))
+            
+    cursor.execute('''
+        INSERT INTO notas_credito (empresa_id, cdc_referencia, cdc_novo, nome_cliente, valor_total, itens, link_pdf)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    ''', (empresa_id, cdc_ref, cdc_novo, cliente, valor, itens_json, link_pdf))
     conexao.commit()
     conexao.close()
 
