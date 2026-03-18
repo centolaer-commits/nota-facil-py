@@ -42,6 +42,13 @@ class ProdutoNovo(BaseModel):
     quantidade: int
     codigo_proveedor: Optional[str] = ""
 
+class ProveedorNovo(BaseModel):
+    nome: str
+    ruc: Optional[str] = ""
+    telefone: Optional[str] = ""
+    email: Optional[str] = ""
+    endereco: Optional[str] = ""
+
 class ItemNota(BaseModel):
     codigo_barras: Optional[str] = None
     descricao: str
@@ -142,6 +149,21 @@ def listar_categorias(x_empresa_id: int = Header(...)):
 def deletar_categoria(id_categoria: int, x_empresa_id: int = Header(...)):
     banco_dados.deletar_categoria(x_empresa_id, id_categoria)
     return {"mensaje": "Categoría eliminada"}
+
+@app.post("/cadastrar-proveedor")
+def cadastrar_proveedor(prov: ProveedorNovo, x_empresa_id: int = Header(...)):
+    sucesso, msg = banco_dados.cadastrar_proveedor(x_empresa_id, prov.nome, prov.ruc, prov.telefone, prov.email, prov.endereco)
+    if sucesso: return {"mensaje": msg}
+    raise HTTPException(status_code=400, detail=msg)
+
+@app.get("/listar-proveedores")
+def listar_proveedores(x_empresa_id: int = Header(...)):
+    return banco_dados.listar_proveedores(x_empresa_id)
+
+@app.delete("/deletar-proveedor/{id_prov}")
+def deletar_proveedor(id_prov: int, x_empresa_id: int = Header(...)):
+    banco_dados.deletar_proveedor(x_empresa_id, id_prov)
+    return {"mensaje": "Proveedor eliminado"}
 
 @app.get("/obter-configuracao")
 def obter_configuracao(x_empresa_id: int = Header(...)):
