@@ -38,11 +38,10 @@
     .toggle-checkbox { right: 0; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
     .toggle-label { width: 3rem; height: 1.5rem; background-color: #cbd5e1; border-radius: 9999px; transition: all 0.3s; cursor: pointer; }
 
-    /* MÁGICA DA IMPRESSÃO TÉRMICA 80mm */
     @media print {
-        body * { visibility: hidden; }
-        #print-area, #print-area * { visibility: visible; }
-        #print-area { position: absolute; left: 0; top: 0; width: 80mm; padding: 0; margin: 0; background: white; color: black; font-family: 'Courier New', Courier, monospace; }
+        body > :not(#print-area) { display: none !important; }
+        #print-area { display: block !important; width: 80mm; padding: 0; margin: 0; background: white; color: black; font-family: 'Courier New', Courier, monospace; }
+        @page { margin: 0; }
     }
   </style>
 </head>
@@ -397,7 +396,6 @@
         } catch(e) { erroBox.innerText = "Error de red."; erroBox.classList.remove('hidden'); } finally { btn.innerText = "Ingresar al Sistema"; btn.disabled = false; } 
     }
 
-    // IMPRESSÃO DE TICKET TÉRMICO (80mm)
     function prepararTicket(empresaNome, rucEmissor, cdc, cliente, itens, total, qrcode, dataEmissao) {
         let html = `
         <div style="text-align: center; margin-bottom: 10px; font-family: monospace; color: black;">
@@ -436,7 +434,10 @@
         const cliente = document.getElementById('cliente').value || "Consumidor Final";
         const dataAgora = new Date().toLocaleString('es-PY');
         prepararTicket(empresaNome, rucEmissor, ultimoCDCGerado, cliente, productosCaixa, totalDaVendaAtual, ultimoQRGerado, dataAgora);
+        
+        document.getElementById('print-area').classList.remove('hidden');
         window.print();
+        document.getElementById('print-area').classList.add('hidden');
     }
 
     async function imprimirTicketHistorico(cdc) {
@@ -446,9 +447,12 @@
                 const nota = await res.json();
                 const empresaNome = document.getElementById('sidebar-nome-loja').innerText;
                 prepararTicket(empresaNome, nota.ruc_emissor, cdc, nota.nome_cliente, nota.itens, nota.valor_total, nota.link_qrcode, nota.data_emissao);
+                
+                document.getElementById('print-area').classList.remove('hidden');
                 window.print();
-            } else { showToast("Error al obtener detalles de la nota.", "error"); }
-        } catch(e) { showToast("Error de red.", "error"); }
+                document.getElementById('print-area').classList.add('hidden');
+            } else { showToast("Error", "error"); }
+        } catch(e) { showToast("Error", "error"); }
     }
 
     function abrirAuthSupervisor() { document.getElementById('modal-auth-supervisor').classList.remove('hidden'); document.getElementById('modal-auth-supervisor').classList.add('flex'); document.getElementById('auth-admin-senha').focus(); }
@@ -546,7 +550,6 @@
             document.getElementById('qrcode-img').src = ultimoQRGerado; 
             
             document.getElementById('btn-emitir').classList.add('hidden'); 
-            // IMPORTANTE: NÃO LIMPAR productosCaixa AQUI PARA O TICKET FUNCIONAR
             atualizarInterfaceCaixa(); 
         } catch(e) { showToast("❌ Error.", "error"); } finally { btn.disabled = false; } 
     }
