@@ -101,7 +101,6 @@
           </div>
 
           <button id="nav-btn-config" onclick="mudarTela('config', this)" class="nav-btn p-3 rounded-lg text-left flex items-center mt-2">⚙️ Ajustes</button>
-          
           <button id="nav-btn-ayuda" onclick="mudarTela('ayuda', this)" class="nav-btn p-3 rounded-lg text-left flex items-center mt-2 text-green-400 hover:bg-slate-700/50">❓ Ayuda / Soporte</button>
 
         </nav>
@@ -130,14 +129,16 @@
             <div class="bg-green-900/20 p-6 rounded-2xl inline-block shadow-sm border border-green-800/50">
                 <h2 class="text-xl font-bold text-green-400 mb-4" id="texto-resultado">✅ ¡Factura Aprobada!</h2>
                 <img id="qrcode-img" src="" class="mx-auto mb-4 w-36 h-36 bg-white/5 object-contain rounded-xl border-4 border-white/10">
+                
                 <div class="flex flex-col sm:flex-row gap-3 justify-center mb-4">
-                    <button type="button" onclick="imprimirTicketLocal()" class="bg-brand-accent hover:bg-brand-accentHover text-white px-6 py-3 rounded-lg font-bold shadow-md transition">🖨️ Ticket 80mm</button>
-                    <a id="btn-pdf" href="#" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg font-bold shadow-md transition border border-slate-600">📄 PDF A4</a>
+                    <button type="button" onclick="imprimirTicketLocal()" class="bg-brand-accent hover:bg-brand-accentHover text-white px-6 py-3 rounded-lg font-bold shadow-md transition">🖨️ Ticket</button>
+                    <button type="button" onclick="enviarWhatsApp()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow-md transition flex items-center justify-center gap-2">💬 WhatsApp</button>
+                    <a id="btn-pdf" href="#" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg font-bold shadow-md transition border border-slate-600">📄 PDF</a>
                 </div>
+                
                 <button onclick="novaVenda()" class="text-brand-accent font-bold hover:underline block w-full mt-2">Nueva Venta</button>
             </div>
         </div>
-
       </div>
 
       <div id="tela-operaciones" class="max-w-6xl mx-auto section-tela hidden">
@@ -422,7 +423,7 @@
   </div>
 
   <script>
-    let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let productosGlobais = []; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = '';
+    let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let productosGlobais = []; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = '';
     const getSaaSHeaders = (extraHeaders = {}) => { return { 'Content-Type': 'application/json', 'X-Empresa-ID': empresaAtualId ? empresaAtualId.toString() : "1", ...extraHeaders }; };
     
     document.addEventListener("DOMContentLoaded", () => {
@@ -514,7 +515,10 @@
         const cliente = document.getElementById('cliente').value || "Consumidor Final";
         const dataAgora = new Date().toLocaleString('es-PY');
         prepararTicket(empresaNome, rucEmissor, ultimoCDCGerado, cliente, productosCaixa, totalDaVendaAtual, ultimoQRGerado, dataAgora);
+        
+        document.getElementById('print-area').classList.remove('hidden');
         window.print();
+        document.getElementById('print-area').classList.add('hidden');
     }
 
     async function imprimirTicketHistorico(cdc) {
@@ -524,9 +528,22 @@
                 const nota = await res.json();
                 const empresaNome = document.getElementById('sidebar-nome-loja').innerText;
                 prepararTicket(empresaNome, nota.ruc_emissor, cdc, nota.nome_cliente, nota.itens, nota.valor_total, nota.link_qrcode, nota.data_emissao);
+                
+                document.getElementById('print-area').classList.remove('hidden');
                 window.print();
-            } else { showToast("Error al obtener detalles de la nota.", "error"); }
-        } catch(e) { showToast("Error de red.", "error"); }
+                document.getElementById('print-area').classList.add('hidden');
+            } else { showToast("Error", "error"); }
+        } catch(e) { showToast("Error", "error"); }
+    }
+
+    function enviarWhatsApp() {
+        if (!ultimoLinkSifen) return showToast("No hay enlace disponible para compartir.", "error");
+        const numero = prompt("Ingrese el número de WhatsApp del cliente\n(Ejemplo con código de país: 5959...):");
+        if (numero) {
+            const numLimpio = numero.replace(/\D/g, '');
+            const texto = encodeURIComponent("¡Hola! Gracias por su compra. Aquí tiene el enlace a su Factura Electrónica (KuDE): " + ultimoLinkSifen);
+            window.open(`https://wa.me/${numLimpio}?text=${texto}`, '_blank');
+        }
     }
 
     function abrirAuthSupervisor() { document.getElementById('modal-auth-supervisor').classList.remove('hidden'); document.getElementById('modal-auth-supervisor').classList.add('flex'); document.getElementById('auth-admin-senha').focus(); }
@@ -620,6 +637,7 @@
             document.getElementById('btn-pdf').href = dados.link_pdf; 
             
             ultimoCDCGerado = dados.cdc;
+            ultimoLinkSifen = dados.link_qrcode;
             ultimoQRGerado = `https://quickchart.io/qr?text=${encodeURIComponent(dados.link_qrcode)}&size=150`;
             document.getElementById('qrcode-img').src = ultimoQRGerado; 
             
@@ -680,7 +698,7 @@
     function atualizarInterfaceEntrada() { const tb=document.getElementById('tabela-entrada-itens'); tb.innerHTML=''; let t=0; itensEntrada.forEach((i,idx)=>{ const st=i.quantidade*i.custo_unitario; t+=st; tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-3 text-white">${i.descricao}</td><td class="p-3 text-center text-white">${i.quantidade}</td><td class="p-3 text-right">Gs. ${i.custo_unitario.toLocaleString('es-PY')}</td><td class="p-3 text-right font-bold text-blue-400">Gs. ${st.toLocaleString('es-PY')}</td><td class="p-3 text-center"><button onclick="itensEntrada.splice(${idx},1);atualizarInterfaceEntrada();" class="text-red-400">✕</button></td></tr>`; }); document.getElementById('entrada-total-tela').innerText=t.toLocaleString('es-PY'); }
     async function salvarEntradaFactura() { if(itensEntrada.length===0) return; const p=document.getElementById('entrada-prov').value; const n=document.getElementById('entrada-nro').value; const d=document.getElementById('entrada-data').value; if(!p||!n) return showToast("Falta info", "error"); try { await fetch('/salvar-entrada',{method:'POST',headers:getSaaSHeaders(),body:JSON.stringify({proveedor_id:parseInt(p), numero_factura:n, data_emissao:d, itens:itensEntrada})}); showToast("✅ Factura Guardada"); itensEntrada=[]; atualizarInterfaceEntrada(); document.getElementById('entrada-nro').value=''; carregarEstoque(); } catch(e){} }
     
-    function filtrarMerma() { const inp = document.getElementById('merma-cod').value.toLowerCase(); const drop = document.getElementById('merma-dropdown'); drop.innerHTML = ''; if (inp.length < 2) { drop.classList.add('hidden'); return; } const res = productosGlobais.filter(p => p.descricao.toLowerCase().includes(inp) || p.codigo_barras.toLowerCase().includes(inp)).slice(0, 10); if (res.length > 0) { drop.classList.remove('hidden'); res.forEach(p => { const div = document.createElement('div'); div.className = 'p-3 border-b border-slate-600 hover:bg-slate-600 cursor-pointer text-white'; div.innerHTML = p.descricao; div.onclick = () => { drop.classList.add('hidden'); document.getElementById('merma-cod').value = p.codigo_barras; document.getElementById('merma-atual').value = p.quantidade; document.getElementById('merma-add').focus(); }; drop.appendChild(div); }); } else { drop.classList.add('hidden'); } }
+    function filtrarMerma() { const inp = document.getElementById('merma-cod').value.toLowerCase(); const drop = document.getElementById('merma-dropdown'); drop.innerHTML = ''; if (inp.length < 2) { drop.classList.add('hidden'); return; } const res = productosGlobais.filter(p => p.descricao.toLowerCase().includes(inp) || p.codigo_barras.toLowerCase().includes(input)).slice(0, 10); if (res.length > 0) { drop.classList.remove('hidden'); res.forEach(p => { const div = document.createElement('div'); div.className = 'p-3 border-b border-slate-600 hover:bg-slate-600 cursor-pointer text-white'; div.innerHTML = p.descricao; div.onclick = () => { drop.classList.add('hidden'); document.getElementById('merma-cod').value = p.codigo_barras; document.getElementById('merma-atual').value = p.quantidade; document.getElementById('merma-add').focus(); }; drop.appendChild(div); }); } else { drop.classList.add('hidden'); } }
     function buscarParaMerma(e) { if(e.key === 'Enter') { e.preventDefault(); const c = document.getElementById('merma-cod').value.trim(); const p = productosGlobais.find(x => x.codigo_barras === c); if(p) { document.getElementById('merma-dropdown').classList.add('hidden'); document.getElementById('merma-cod').value = p.codigo_barras; document.getElementById('merma-atual').value = p.quantidade; document.getElementById('merma-add').focus(); } } }
     async function salvarMerma() { const c = document.getElementById('merma-cod').value; const q = parseInt(document.getElementById('merma-add').value); const m = document.getElementById('merma-motivo').value; if(!c || !q || q<=0) return; try { const res = await fetch('/registrar-merma', { method:'POST', headers:getSaaSHeaders(), body:JSON.stringify({codigo_barras:c, quantidade:q, motivo:m}) }); if(res.ok) { showToast("✅ Baja registrada."); document.getElementById('merma-cod').value=''; document.getElementById('merma-atual').value=''; document.getElementById('merma-add').value=''; carregarMermas(); carregarEstoque(); } else { const err = await res.json(); showToast("❌ " + err.detail, "error"); } } catch(e){} }
     async function carregarMermas() { try { const res = await fetch('/listar-mermas', {headers:getSaaSHeaders()}); const d = await res.json(); const tb = document.getElementById('tabela-mermas'); tb.innerHTML = ''; d.forEach(m => { const loss = m.quantidade * m.custo; tb.innerHTML += `<tr class="border-b border-slate-700 hover:bg-slate-700/30"><td class="p-3 text-gray-400 text-xs">${m.data}</td><td class="p-3 text-white font-bold">${m.descricao}</td><td class="p-3 text-center text-red-400 font-bold">${m.quantidade}</td><td class="p-3 text-gray-400">${m.motivo}</td><td class="p-3 text-right text-red-400 font-bold">Gs. ${loss.toLocaleString('es-PY')}</td></tr>`; }); } catch(e){} }
