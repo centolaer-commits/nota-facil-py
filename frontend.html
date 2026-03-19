@@ -39,20 +39,22 @@
     .toggle-label { width: 3rem; height: 1.5rem; background-color: #cbd5e1; border-radius: 9999px; transition: all 0.3s; cursor: pointer; }
 
     @media print {
-        body > :not(#print-area) { display: none !important; }
-        #print-area { display: block !important; width: 80mm; padding: 0; margin: 0; background: white; color: black; font-family: 'Courier New', Courier, monospace; }
-        @page { margin: 0; }
+        body * { visibility: hidden; }
+        #print-area, #print-area * { visibility: visible; }
+        #print-area { position: absolute; left: 0; top: 0; width: 80mm; padding: 0; margin: 0; background: white; color: black; font-family: 'Courier New', Courier, monospace; }
     }
+
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
   </style>
 </head>
 <body class="bg-slate-900 font-sans h-[100dvh] overflow-hidden flex flex-col md:flex-row text-gray-100 relative">
 
   <div id="print-area" class="hidden text-black bg-white w-[80mm] p-2 text-xs"></div>
-
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
 
   <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-slate-800 p-4 rounded-2xl w-full max-w-md shadow-2xl border border-slate-700"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-white flex items-center">📷 Escanear</h3><button type="button" onclick="fecharCamera()" class="text-red-400 hover:bg-slate-700 p-2 rounded-full font-bold text-xl leading-none transition">&times;</button></div><div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-brand-accent/50 min-h-[250px] flex items-center justify-center text-white text-sm">Iniciando cámara...</div></div></div>
-  <div id="modal-legal" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-slate-800 p-6 rounded-2xl w-full max-w-3xl shadow-2xl border border-slate-700 flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700 shrink-0"><h3 class="text-xl font-bold text-white">Términos Legales</h3><button type="button" onclick="fecharModalLegal()" class="text-gray-400 hover:text-red-400 font-bold text-2xl transition">&times;</button></div><div class="overflow-y-auto pr-4 space-y-4 text-sm text-gray-300 scrollbar-thin scrollbar-thumb-slate-600 pb-4"><p class="font-extrabold text-white text-center mb-6">ACUERDO MARCO NubePY</p></div><div class="pt-4 mt-4 border-t border-slate-700 shrink-0 text-center"><button type="button" onclick="fecharModalLegal()" class="bg-brand-accent text-white font-bold py-3 px-8 rounded-xl">Cerrar</button></div></div></div>
+  <div id="modal-legal" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-slate-800 p-6 rounded-2xl w-full max-w-3xl shadow-2xl border border-slate-700 flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700 shrink-0"><h3 class="text-xl font-bold text-white">Términos Legales</h3><button type="button" onclick="fecharModalLegal()" class="text-gray-400 font-bold text-2xl transition">&times;</button></div><div class="overflow-y-auto pr-4 space-y-4 text-sm text-gray-300 scrollbar-thin scrollbar-thumb-slate-600 pb-4"><p class="font-extrabold text-white text-center mb-6">ACUERDO MARCO NubePY</p></div><div class="pt-4 mt-4 border-t border-slate-700 shrink-0 text-center"><button type="button" onclick="fecharModalLegal()" class="bg-brand-accent text-white font-bold py-3 px-8 rounded-xl">Cerrar</button></div></div></div>
   <div id="modal-audit-details" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-slate-800 p-6 rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-700 flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700 shrink-0"><h3 class="text-xl font-bold text-white">Detalles</h3><button type="button" onclick="fecharModalAudit()" class="text-gray-400 font-bold text-2xl transition">&times;</button></div><div class="overflow-y-auto scrollbar-thin rounded-lg border border-slate-700"><table class="w-full text-left bg-slate-800 text-sm"><thead class="bg-slate-900 text-gray-400 sticky top-0"><tr><th class="p-3">Producto</th><th class="p-3 text-center">Sis</th><th class="p-3 text-center">Físico</th><th class="p-3 text-center">Diff</th><th class="p-3 text-right">Impacto</th></tr></thead><tbody id="tabela-audit-detalhes" class="divide-y divide-slate-700 text-gray-300"></tbody></table></div><div class="pt-4 mt-4 shrink-0 text-center"><button onclick="fecharModalAudit()" class="bg-brand-primary text-white font-bold py-3 px-8 rounded-xl border border-slate-600">Cerrar</button></div></div></div>
   <div id="modal-editar-empresa" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-700"><div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3"><h3 class="text-xl font-bold text-white">Upgrade</h3><button onclick="fecharModalEditarEmpresa()" class="text-gray-400 text-2xl">&times;</button></div><input type="hidden" id="edit-empresa-id"><div class="mb-4"><select id="edit-plano" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white"><option value="Inicial">Inicial</option><option value="Crecimiento">Crecimiento</option><option value="VIP">VIP</option></select></div><div class="mb-6"><input type="number" id="edit-valor" class="w-full border-slate-600 border p-3 rounded-lg bg-slate-700 text-white"></div><button onclick="salvarEdicaoEmpresa()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-xl hover:bg-brand-accentHover transition shadow-md">Guardar</button></div></div>
   <div id="modal-checkout" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-slate-800 p-6 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-700"><div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4"><h3 class="text-2xl font-bold text-white">Finalizar Venta</h3><button onclick="fecharCheckout()" class="text-gray-400 font-bold text-2xl leading-none">&times;</button></div><div class="text-center mb-6"><p class="text-sm text-gray-400 uppercase font-bold mb-1">Monto a Cobrar</p><p class="text-5xl font-extrabold text-brand-accent">Gs. <span id="checkout-total">0</span></p></div><div class="mb-6"><label class="text-xs font-bold text-gray-400 block mb-2">Método de Pago</label><select id="checkout-metodo" class="w-full border-2 border-slate-600 p-4 rounded-xl text-lg font-bold focus:border-brand-accent bg-slate-700 text-white" onchange="actualizarTroco()"><option value="Efectivo">💵 Efectivo</option><option value="Tarjeta">💳 Tarjeta (POS)</option><option value="Transferencia">📱 Transferencia / QR</option></select></div><div id="box-vuelto" class="mb-6 bg-slate-700/50 p-4 rounded-xl border border-slate-600"><div class="flex items-center gap-4"><div class="flex-1"><label class="text-xs font-bold text-gray-400 block mb-1">Recibido</label><input type="number" id="checkout-recebido" placeholder="0" class="w-full border-2 border-slate-600 p-3 rounded-lg text-xl font-bold focus:border-brand-accent text-center bg-slate-700 text-white" oninput="actualizarTroco()"></div><div class="flex-1 text-center"><label class="text-xs font-bold text-gray-400 block mb-1">Vuelto</label><p class="text-3xl font-extrabold text-green-400">Gs. <span id="checkout-vuelto">0</span></p></div></div></div><button type="button" onclick="confirmarVenta()" id="btn-confirmar-venta" class="w-full bg-brand-accent text-white font-bold py-4 text-xl rounded-xl">✔️ Emitir Factura</button></div></div>
@@ -99,6 +101,9 @@
           </div>
 
           <button id="nav-btn-config" onclick="mudarTela('config', this)" class="nav-btn p-3 rounded-lg text-left flex items-center mt-2">⚙️ Ajustes</button>
+          
+          <button id="nav-btn-ayuda" onclick="mudarTela('ayuda', this)" class="nav-btn p-3 rounded-lg text-left flex items-center mt-2 text-green-400 hover:bg-slate-700/50">❓ Ayuda / Soporte</button>
+
         </nav>
       </div>
       <div class="p-4 border-t border-slate-700"><button onclick="window.location.reload()" class="w-full text-red-400 hover:bg-red-950/30 p-3 rounded-lg text-sm font-bold transition">Cerrar Sesión</button></div>
@@ -336,6 +341,81 @@
       <div id="tela-variancia" class="max-w-5xl mx-auto bg-slate-800 p-6 rounded-2xl section-tela hidden"><header class="mb-6 flex justify-between"><h1 class="text-2xl font-bold">Varianza de Stock</h1><div><input type="date" id="filtro-data-inicio-var" class="bg-slate-700 p-2"><input type="date" id="filtro-data-fim-var" class="bg-slate-700 p-2"><button onclick="carregarRelatorioVariancia()" class="bg-brand-accent p-2">Filtrar</button></div></header><div class="grid grid-cols-2 gap-4 mb-8"><div class="bg-slate-700 p-5 text-center"><p class="text-xs">Impacto</p><p class="text-3xl font-bold" id="var-impacto-total">0</p></div><div class="bg-slate-700 p-5 text-center"><p class="text-xs">Unidades</p><p class="text-3xl font-bold" id="var-unidades-total">0</p></div></div><table class="w-full text-left text-sm"><tbody id="tabela-variancia" class="divide-y divide-slate-700"></tbody></table></div>
       <div id="tela-stocktakereport" class="max-w-5xl mx-auto bg-slate-800 p-6 rounded-2xl section-tela hidden"><header class="mb-6"><h1 class="text-2xl font-bold">Reportes Stock Take</h1></header><table class="w-full text-left text-sm"><tbody id="tabela-stocktakereport" class="divide-y divide-slate-700"></tbody></table></div>
 
+      <div id="tela-ayuda" class="max-w-4xl mx-auto section-tela hidden">
+        <header class="mb-8 border-b border-slate-700 pb-4">
+            <h1 class="text-3xl font-bold text-white">Centro de Ayuda y Soporte</h1>
+            <p class="text-gray-400 mt-2">Encuentra respuestas rápidas o contáctanos directamente.</p>
+        </header>
+
+        <div class="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-6 mb-8 flex flex-col md:flex-row justify-between items-center shadow-lg">
+            <div class="mb-4 md:mb-0">
+                <h2 class="text-xl font-bold text-white mb-1">¿Necesitas ayuda urgente?</h2>
+                <p class="text-green-100 text-sm">Nuestro equipo de soporte está listo para asistirte vía WhatsApp.</p>
+            </div>
+            <a href="https://wa.me/595999000000" target="_blank" class="bg-white text-green-600 font-extrabold px-8 py-3 rounded-full shadow-md hover:bg-gray-100 transition whitespace-nowrap">
+                💬 Escribir al Soporte
+            </a>
+        </div>
+
+        <h3 class="text-xl font-bold text-white mb-4">Guía de Navegación</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
+                <div class="text-brand-accent text-2xl mb-2">🛒</div>
+                <h4 class="font-bold text-white mb-2">Punto de Venta (Caja)</h4>
+                <p class="text-sm text-gray-400">Escanea o busca productos. Haz clic en "Ir al Pago" para emitir la Factura. Si necesitas anular una venta o bajar stock por daño, haz clic en el botón superior "Operaciones (NC / Mermas)" usando la clave de administrador.</p>
+            </div>
+            <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
+                <div class="text-brand-accent text-2xl mb-2">📦</div>
+                <h4 class="font-bold text-white mb-2">Inventario y Compras</h4>
+                <p class="text-sm text-gray-400">Usa "Productos" para crear ítems. Usa "Entrada (Compras)" para cargar facturas de tus proveedores y sumar stock automáticamente.</p>
+            </div>
+            <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
+                <div class="text-brand-accent text-2xl mb-2">🚚</div>
+                <h4 class="font-bold text-white mb-2">Nota de Remisión</h4>
+                <p class="text-sm text-gray-400">Genera el documento legal de transporte para tus choferes. Esta nota no descuenta el stock de tu inventario, solo avala el traslado.</p>
+            </div>
+            <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl">
+                <div class="text-brand-accent text-2xl mb-2">📈</div>
+                <h4 class="font-bold text-white mb-2">Reportes y Cierre</h4>
+                <p class="text-sm text-gray-400">En "Ventas y Cierre" puedes ver tu ganancia real (GP) y cerrar el turno de la caja actual. Usa "Historial SIFEN" para reimprimir tickets o PDFs antiguos.</p>
+            </div>
+      </div>
+
+      <h3 class="text-xl font-bold text-white mb-4">Preguntas Frecuentes</h3>
+      <div class="space-y-3">
+          <details class="bg-slate-800 border border-slate-700 rounded-xl group cursor-pointer">
+              <summary class="font-bold text-white p-4 flex justify-between items-center">
+                  ¿Qué pasa si me quedo sin internet?
+                  <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div class="p-4 pt-0 text-sm text-gray-400 border-t border-slate-700 mt-2">
+                  El sistema tiene un modo "Contingencia". Puedes seguir cobrando y el sistema guardará las ventas en una cola local. Cuando el internet regrese, las facturas se enviarán automáticamente a la SIFEN.
+              </div>
+          </details>
+
+          <details class="bg-slate-800 border border-slate-700 rounded-xl group cursor-pointer">
+              <summary class="font-bold text-white p-4 flex justify-between items-center">
+                  ¿Cómo corrijo un error en el stock?
+                  <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div class="p-4 pt-0 text-sm text-gray-400 border-t border-slate-700 mt-2">
+                  Ve a <b>Inventario > Auditoría (Stock Take)</b>. Allí puedes contar los productos reales en tu estante y poner la cantidad correcta. El sistema calculará la diferencia y el impacto en dinero automáticamente.
+              </div>
+          </details>
+
+          <details class="bg-slate-800 border border-slate-700 rounded-xl group cursor-pointer">
+              <summary class="font-bold text-white p-4 flex justify-between items-center">
+                  ¿Cómo registro un gasto o compra sin RUC?
+                  <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div class="p-4 pt-0 text-sm text-gray-400 border-t border-slate-700 mt-2">
+                  Ve a <b>Reportes > Emitir Autofactura</b>. Te permite justificar la salida de dinero de tu caja por servicios o compras informales, cumpliendo con las normativas del gobierno.
+              </div>
+          </details>
+      </div>
+
+      </div>
+
       <div id="tela-config" class="max-w-4xl mx-auto bg-slate-800 p-6 rounded-2xl section-tela hidden"><header class="mb-8 border-b border-slate-700 pb-4"><h1 class="text-2xl font-bold text-white">Ajustes</h1></header><div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="space-y-5 md:border-r md:border-slate-700 md:pr-8"><div><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Nombre Empresa</label><input type="text" id="conf-nome" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-700 text-white focus:border-brand-accent outline-none"></div><div><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">RUC Emisor</label><input type="text" id="conf-ruc" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-800 text-gray-400 font-mono cursor-not-allowed" readonly></div><div><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Dirección</label><input type="text" id="conf-endereco" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-700 text-white focus:border-brand-accent outline-none"></div><div><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Código CSC (Seguridad)</label><input type="text" id="conf-csc" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-700 text-white focus:border-brand-accent outline-none"></div><div><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Contraseña SIFEN (.p12)</label><input type="password" id="conf-senha-cert" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-700 text-white focus:border-brand-accent outline-none"></div><button type="button" onclick="salvarConfiguracao()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-lg hover:bg-brand-accentHover transition shadow-md">Guardar Datos</button></div><div class="space-y-5"><div class="border-2 border-dashed border-brand-accent/30 p-6 rounded-xl text-center bg-slate-700/30 hover:border-brand-accent/50 transition"><input type="file" id="arquivo-cert" accept=".p12,.pfx" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-brand-accent file:text-white hover:file:bg-brand-accentHover cursor-pointer mx-auto"></div><button type="button" onclick="fazerUploadCertificado()" class="w-full bg-slate-600 text-white font-bold py-3 px-6 rounded-lg text-sm hover:bg-slate-500 transition border border-slate-500">Subir Archivo</button><div id="status-cert" class="text-sm text-center p-3 rounded-lg hidden border"></div></div></div><div class="mt-8 pt-6 border-t border-slate-700"><h3 class="text-lg font-bold text-white mb-4">Estado de Conexión SIFEN</h3><div class="flex flex-col md:flex-row items-center gap-4 bg-slate-700/50 p-4 rounded-xl border border-slate-700 mb-8"><div class="flex-1"><p class="font-bold text-white">Ambiente de Emisión</p></div><select id="conf-ambiente" onchange="alterarAmbienteSifen()" class="w-full md:w-auto border-2 border-brand-accent p-3 rounded-lg font-bold text-white outline-none bg-slate-800"><option value="testes">🟡 Pruebas</option><option value="produccion">🟢 Producción</option></select></div></div></div>
 
     </div>
@@ -370,7 +450,7 @@
                     document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); 
                     document.getElementById('sidebar-rol-loja').innerText = (rolUsuario === 'admin') ? `Dueño | Plan ${planoAtivo.split(' ')[0]}` : `Cajero | Plan ${planoAtivo.split(' ')[0]}`; 
                     
-                    const idsTodos = ['nav-group-inventario','nav-btn-dashboard','nav-group-reportes','btn-nav-stocktake','btn-nav-stocktakereport','btn-nav-proveedores','btn-nav-entrada','btn-nav-remision','btn-nav-autofactura','btn-nav-variancia','nav-btn-config','btn-cerrar-turno'];
+                    const idsTodos = ['nav-group-inventario','nav-btn-dashboard','nav-group-reportes','btn-nav-stocktake','btn-nav-stocktakereport','btn-nav-proveedores','btn-nav-entrada','btn-nav-remision','btn-nav-autofactura','btn-nav-variancia','nav-btn-config','nav-btn-ayuda','btn-cerrar-turno'];
                     idsTodos.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = ''; });
                     if(document.getElementById('box-novo-prov')) document.getElementById('box-novo-prov').style.display = 'block';
 
@@ -434,10 +514,7 @@
         const cliente = document.getElementById('cliente').value || "Consumidor Final";
         const dataAgora = new Date().toLocaleString('es-PY');
         prepararTicket(empresaNome, rucEmissor, ultimoCDCGerado, cliente, productosCaixa, totalDaVendaAtual, ultimoQRGerado, dataAgora);
-        
-        document.getElementById('print-area').classList.remove('hidden');
         window.print();
-        document.getElementById('print-area').classList.add('hidden');
     }
 
     async function imprimirTicketHistorico(cdc) {
@@ -447,12 +524,9 @@
                 const nota = await res.json();
                 const empresaNome = document.getElementById('sidebar-nome-loja').innerText;
                 prepararTicket(empresaNome, nota.ruc_emissor, cdc, nota.nome_cliente, nota.itens, nota.valor_total, nota.link_qrcode, nota.data_emissao);
-                
-                document.getElementById('print-area').classList.remove('hidden');
                 window.print();
-                document.getElementById('print-area').classList.add('hidden');
-            } else { showToast("Error", "error"); }
-        } catch(e) { showToast("Error", "error"); }
+            } else { showToast("Error al obtener detalles de la nota.", "error"); }
+        } catch(e) { showToast("Error de red.", "error"); }
     }
 
     function abrirAuthSupervisor() { document.getElementById('modal-auth-supervisor').classList.remove('hidden'); document.getElementById('modal-auth-supervisor').classList.add('flex'); document.getElementById('auth-admin-senha').focus(); }
