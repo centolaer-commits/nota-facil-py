@@ -446,6 +446,12 @@ def baixar_pdf(id_nota: str):
     if os.path.exists(caminho): return FileResponse(caminho, media_type='application/pdf', filename=f"Documento_{id_nota}.pdf")
     raise HTTPException(status_code=404, detail="PDF no encontrado")
 
+@app.get("/api/nota/{cdc}")
+def obter_nota_por_cdc(cdc: str, x_empresa_id: int = Header(...)):
+    nota = banco_dados.obter_nota_por_cdc(x_empresa_id, cdc)
+    if nota: return nota
+    raise HTTPException(status_code=404, detail="Nota no encontrada")
+
 @app.get("/listar-notas")
 def listar_notas(busca: Optional[str] = "", inicio: Optional[str] = None, fim: Optional[str] = None, x_empresa_id: int = Header(...)):
     historico = banco_dados.listar_todas_notas(x_empresa_id, busca, inicio, fim)
@@ -458,3 +464,12 @@ def api_cierre_caja(inicio: Optional[str] = None, fim: Optional[str] = None, x_e
 @app.get("/painel")
 def abrir_painel():
     return FileResponse("frontend.html")
+# Existing code...
+@app.get("/painel")
+def abrir_painel():
+    return FileResponse("frontend.html")
+
+# ADD THIS NEW ROUTE:
+@app.get("/app.js")
+def servir_js():
+    return FileResponse("app.js")
