@@ -294,9 +294,29 @@ def obter_configuracao(x_empresa_id: int = Header(...)):
     return banco_dados.obter_configuracao(x_empresa_id)
 
 @app.post("/salvar-configuracao")
-def salvar_configuracao(nome_empresa: str = Form(...), ruc: str = Form(...), endereco: str = Form(""), senha_certificado: str = Form(""), csc: str = Form(""), x_empresa_id: int = Header(...)):
-    banco_dados.salvar_configuracao_texto(x_empresa_id, nome_empresa, ruc, endereco, senha_certificado, csc)
-    return {"mensaje": "Datos guardados"}
+def salvar_config_route(
+    nome_empresa: str = Form(...),
+    ruc: str = Form(...),
+    endereco: str = Form(...),
+    senha_certificado: str = Form(...),
+    csc: str = Form(default=""),
+    mercado_pago_token: str = Form(default=""),  # NOVO CAMPO ADICIONADO AQUI
+    empresa_id: str = Header(None, alias="X-Empresa-ID")
+):
+    if not empresa_id:
+        raise HTTPException(status_code=400, detail="Empresa ID no proporcionado")
+    
+    # Passamos o novo token para a função do banco_dados que atualizamos no passo anterior
+    banco_dados.salvar_configuracao_texto(
+        int(empresa_id), 
+        nome_empresa, 
+        ruc, 
+        endereco, 
+        senha_certificado, 
+        csc,
+        mercado_pago_token
+    )
+    return {"mensagem": "Configuración guardada con éxito"}
 
 @app.post("/upload-certificado")
 def upload_certificado(arquivo: UploadFile = File(...), x_empresa_id: int = Header(...)):

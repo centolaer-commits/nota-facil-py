@@ -225,6 +225,8 @@ def inicializar_banco():
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS data_vencimento DATE")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS valor_mensalidade REAL DEFAULT 0")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS csc TEXT DEFAULT ''")
+        # HERE IS THE NEW MERCADO PAGO TOKEN COLUMN
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS mercado_pago_token TEXT DEFAULT ''")
     except Exception as e:
         pass
 
@@ -389,16 +391,18 @@ def deletar_categoria(empresa_id, id_categoria):
 def obter_configuracao(empresa_id):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute('SELECT nome_empresa, ruc, endereco, senha_certificado, caminho_certificado, ambiente_sifen, csc FROM empresas WHERE id = %s', (empresa_id,))
+    # ADDED mercado_pago_token TO THE SELECT HERE
+    cursor.execute('SELECT nome_empresa, ruc, endereco, senha_certificado, caminho_certificado, ambiente_sifen, csc, mercado_pago_token FROM empresas WHERE id = %s', (empresa_id,))
     linha = cursor.fetchone()
     conexao.close()
-    if linha: return {"nome_empresa": linha[0], "ruc": linha[1], "endereco": linha[2], "senha_certificado": linha[3], "caminho_certificado": linha[4], "ambiente_sifen": linha[5], "csc": linha[6]}
+    if linha: return {"nome_empresa": linha[0], "ruc": linha[1], "endereco": linha[2], "senha_certificado": linha[3], "caminho_certificado": linha[4], "ambiente_sifen": linha[5], "csc": linha[6], "mercado_pago_token": linha[7]}
     return None
 
-def salvar_configuracao_texto(empresa_id, nome, ruc, endereco, senha, csc):
+# UPDATED TO RECEIVE AND SAVE mercado_pago_token
+def salvar_configuracao_texto(empresa_id, nome, ruc, endereco, senha, csc, mercado_pago_token=""):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute('UPDATE empresas SET nome_empresa = %s, ruc = %s, endereco = %s, senha_certificado = %s, csc = %s WHERE id = %s', (nome, ruc, endereco, senha, csc, empresa_id))
+    cursor.execute('UPDATE empresas SET nome_empresa = %s, ruc = %s, endereco = %s, senha_certificado = %s, csc = %s, mercado_pago_token = %s WHERE id = %s', (nome, ruc, endereco, senha, csc, mercado_pago_token, empresa_id))
     conexao.commit()
     conexao.close()
 
