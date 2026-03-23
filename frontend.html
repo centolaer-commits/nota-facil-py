@@ -52,7 +52,49 @@
 
   <div id="print-area" class="hidden text-black bg-white w-[80mm] p-2 text-xs"></div>
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+  <div id="modal-tutorial-mp" class="fixed inset-0 bg-black bg-opacity-90 z-[70] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-cardBg-light dark:bg-cardBg-dark p-8 rounded-2xl w-full max-w-2xl shadow-2xl border border-blue-500/30 flex flex-col max-h-[90vh]">
+          <div class="flex justify-between items-center mb-6 border-b border-border-light dark:border-border-dark pb-4 shrink-0">
+              <h3 class="text-2xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center gap-3">📘 Guía: PixBridge y Mercado Pago</h3>
+              <button onclick="fecharModalTutorialMP()" class="text-gray-400 font-bold text-2xl leading-none">&times;</button>
+          </div>
+          <div class="overflow-y-auto scrollbar-thin pr-4 space-y-6 text-sm text-text-light dark:text-text-dark pb-4">
+              
+              <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <h4 class="font-bold text-blue-800 dark:text-blue-300 mb-2">1. Requisitos para abrir la cuenta (Paraguay a Brasil)</h4>
+                  <p class="mb-2">El Banco Central de Brasil exige documentación brasileña. Para operar legalmente, necesitas:</p>
+                  <ul class="list-disc pl-5 space-y-1 text-text-mutedLight dark:text-text-mutedDark">
+                      <li>Un <b>CPF</b> (Cadastro de Personas Físicas). <i>Nota: Extranjeros pueden tramitar un CPF en la Receita Federal o Consulado Brasileño.</i></li>
+                      <li>Un <b>Número de Teléfono de Brasil</b> (Chip SIM activo para recibir SMS de validación).</li>
+                      <li>Si eres empresa registrada en Brasil, un CNPJ.</li>
+                  </ul>
+                  <p class="mt-2 text-xs italic text-blue-600 dark:text-blue-400">Consejo de Frontera: Muchos comercios utilizan la cuenta de un socio o familiar brasileño de confianza para centralizar los cobros.</p>
+              </div>
 
+              <div>
+                  <h4 class="font-bold text-lg mb-2">2. Crear la cuenta en Mercado Pago</h4>
+                  <p class="text-text-mutedLight dark:text-text-mutedDark">Descarga la app de Mercado Pago Brasil o ingresa a <a href="https://www.mercadopago.com.br" target="_blank" class="text-blue-500 hover:underline font-bold">mercadopago.com.br</a> y regístrate usando el CPF y el número telefónico brasileño.</p>
+              </div>
+
+              <div>
+                  <h4 class="font-bold text-lg mb-2">3. Obtener tu "Access Token" (Clave API)</h4>
+                  <p class="text-text-mutedLight dark:text-text-mutedDark mb-3">Esta clave conecta de forma segura tu NubePY con tu cuenta bancaria para confirmar los Pix automáticamente.</p>
+                  <ol class="list-decimal pl-5 space-y-2 text-text-mutedLight dark:text-text-mutedDark font-medium">
+                      <li>Ingresa a: <a href="https://www.mercadopago.com.br/developers/panel" target="_blank" class="text-blue-500 hover:underline font-bold">Panel de Desarrolladores de Mercado Pago</a> y loguéate con tu cuenta.</li>
+                      <li>Haz clic en el botón <b>"Crear Aplicación"</b>.</li>
+                      <li>Ponle un nombre (ej: NubePY Caixa) y selecciona "Pagos Presenciales".</li>
+                      <li>Abre la aplicación creada y ve al menú lateral izquierdo: <b>"Credenciales de Producción"</b>.</li>
+                      <li>Copia el código largo llamado <b>Access Token</b> (generalmente empieza con <span class="bg-slate-200 dark:bg-slate-800 p-1 rounded text-xs font-mono text-text-light dark:text-text-dark">APP_USR-</span>).</li>
+                      <li>Pega ese código en la pantalla de Ajustes de NubePY y dale a Guardar.</li>
+                  </ol>
+              </div>
+
+          </div>
+          <div class="pt-6 mt-2 border-t border-border-light dark:border-border-dark shrink-0 text-center">
+              <button onclick="fecharModalTutorialMP()" class="bg-blue-600 text-white font-bold py-3 px-10 rounded-xl hover:bg-blue-500 shadow-md">Entendido</button>
+          </div>
+      </div>
+  </div>
   <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-slate-800 p-4 rounded-2xl w-full max-w-md shadow-2xl border border-slate-700"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-white flex items-center">📷 Escanear</h3><button type="button" onclick="fecharCamera()" class="text-red-400 hover:bg-slate-700 p-2 rounded-full font-bold text-xl leading-none transition">&times;</button></div><div id="reader" class="w-full bg-black rounded-lg overflow-hidden border-2 border-brand-accent/50 min-h-[250px] flex items-center justify-center text-white text-sm">Iniciando cámara...</div></div></div>
   <div id="modal-legal" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-slate-800 p-6 rounded-2xl w-full max-w-3xl shadow-2xl border border-slate-700 flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700 shrink-0"><h3 class="text-xl font-bold text-white">Términos Legales</h3><button type="button" onclick="fecharModalLegal()" class="text-gray-400 font-bold text-2xl transition">&times;</button></div><div class="overflow-y-auto pr-4 space-y-4 text-sm text-gray-300 scrollbar-thin scrollbar-thumb-slate-600 pb-4"><p class="font-extrabold text-white text-center mb-6">ACUERDO MARCO NubePY</p></div><div class="pt-4 mt-4 border-t border-slate-700 shrink-0 text-center"><button type="button" onclick="fecharModalLegal()" class="bg-brand-accent text-white font-bold py-3 px-8 rounded-xl">Cerrar</button></div></div></div>
   <div id="modal-audit-details" class="fixed inset-0 bg-black bg-opacity-95 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-slate-800 p-6 rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-700 flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-700 shrink-0"><h3 class="text-xl font-bold text-white">Detalles</h3><button type="button" onclick="fecharModalAudit()" class="text-gray-400 font-bold text-2xl transition">&times;</button></div><div class="overflow-y-auto scrollbar-thin rounded-lg border border-slate-700"><table class="w-full text-left bg-slate-800 text-sm"><thead class="bg-slate-900 text-gray-400 sticky top-0"><tr><th class="p-3">Producto</th><th class="p-3 text-center">Sis</th><th class="p-3 text-center">Físico</th><th class="p-3 text-center">Diff</th><th class="p-3 text-right">Impacto</th></tr></thead><tbody id="tabela-audit-detalhes" class="divide-y divide-slate-700 text-gray-300"></tbody></table></div><div class="pt-4 mt-4 shrink-0 text-center"><button onclick="fecharModalAudit()" class="bg-brand-primary text-white font-bold py-3 px-8 rounded-xl border border-slate-600">Cerrar</button></div></div></div>
@@ -417,7 +459,51 @@
 
       </div>
 
-      <div id="tela-config" class="max-w-4xl mx-auto bg-slate-800 p-6 rounded-2xl section-tela hidden"><header class="mb-8 border-b border-slate-700 pb-4"><h1 class="text-2xl font-bold text-white">Ajustes</h1></header><div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div class="space-y-5 md:border-r md:border-slate-700 md:pr-8"><div><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Nombre Empresa</label><input type="text" id="conf-nome" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-700 text-white focus:border-brand-accent outline-none"></div><div><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">RUC Emisor</label><input type="text" id="conf-ruc" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-800 text-gray-400 font-mono cursor-not-allowed" readonly></div><div><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Dirección</label><input type="text" id="conf-endereco" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-700 text-white focus:border-brand-accent outline-none"></div><div><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Código CSC (Seguridad)</label><input type="text" id="conf-csc" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-700 text-white focus:border-brand-accent outline-none"></div><div><label class="text-xs font-bold text-gray-400 uppercase mb-1 block">Contraseña SIFEN (.p12)</label><input type="password" id="conf-senha-cert" class="w-full border border-slate-600 p-3 rounded-lg text-sm bg-slate-700 text-white focus:border-brand-accent outline-none"></div><button type="button" onclick="salvarConfiguracao()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-lg hover:bg-brand-accentHover transition shadow-md">Guardar Datos</button></div><div class="space-y-5"><div class="border-2 border-dashed border-brand-accent/30 p-6 rounded-xl text-center bg-slate-700/30 hover:border-brand-accent/50 transition"><input type="file" id="arquivo-cert" accept=".p12,.pfx" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-brand-accent file:text-white hover:file:bg-brand-accentHover cursor-pointer mx-auto"></div><button type="button" onclick="fazerUploadCertificado()" class="w-full bg-slate-600 text-white font-bold py-3 px-6 rounded-lg text-sm hover:bg-slate-500 transition border border-slate-500">Subir Archivo</button><div id="status-cert" class="text-sm text-center p-3 rounded-lg hidden border"></div></div></div><div class="mt-8 pt-6 border-t border-slate-700"><h3 class="text-lg font-bold text-white mb-4">Estado de Conexión SIFEN</h3><div class="flex flex-col md:flex-row items-center gap-4 bg-slate-700/50 p-4 rounded-xl border border-slate-700 mb-8"><div class="flex-1"><p class="font-bold text-white">Ambiente de Emisión</p></div><select id="conf-ambiente" onchange="alterarAmbienteSifen()" class="w-full md:w-auto border-2 border-brand-accent p-3 rounded-lg font-bold text-white outline-none bg-slate-800"><option value="testes">🟡 Pruebas</option><option value="produccion">🟢 Producción</option></select></div></div></div>
+      <div id="tela-config" class="max-w-4xl mx-auto bg-cardBg-light dark:bg-cardBg-dark p-6 rounded-2xl shadow-sm border border-border-light dark:border-border-dark section-tela hidden transition-colors duration-200">
+        <header class="mb-8 border-b border-border-light dark:border-border-dark pb-4">
+            <h1 class="text-3xl font-extrabold text-text-light dark:text-text-dark flex items-center gap-3">
+                <svg class="w-8 h-8 stroke-cyan-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                Ajustes Generales
+            </h1>
+        </header>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-5 md:border-r md:border-border-light dark:border-border-dark md:pr-8">
+                <h3 class="font-bold text-text-light dark:text-text-dark border-b border-border-light dark:border-border-dark pb-2">Empresa y SIFEN</h3>
+                <div><label class="text-xs font-bold text-text-mutedLight dark:text-text-mutedDark uppercase mb-1 block">Nombre Empresa</label><input type="text" id="conf-nome" class="w-full border border-border-light dark:border-border-dark p-3 rounded-lg text-sm bg-brand-light dark:bg-brand-inputBgDark text-text-light dark:text-text-dark focus:border-brand-accent outline-none shadow-inner"></div>
+                <div><label class="text-xs font-bold text-text-mutedLight dark:text-text-mutedDark uppercase mb-1 block">RUC Emisor</label><input type="text" id="conf-ruc" class="w-full border border-border-light dark:border-border-dark p-3 rounded-lg text-sm bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono cursor-not-allowed" readonly></div>
+                <div><label class="text-xs font-bold text-text-mutedLight dark:text-text-mutedDark uppercase mb-1 block">Dirección</label><input type="text" id="conf-endereco" class="w-full border border-border-light dark:border-border-dark p-3 rounded-lg text-sm bg-brand-light dark:bg-brand-inputBgDark text-text-light dark:text-text-dark focus:border-brand-accent outline-none shadow-inner"></div>
+                <div><label class="text-xs font-bold text-text-mutedLight dark:text-text-mutedDark uppercase mb-1 block">Código CSC (Seguridad)</label><input type="text" id="conf-csc" class="w-full border border-border-light dark:border-border-dark p-3 rounded-lg text-sm bg-brand-light dark:bg-brand-inputBgDark text-text-light dark:text-text-dark focus:border-brand-accent outline-none shadow-inner"></div>
+                <div><label class="text-xs font-bold text-text-mutedLight dark:text-text-mutedDark uppercase mb-1 block">Contraseña SIFEN (.p12)</label><input type="password" id="conf-senha-cert" class="w-full border border-border-light dark:border-border-dark p-3 rounded-lg text-sm bg-brand-light dark:bg-brand-inputBgDark text-text-light dark:text-text-dark focus:border-brand-accent outline-none shadow-inner"></div>
+            </div>
+
+            <div class="space-y-5">
+                <h3 class="font-bold text-text-light dark:text-text-dark border-b border-border-light dark:border-border-dark pb-2">Integración de Pagos (PIXBRIDGE)</h3>
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 p-4 rounded-xl shadow-sm">
+                    <label class="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase mb-2 block flex items-center gap-2"><svg class="w-4 h-4 stroke-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Mercado Pago Access Token (Producción)</label>
+                    <input type="password" id="conf-mp-token" placeholder="APP_USR-..." class="w-full border border-blue-300 dark:border-blue-700 p-3 rounded-lg text-sm bg-white dark:bg-slate-800 text-text-light dark:text-text-dark focus:border-blue-500 outline-none font-mono shadow-inner mb-3">
+                    <button type="button" onclick="abrirModalTutorialMP()" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">📘 ¿Cómo obtener mi Token y abrir cuenta?</button>
+                </div>
+
+                <div class="border-2 border-dashed border-brand-accent/30 p-6 rounded-2xl text-center bg-brand-light dark:bg-brand-sidebarDark/30 hover:border-brand-accent/50 transition cursor-pointer mt-4">
+                    <svg class="w-10 h-10 stroke-brand-accent mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <p class="text-sm font-bold text-text-light dark:text-text-dark mb-2">Certificado Digital (Firma)</p>
+                    <input type="file" id="arquivo-cert" accept=".p12,.pfx" class="block w-full text-xs text-text-mutedLight dark:text-text-mutedDark file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-brand-accent file:text-white hover:file:bg-brand-accentHover cursor-pointer mx-auto mt-2">
+                </div>
+                <button type="button" onclick="fazerUploadCertificado()" class="w-full bg-brand-primary dark:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-slate-700 dark:hover:bg-slate-600 transition border border-border-light dark:border-slate-600">Subir Archivo P12</button>
+            </div>
+        </div>
+
+        <button type="button" onclick="salvarConfiguracao()" class="w-full bg-brand-accent text-white font-extrabold py-4 mt-8 rounded-xl hover:bg-brand-accentHover transition shadow-lg text-lg">Guardar Configuración General</button>
+
+        <div class="mt-8 pt-8 border-t border-border-light dark:border-border-dark">
+            <h3 class="text-xl font-bold text-text-light dark:text-text-dark mb-4">Estado de Conexión SIFEN</h3>
+            <div class="flex flex-col md:flex-row items-center gap-4 bg-brand-light dark:bg-brand-sidebarDark/50 p-5 rounded-2xl border border-border-light dark:border-border-dark shadow-sm">
+                <div class="flex-1"><p class="font-bold text-text-light dark:text-text-dark">Ambiente de Emisión Actual</p><p class="text-xs text-text-mutedLight dark:text-text-mutedDark">Cambie a Producción solo cuando SET lo apruebe.</p></div>
+                <select id="conf-ambiente" onchange="alterarAmbienteSifen()" class="w-full md:w-auto border-2 border-brand-accent p-3.5 rounded-xl font-extrabold text-brand-accent outline-none bg-cardBg-light dark:bg-cardBg-dark shadow-sm"><option value="testes">🟡 Entorno de Pruebas</option><option value="produccion">🟢 Entorno de Producción</option></select>
+            </div>
+        </div>
+      </div>
 
     </div>
   </div>
