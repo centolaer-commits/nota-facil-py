@@ -205,7 +205,19 @@
     function abrirModalSangria() { document.getElementById('modal-sangria').classList.remove('hidden'); document.getElementById('modal-sangria').classList.add('flex'); } function fecharModalSangria() { document.getElementById('modal-sangria').classList.add('hidden'); }
     async function salvarSangria() { const valor = parseFloat(document.getElementById('sangria-valor').value) || 0; const motivo = document.getElementById('sangria-motivo').value.trim(); try { const res = await fetch('/registrar-sangria', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({valor, motivo}) }); if (res.ok) { showToast("✅ Retiro registrado."); fecharModalSangria(); } } catch(e) {} }
     function abrirCheckout() { if(productosCaixa.length === 0) return; document.getElementById('checkout-total').innerText = totalDaVendaAtual.toLocaleString('es-PY'); document.getElementById('checkout-metodo').value = "Efectivo"; atualizarTroco(); document.getElementById('modal-checkout').classList.remove('hidden'); document.getElementById('modal-checkout').classList.add('flex'); } function fecharCheckout() { document.getElementById('modal-checkout').classList.add('hidden'); }
-    function atualizarTroco() { const metodo = document.getElementById('checkout-metodo').value; const boxVuelto = document.getElementById('box-vuelto'); if(metodo === "Efectivo") { boxVuelto.classList.remove('hidden'); const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0; document.getElementById('checkout-vuelto').innerText = Math.max(recebido - totalDaVendaAtual, 0).toLocaleString('es-PY'); } else { boxVuelto.classList.add('hidden'); } }
+    function atualizarTroco() { 
+    const metodo = document.getElementById('checkout-metodo').value; 
+    const boxVuelto = document.getElementById('box-vuelto'); 
+    
+    if(metodo === "Efectivo") { 
+        boxVuelto.classList.remove('hidden'); 
+        const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0; 
+        document.getElementById('checkout-vuelto').innerText = Math.max(recebido - totalDaVendaAtual, 0).toLocaleString('es-PY'); 
+    } else { 
+        // Esconde a caixa de troco para Cartão, Transferência e PIX
+        boxVuelto.classList.add('hidden'); 
+    } 
+}
     
     async function confirmarVenta() { 
         const metodoPago = document.getElementById('checkout-metodo').value; 
