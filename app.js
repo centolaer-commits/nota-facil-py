@@ -283,42 +283,75 @@
     async function carregarDashboard() { try { const res=await fetch('/dados-dashboard', {headers:getSaaSHeaders()}); const d=await res.json(); document.getElementById('dash-vendas').innerText=d.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText=d.total_notas; const ctx=document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) graficoAtual.destroy(); graficoAtual=new Chart(ctx,{type:'bar',data:{labels:d.top_produtos.map(p=>p.nome),datasets:[{label:'Unidades',data:d.top_produtos.map(p=>p.quantidade),backgroundColor:'#0d9488'}]},options:{responsive:true,maintainAspectRatio:false}}); } catch(e){} }
     async function carregarCategorias() { try { const res=await fetch('/listar-categorias', {headers:getSaaSHeaders()}); const d=await res.json(); const sf=document.getElementById('novo-cat'); const sfi=document.getElementById('filtro-cat-inventario'); const tb=document.getElementById('tabela-categorias'); if(sf) sf.innerHTML=''; if(sfi) sfi.innerHTML='<option value="">Todas</option>'; if(tb) tb.innerHTML=''; d.forEach(c=>{ if(sf) sf.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfi) sfi.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(tb) tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${c.nome}</td><td class="p-4 text-center"><button onclick="deletarCategoria(${c.id})" class="text-red-400">🗑️</button></td></tr>`; }); } catch(e){} }
     async function adicionarCategoria() { const n=document.getElementById('nova-cat-nome').value; if(n){ await fetch('/cadastrar-categoria',{method:'POST',headers:getSaaSHeaders(),body:JSON.stringify({nome:n})}); carregarCategorias(); document.getElementById('nova-cat-nome').value=''; } } async function deletarCategoria(id) { if(confirm("Del?")) { await fetch(`/deletar-categoria/${id}`,{method:'DELETE',headers:getSaaSHeaders()}); carregarCategorias(); } }
-  async function carregarConfiguracao() { 
+ async function carregarConfiguracao() { 
     try { 
+        console.log("A pedir configurações ao servidor...");
         const res = await fetch('/obter-configuracao', {headers: getSaaSHeaders()}); 
         const d = await res.json(); 
         
+        console.log("Dados recebidos da base de dados:", d); // O nosso detetive!
+
         if(d){ 
-            if(document.getElementById('conf-nome')) document.getElementById('conf-nome').value=d.nome_empresa || ''; 
-            if(document.getElementById('conf-ruc')) document.getElementById('conf-ruc').value=d.ruc || ''; 
-            if(document.getElementById('conf-endereco')) document.getElementById('conf-endereco').value=d.endereco || ''; 
-            if(document.getElementById('conf-senha-cert')) document.getElementById('conf-senha-cert').value=d.senha_certificado || ''; 
-            if(document.getElementById('conf-csc')) document.getElementById('conf-csc').value=d.csc || ''; 
+            if(document.getElementById('conf-nome')) document.getElementById('conf-nome').value = d.nome_empresa || ''; 
+            if(document.getElementById('conf-ruc')) document.getElementById('conf-ruc').value = d.ruc || ''; 
+            if(document.getElementById('conf-endereco')) document.getElementById('conf-endereco').value = d.endereco || ''; 
+            if(document.getElementById('conf-senha-cert')) document.getElementById('conf-senha-cert').value = d.senha_certificado || ''; 
+            if(document.getElementById('conf-csc')) document.getElementById('conf-csc').value = d.csc || ''; 
             
-            // ESTA É A LINHA QUE COLOCA O TOKEN DE VOLTA NA CAIXINHA
-            if(document.getElementById('conf-mp-token')) document.getElementById('conf-mp-token').value=d.mercado_pago_token || ''; 
+            // Carrega o Mercado Pago
+            if(document.getElementById('conf-mp-token')) {
+                document.getElementById('conf-mp-token').value = d.mercado_pago_token || ''; 
+                console.log("Token colocado na caixinha:", d.mercado_pago_token);
+            }
             
-            if(document.getElementById('ruc')) document.getElementById('ruc').value=d.ruc || ''; 
-            if(document.getElementById('conf-ambiente')) document.getElementById('conf-ambiente').value=d.ambiente_sifen || 'testes'; 
-            if(document.getElementById('sidebar-nome-loja')) document.getElementById('sidebar-nome-loja').innerText=d.nome_empresa || 'Empresa'; 
+            if(document.getElementById('ruc')) document.getElementById('ruc').value = d.ruc || ''; 
+            if(document.getElementById('conf-ambiente')) document.getElementById('conf-ambiente').value = d.ambiente_sifen || 'testes'; 
+            if(document.getElementById('sidebar-nome-loja')) document.getElementById('sidebar-nome-loja').innerText = d.nome_empresa || 'Empresa'; 
         } 
-    } catch(e){} 
+    } catch(e){
+        console.error("Erro ao carregar configurações:", e);
+    } 
+}
+
+async function salvarConfiguracao() { 
+    try {
+        const f = new FormData(); 
+        f.append('nome_empresa', document.getElementById('conf-nome').value); 
+        f.append('ruc', document.getElementById('conf-ruc').value); 
+        f.append('endereco', document.getElementById('conf-endereco').value); 
+        f.append('senha_certificado', document.getElementById('conf-senha-cert').value); 
+        if(document.getElementById('conf-csc')) f.append('csc', document.getElementById('conf-csc').value); 
+        
+        // Empacota o Mercado Pago
+        let tokenParaEnviar = "";
+        if(document.getElementById('conf-mp-token')) {
+            tokenParaEnviar = document.getElementById('conf-mp-token').value;
+            f.append('mercado_pago_token', tokenParaEnviar); 
+        }
+
+        console.log("A enviar para o servidor o token:", tokenParaEnviar);
+
+        const resposta = await fetch('/salvar-configuracao', {
+            method: 'POST',
+            headers: {'X-Empresa-ID': empresaAtualId.toString()},
+            body: f
+        }); 
+
+        // Agora só mostramos o verde SE o servidor confirmar que correu tudo bem!
+        if (resposta.ok) {
+            showToast("✅ Configuración General Guardada"); 
+        } else {
+            showToast("❌ Error al guardar en el servidor");
+            console.error("O servidor rejeitou:", await resposta.text());
+        }
+    } catch(e) {
+        showToast("❌ Error de conexión");
+        console.error("Erro ao enviar:", e);
+    }
 }
     async function alterarAmbienteSifen() { await fetch('/alternar-ambiente',{method:'POST',headers:getSaaSHeaders(),body:JSON.stringify({ambiente:document.getElementById('conf-ambiente').value})}); }
-    async function salvarConfiguracao() { 
-    const f=new FormData(); 
-    f.append('nome_empresa',document.getElementById('conf-nome').value); 
-    f.append('ruc',document.getElementById('conf-ruc').value); 
-    f.append('endereco',document.getElementById('conf-endereco').value); 
-    f.append('senha_certificado',document.getElementById('conf-senha-cert').value); 
-    if(document.getElementById('conf-csc')) f.append('csc',document.getElementById('conf-csc').value); 
     
-    // NOVO: Envia o token para o Python
-    if(document.getElementById('conf-mp-token')) f.append('mercado_pago_token',document.getElementById('conf-mp-token').value); 
 
-    await fetch('/salvar-configuracao',{method:'POST',headers:{'X-Empresa-ID':empresaAtualId.toString()},body:f}); 
-    showToast("✅ Configuración General Guardada"); 
-}
     async function fazerUploadCertificado() { const file=document.getElementById('arquivo-cert').files[0]; if(file){ const f=new FormData(); f.append('arquivo',file); await fetch('/upload-certificado',{method:'POST',headers:{'X-Empresa-ID':empresaAtualId.toString()},body:f}); showToast("✅ Subido"); } }
     async function carregarStockTake() { await carregarEstoque(); renderTabelaStockTake(productosGlobais); } function filtrarListaStockTake() { const t=document.getElementById('busca-st').value.toLowerCase(); renderTabelaStockTake(productosGlobais.filter(p=>p.descricao.toLowerCase().includes(t)||p.codigo_barras.toLowerCase().includes(t))); } function renderTabelaStockTake(l) { const tb=document.getElementById('tabela-stocktake'); tb.innerHTML=''; l.forEach(p=>{ let val=document.getElementById(`st-input-${p.codigo_barras}`)?.value||''; tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${p.descricao}</td><td class="p-4 text-center font-bold text-brand-accent">${p.quantidade}</td><td class="p-4 text-center"><input type="number" id="st-input-${p.codigo_barras}" value="${val}" class="w-24 p-2 bg-slate-800 text-center text-white border border-slate-600 rounded" oninput="atualizarDiffST('${p.codigo_barras}',${p.quantidade})"></td><td class="p-4 text-center"><span id="st-diff-${p.codigo_barras}">-</span></td></tr>`; if(val!=='') atualizarDiffST(p.codigo_barras,p.quantidade); }); } function atualizarDiffST(c,q) { let val=document.getElementById(`st-input-${c}`).value; let sp=document.getElementById(`st-diff-${c}`); if(val==='') sp.innerText='-'; else { let d=parseInt(val)-q; sp.innerText=d>0?`+${d}`:d; sp.className=d>0?'text-green-400 font-bold':(d<0?'text-red-400 font-bold':'text-gray-400 font-bold'); } } async function salvarStockTake() { let pay=[]; productosGlobais.forEach(p=>{ let v=document.getElementById(`st-input-${p.codigo_barras}`); if(v&&v.value!=='') if(parseInt(v.value)!==p.quantidade) pay.push({codigo_barras:p.codigo_barras,qtd_fisica:parseInt(v.value)}); }); if(pay.length>0) { await fetch('/salvar-auditoria',{method:'POST',headers:getSaaSHeaders(),body:JSON.stringify({itens:pay})}); showToast("✅ Audit OK"); carregarStockTake(); } }
     
