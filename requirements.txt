@@ -11,3 +11,4 @@ signxml
 lxml
 zeep
 requests
+mercadopago==3.2.0
