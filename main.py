@@ -290,8 +290,16 @@ def api_listar_mermas(x_empresa_id: int = Header(...)):
     return banco_dados.listar_mermas(x_empresa_id)
 
 @app.get("/obter-configuracao")
-def obter_configuracao(x_empresa_id: int = Header(...)):
-    return banco_dados.obter_configuracao(x_empresa_id)
+def obter_config_route(empresa_id: str = Header(None, alias="X-Empresa-ID")):
+    if not empresa_id:
+        raise HTTPException(status_code=400, detail="Empresa ID no proporcionado")
+    
+    config = banco_dados.obter_configuracao(int(empresa_id))
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuración no encontrada")
+        
+    # Aqui garantimos que o Python devolve o dicionário inteiro, sem filtrar nada!
+    return config
 
 @app.post("/salvar-configuracao")
 def salvar_config_route(

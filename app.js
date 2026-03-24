@@ -283,23 +283,24 @@
     async function carregarDashboard() { try { const res=await fetch('/dados-dashboard', {headers:getSaaSHeaders()}); const d=await res.json(); document.getElementById('dash-vendas').innerText=d.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText=d.total_notas; const ctx=document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) graficoAtual.destroy(); graficoAtual=new Chart(ctx,{type:'bar',data:{labels:d.top_produtos.map(p=>p.nome),datasets:[{label:'Unidades',data:d.top_produtos.map(p=>p.quantidade),backgroundColor:'#0d9488'}]},options:{responsive:true,maintainAspectRatio:false}}); } catch(e){} }
     async function carregarCategorias() { try { const res=await fetch('/listar-categorias', {headers:getSaaSHeaders()}); const d=await res.json(); const sf=document.getElementById('novo-cat'); const sfi=document.getElementById('filtro-cat-inventario'); const tb=document.getElementById('tabela-categorias'); if(sf) sf.innerHTML=''; if(sfi) sfi.innerHTML='<option value="">Todas</option>'; if(tb) tb.innerHTML=''; d.forEach(c=>{ if(sf) sf.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfi) sfi.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(tb) tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${c.nome}</td><td class="p-4 text-center"><button onclick="deletarCategoria(${c.id})" class="text-red-400">🗑️</button></td></tr>`; }); } catch(e){} }
     async function adicionarCategoria() { const n=document.getElementById('nova-cat-nome').value; if(n){ await fetch('/cadastrar-categoria',{method:'POST',headers:getSaaSHeaders(),body:JSON.stringify({nome:n})}); carregarCategorias(); document.getElementById('nova-cat-nome').value=''; } } async function deletarCategoria(id) { if(confirm("Del?")) { await fetch(`/deletar-categoria/${id}`,{method:'DELETE',headers:getSaaSHeaders()}); carregarCategorias(); } }
-    async function carregarConfiguracao() { 
+  async function carregarConfiguracao() { 
     try { 
-        const res=await fetch('/obter-configuracao',{headers:getSaaSHeaders()}); 
-        const d=await res.json(); 
+        const res = await fetch('/obter-configuracao', {headers: getSaaSHeaders()}); 
+        const d = await res.json(); 
+        
         if(d){ 
-            document.getElementById('conf-nome').value=d.nome_empresa || ''; 
-            document.getElementById('conf-ruc').value=d.ruc || ''; 
-            document.getElementById('conf-endereco').value=d.endereco || ''; 
-            document.getElementById('conf-senha-cert').value=d.senha_certificado || ''; 
+            if(document.getElementById('conf-nome')) document.getElementById('conf-nome').value=d.nome_empresa || ''; 
+            if(document.getElementById('conf-ruc')) document.getElementById('conf-ruc').value=d.ruc || ''; 
+            if(document.getElementById('conf-endereco')) document.getElementById('conf-endereco').value=d.endereco || ''; 
+            if(document.getElementById('conf-senha-cert')) document.getElementById('conf-senha-cert').value=d.senha_certificado || ''; 
             if(document.getElementById('conf-csc')) document.getElementById('conf-csc').value=d.csc || ''; 
             
-            // NOVO: Carrega o token do banco de dados
+            // ESTA É A LINHA QUE COLOCA O TOKEN DE VOLTA NA CAIXINHA
             if(document.getElementById('conf-mp-token')) document.getElementById('conf-mp-token').value=d.mercado_pago_token || ''; 
             
-            document.getElementById('ruc').value=d.ruc || ''; 
-            document.getElementById('conf-ambiente').value=d.ambiente_sifen || 'testes'; 
-            document.getElementById('sidebar-nome-loja').innerText=d.nome_empresa || 'Empresa'; 
+            if(document.getElementById('ruc')) document.getElementById('ruc').value=d.ruc || ''; 
+            if(document.getElementById('conf-ambiente')) document.getElementById('conf-ambiente').value=d.ambiente_sifen || 'testes'; 
+            if(document.getElementById('sidebar-nome-loja')) document.getElementById('sidebar-nome-loja').innerText=d.nome_empresa || 'Empresa'; 
         } 
     } catch(e){} 
 }
