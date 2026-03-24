@@ -300,13 +300,12 @@ def salvar_config_route(
     endereco: str = Form(...),
     senha_certificado: str = Form(...),
     csc: str = Form(default=""),
-    mercado_pago_token: str = Form(default=""),  # NOVO CAMPO ADICIONADO AQUI
+    mercado_pago_token: str = Form(default=""),
     empresa_id: str = Header(None, alias="X-Empresa-ID")
 ):
     if not empresa_id:
         raise HTTPException(status_code=400, detail="Empresa ID no proporcionado")
     
-    # Passamos o novo token para a função do banco_dados que atualizamos no passo anterior
     banco_dados.salvar_configuracao_texto(
         int(empresa_id), 
         nome_empresa, 
