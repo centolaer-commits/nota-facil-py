@@ -191,10 +191,15 @@ def gerar_pix_dinamico(
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en Mercado Pago: {str(e)}")class PedidoPix(BaseModel):
-    valor_guaranis: float
+        raise HTTPException(status_code=500, detail=f"Error en Mercado Pago: {str(e)}")
+    
+
+    class PedidoPix(BaseModel):
+      valor_guaranis: float
 
 @app.post("/gerar-pix")
+
+
 def gerar_pix_dinamico(
     pedido: PedidoPix, 
     empresa_id: str = Header(None, alias="X-Empresa-ID")
