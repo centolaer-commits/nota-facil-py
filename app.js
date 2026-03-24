@@ -221,6 +221,13 @@
     
     async function confirmarVenta() { 
         const metodoPago = document.getElementById('checkout-metodo').value; 
+
+        // NOVO BLOCO PIX: Se for PIX, gera o código e para a função aqui!
+    if (metodoPago === "Pix") {
+        fecharCheckout(); // Fecha a tela de troco
+        gerarPixNaTela(totalDaVendaAtual); // Chama o QR Code
+        return; // Impede que o sistema grave a venda antes do cliente pagar
+    }
         const btn = document.getElementById('btn-confirmar-venta'); btn.disabled = true; 
         const payload = { ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: totalDaVendaAtual, itens: productosCaixa, metodo_pago: metodoPago }; 
         
@@ -386,3 +393,65 @@ async function salvarConfiguracao() {
     async function emitirAutofactura() { const nom = document.getElementById('auto-nome').value.trim(); const ced = document.getElementById('auto-cedula').value.trim(); const end = document.getElementById('auto-endereco').value.trim(); const moverStock = document.getElementById('auto-mover-stock').checked; if(autoProductosCaixa.length === 0 || !nom || !ced || !end) return showToast("Complete todos los datos del vendedor y agregue ítems.", "warning"); const btn = document.getElementById('btn-emitir-auto'); btn.disabled = true; btn.innerHTML = '⏳ Generando Autofactura...'; const payload = { nome_vendedor: nom, cedula_vendedor: ced, endereco_vendedor: end, mover_stock: moverStock, itens: autoProductosCaixa }; try { const res = await fetch('/emitir-autofactura', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payload) }); if(!res.ok) throw new Error((await res.json()).detail); const dados = await res.json(); document.getElementById('auto-resultado').classList.remove('hidden'); document.getElementById('btn-auto-pdf').href = dados.link_pdf; btn.classList.add('hidden'); autoProductosCaixa = []; atualizarInterfaceAuto(); carregarAutofacturas(); carregarEstoque(); showToast("✅ Autofactura Emitida."); } catch(e) { showToast("❌ Error: " + e.message, "error"); } finally { btn.disabled = false; btn.innerHTML = '🧾 Emitir Autofactura SIFEN'; } }
     function novaAutofactura() { document.getElementById('auto-resultado').classList.add('hidden'); document.getElementById('btn-emitir-auto').classList.remove('hidden'); ['auto-nome','auto-cedula','auto-endereco'].forEach(id=>document.getElementById(id).value=''); document.getElementById('auto-scanner').focus(); }
     async function carregarAutofacturas() { try { const res = await fetch('/listar-autofacturas', {headers:getSaaSHeaders()}); const d = await res.json(); const tb = document.getElementById('tabela-hist-auto'); tb.innerHTML = ''; d.forEach(r => { tb.innerHTML += `<tr class="border-b border-slate-700 hover:bg-slate-700/30"><td class="p-3"><div class="font-bold text-white text-xs">${r.data}</div><div class="text-[10px] text-gray-500 font-mono">${r.cdc.substring(0,25)}...</div></td><td class="p-3 text-white font-bold">${r.vendedor}</td><td class="p-3 text-right font-bold text-orange-400">Gs. ${r.valor.toLocaleString('es-PY')}</td><td class="p-3 text-center"><a href="${r.link_pdf}" target="_blank" class="bg-slate-700 text-white px-3 py-1 rounded text-xs font-bold border border-slate-600">PDF</a></td></tr>`; }); } catch(e){} }
+   
+    // VARIÁVEIS PARA O PIX
+let pixCopiaEColaAtual = "";
+
+// FUNÇÕES DA TELA DO PIX
+function abrirModalPix(valorReaisEstimado) {
+    document.getElementById('modal-pix').classList.remove('hidden');
+    document.getElementById('modal-pix').classList.add('flex');
+    document.getElementById('pix-valor-reais').innerText = valorReaisEstimado.toFixed(2).replace('.', ',');
+    document.getElementById('pix-qrcode-img').classList.add('hidden');
+    document.getElementById('pix-loading').classList.remove('hidden');
+}
+
+function fecharModalPix() {
+    document.getElementById('modal-pix').classList.add('hidden');
+    document.getElementById('modal-pix').classList.remove('flex');
+}
+
+function copiarCodigoPix() {
+    if (pixCopiaEColaAtual) {
+        navigator.clipboard.writeText(pixCopiaEColaAtual)
+            .then(() => showToast("✅ Código copiado con éxito"))
+            .catch(() => showToast("❌ Error al copiar"));
+    }
+}
+
+// FUNÇÃO QUE CHAMA O PYTHON
+async function gerarPixNaTela(valorGuaranis) {
+    try {
+        abrirModalPix(valorGuaranis / 1450); 
+
+        const resposta = await fetch('/gerar-pix', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Empresa-ID': empresaAtualId.toString()
+            },
+            body: JSON.stringify({ valor_guaranis: parseFloat(valorGuaranis) })
+        });
+
+        const dados = await resposta.json();
+
+        if (resposta.ok && dados.sucesso) {
+            document.getElementById('pix-loading').classList.add('hidden');
+            
+            const imgQrCode = document.getElementById('pix-qrcode-img');
+            imgQrCode.src = "data:image/jpeg;base64," + dados.qr_code_base64;
+            imgQrCode.classList.remove('hidden');
+
+            document.getElementById('pix-valor-reais').innerText = dados.valor_reais.toFixed(2).replace('.', ',');
+            pixCopiaEColaAtual = dados.copia_cola;
+
+        } else {
+            fecharModalPix();
+            showToast("❌ " + (dados.detail || "Error al generar PIX"));
+        }
+    } catch (erro) {
+        fecharModalPix();
+        console.error(erro);
+        showToast("❌ Error de conexión");
+    }
+}
