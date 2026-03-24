@@ -223,6 +223,7 @@ def gerar_pix_dinamico(
         raise HTTPException(status_code=400, detail="El valor mínimo para PIX es R$ 0,10")
 
     # 3. Comunicação com o Mercado Pago
+   # 3. Comunicação com o Mercado Pago
     try:
         sdk = mercadopago.SDK(token_mp)
         
@@ -231,7 +232,7 @@ def gerar_pix_dinamico(
             "description": f"Venta NubePY - Emp {empresa_id}",
             "payment_method_id": "pix",
             "payer": {
-                "email": "comprador@nubepy.com", # MP exige um email, usamos um genérico para o POS
+                "email": "comprador@nubepy.com",
                 "first_name": "Cliente",
                 "last_name": "Mostrador"
             }
@@ -240,6 +241,12 @@ def gerar_pix_dinamico(
         resposta = sdk.payment().create(dados_pagamento)
         pagamento = resposta["response"]
         
+        # O NOSSO NOVO ESCUDO DEFENSIVO:
+        # Verifica se o Mercado Pago enviou um erro em vez do PIX
+        if "point_of_interaction" not in pagamento:
+            erro_mp = pagamento.get("message", "Error de validación")
+            raise HTTPException(status_code=400, detail=f"MP Info: {erro_mp}")
+            
         # O MP devolve a linha "Copia e Cola" e a imagem do QR Code em Base64
         codigo_copia_cola = pagamento["point_of_interaction"]["transaction_data"]["qr_code"]
         qr_code_img = pagamento["point_of_interaction"]["transaction_data"]["qr_code_base64"]
@@ -252,8 +259,10 @@ def gerar_pix_dinamico(
             "id_pagamento_mp": pagamento["id"]
         }
         
+    except HTTPException:
+        raise # Deixa passar os nossos próprios erros (como o escudo acima)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en Mercado Pago: {str(e)}")    
+        raise HTTPException(status_code=500, detail=f"Fallo del servidor: {str(e)}")
 
 
 @app.post("/api/login")
