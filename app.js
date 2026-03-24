@@ -1,4 +1,34 @@
- let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let productosGlobais = []; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = '';
+@app.post("/gerar-pix") let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let productosGlobais = []; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; let radarPix = null;
+let pixJaFoiConfirmado = false; // A nossa chave de segurança para fechar a venda
+
+function iniciarRadarPix(pagamentoId) {
+    clearInterval(radarPix); 
+    radarPix = setInterval(async () => {
+        try {
+            const resposta = await fetch(`/status-pix/${pagamentoId}`, {
+                headers: { 'X-Empresa-ID': empresaAtualId.toString() }
+            });
+            const dados = await resposta.json();
+            
+            if (dados.sucesso && dados.status === "approved") {
+                clearInterval(radarPix);
+                showToast("✅ Pago Aprobado!");
+function fecharModalPix() {
+    clearInterval(radarPix); // <--- ADICIONE ESTA LINHA AQUI
+    
+    // (O resto da sua função continua igual)
+    document.getElementById('modal-pix').classList.remove('active');
+}
+                
+                // Mágica: O radar confirmou, então avisamos o sistema e disparamos a venda!
+                pixJaFoiConfirmado = true;
+                confirmarVenta(); 
+            }
+        } catch (erro) {
+            console.log("Aguardando pagamento...");
+        }
+    }, 5000);
+}
     const getSaaSHeaders = (extraHeaders = {}) => { return { 'Content-Type': 'application/json', 'X-Empresa-ID': empresaAtualId ? empresaAtualId.toString() : "1", ...extraHeaders }; };
     
     document.addEventListener("DOMContentLoaded", () => {
@@ -51,6 +81,33 @@
             } else { const err = await res.json(); erroBox.innerText = err.detail || err.mensagem || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); } 
         } catch(e) { erroBox.innerText = "Error de red."; erroBox.classList.remove('hidden'); } finally { btn.innerText = "Ingresar al Sistema"; btn.disabled = false; } 
     }
+    function iniciarRadarPix(pagamentoId) {
+    // Garante que não há dois radares ligados ao mesmo tempo
+    clearInterval(radarPix); 
+    
+    radarPix = setInterval(async () => {
+        try {
+            const resposta = await fetch(`/status-pix/${pagamentoId}`, {
+                method: 'GET',
+                headers: { 'X-Empresa-ID': empresaAtualId.toString() }
+            });
+            const dados = await resposta.json();
+            
+            if (dados.sucesso && dados.status === "approved") {
+                clearInterval(radarPix); // Desliga o radar
+                showToast("✅ Pago Aprobado!");
+                fecharModalPix();
+                
+                // AQUI É A MÁGICA: O pagamento confirmou, então forçamos a gravação da venda!
+                // Mude o método de pagamento para "Pix Confirmado" para o sistema não barrar
+                document.getElementById('checkout-metodo').value = "Pix Confirmado";
+                confirmarVenta(); 
+            }
+        } catch (erro) {
+            console.log("Aguardando pagamento...");
+        }
+    }, 5000); // 5000 milissegundos = 5 segundos
+}
 
     function prepararTicket(empresaNome, rucEmissor, cdc, cliente, itens, total, qrcode, dataEmissao) {
         let html = `
@@ -223,10 +280,11 @@
         const metodoPago = document.getElementById('checkout-metodo').value; 
 
         // NOVO BLOCO PIX: Se for PIX, gera o código e para a função aqui!
-    if (metodoPago === "Pix") {
+    if (metodoPago === "Pix" && pixJaFoiConfirmado === false) {
         fecharCheckout(); // Fecha a tela de troco
         gerarPixNaTela(totalDaVendaAtual); // Chama o QR Code
         return; // Impede que o sistema grave a venda antes do cliente pagar
+    
     }
         const btn = document.getElementById('btn-confirmar-venta'); btn.disabled = true; 
         const payload = { ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: totalDaVendaAtual, itens: productosCaixa, metodo_pago: metodoPago }; 
@@ -240,7 +298,8 @@
             if (!res.ok) throw new Error(); 
             const dados = await res.json(); 
             fecharCheckout(); 
-            document.getElementById('resultado').classList.remove('hidden'); 
+            document.getElementById('resultado').classList.remove('hidden');
+            pixJaFoiConfirmado = false; 
             document.getElementById('btn-pdf').href = dados.link_pdf; 
             
             ultimoCDCGerado = dados.cdc;
@@ -444,6 +503,7 @@ async function gerarPixNaTela(valorGuaranis) {
 
             document.getElementById('pix-valor-reais').innerText = dados.valor_reais.toFixed(2).replace('.', ',');
             pixCopiaEColaAtual = dados.copia_cola;
+            iniciarRadarPix(dados.id_pagamento_mp);
 
         } else {
             fecharModalPix();

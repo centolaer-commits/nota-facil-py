@@ -5,6 +5,8 @@ from typing import List, Optional
 import os
 import shutil
 import mercadopago
+import urllib.request
+import json
 
 from gerador_xml import construir_xml_sifen
 from assinador_xml import assinar_documento
@@ -137,12 +139,17 @@ class ValidacaoAdmin(BaseModel):
 class PedidoPix(BaseModel):
     valor_guaranis: float
 
-
+def obter_taxa_cambio():
+    try:
+        req = urllib.request.Request("https://economia.awesomeapi.com.br/last/BRL-PYG", headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=3) as response:
+            dados = json.loads(response.read().decode())
+            return float(dados["BRLPYG"]["ask"])
+    except Exception:
+        return 1450.0
     
 
-    class PedidoPix(BaseModel):
-      valor_guaranis: float
-
+ 
 @app.post("/gerar-pix")
 
 
@@ -162,7 +169,7 @@ def gerar_pix_dinamico(
 
     # 2. Conversão de Moeda (MVP: Taxa fixa de 1 BRL = 1450 PYG)
     # No futuro, moveremos esta taxa para a tela de Ajustes.
-    taxa_cambio = 1450 
+    taxa_cambio = obter_taxa_cambio()
     valor_reais = round(pedido.valor_guaranis / taxa_cambio, 2)
     
     if valor_reais < 0.10:
@@ -576,3 +583,21 @@ def abrir_painel():
 @app.get("/app.js")
 def servir_js():
     return FileResponse("app.js")
+@app.get("/status-pix/{pagamento_id}")
+def verificar_status_pix(pagamento_id: str, empresa_id: str = Header(None, alias="X-Empresa-ID")):
+    try:
+        config = banco_dados.obter_configuracao(int(empresa_id))
+        token_mp = config.get("mercado_pago_token", "")
+        
+        if not token_mp:
+            raise HTTPException(status_code=400, detail="Token MP não configurado")
+            
+        sdk = mercadopago.SDK(token_mp)
+        resposta = sdk.payment().get(pagamento_id)
+        pagamento = resposta["response"]
+        
+        # Retorna o status oficial (ex: "pending", "approved", "rejected")
+        return {"sucesso": True, "status": pagamento.get("status", "pending")}
+        
+    except Exception as e:
+        return {"sucesso": False, "erro": str(e)}
