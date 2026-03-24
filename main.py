@@ -137,61 +137,7 @@ class ValidacaoAdmin(BaseModel):
 class PedidoPix(BaseModel):
     valor_guaranis: float
 
-@app.post("/gerar-pix")
-def gerar_pix_dinamico(
-    pedido: PedidoPix, 
-    empresa_id: str = Header(None, alias="X-Empresa-ID")
-):
-    if not empresa_id:
-        raise HTTPException(status_code=400, detail="Empresa ID no proporcionado")
-        
-    # 1. Buscar o Token do lojista no nosso cofre
-    config = banco_dados.obter_configuracao(int(empresa_id))
-    token_mp = config.get("mercado_pago_token", "")
-    
-    if not token_mp or token_mp.strip() == "":
-        raise HTTPException(status_code=400, detail="El comercio no ha configurado su Token de Mercado Pago.")
 
-    # 2. Conversão de Moeda (MVP: Taxa fixa de 1 BRL = 1450 PYG)
-    # No futuro, moveremos esta taxa para a tela de Ajustes.
-    taxa_cambio = 1450 
-    valor_reais = round(pedido.valor_guaranis / taxa_cambio, 2)
-    
-    if valor_reais < 0.10:
-        raise HTTPException(status_code=400, detail="El valor mínimo para PIX es R$ 0,10")
-
-    # 3. Comunicação com o Mercado Pago
-    try:
-        sdk = mercadopago.SDK(token_mp)
-        
-        dados_pagamento = {
-            "transaction_amount": valor_reais,
-            "description": f"Venta NubePY - Emp {empresa_id}",
-            "payment_method_id": "pix",
-            "payer": {
-                "email": "comprador@nubepy.com", # MP exige um email, usamos um genérico para o POS
-                "first_name": "Cliente",
-                "last_name": "Mostrador"
-            }
-        }
-        
-        resposta = sdk.payment().create(dados_pagamento)
-        pagamento = resposta["response"]
-        
-        # O MP devolve a linha "Copia e Cola" e a imagem do QR Code em Base64
-        codigo_copia_cola = pagamento["point_of_interaction"]["transaction_data"]["qr_code"]
-        qr_code_img = pagamento["point_of_interaction"]["transaction_data"]["qr_code_base64"]
-        
-        return {
-            "sucesso": True,
-            "valor_reais": valor_reais,
-            "qr_code_base64": qr_code_img,
-            "copia_cola": codigo_copia_cola,
-            "id_pagamento_mp": pagamento["id"]
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en Mercado Pago: {str(e)}")
     
 
     class PedidoPix(BaseModel):
