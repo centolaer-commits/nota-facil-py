@@ -303,10 +303,10 @@ def obter_config_route(empresa_id: str = Header(None, alias="X-Empresa-ID")):
 
 @app.post("/salvar-configuracao")
 def salvar_config_route(
-    nome_empresa: str = Form(...),
-    ruc: str = Form(...),
-    endereco: str = Form(...),
-    senha_certificado: str = Form(...),
+    nome_empresa: str = Form(default=""),
+    ruc: str = Form(default=""),
+    endereco: str = Form(default=""),
+    senha_certificado: str = Form(default=""),
     csc: str = Form(default=""),
     mercado_pago_token: str = Form(default=""),
     empresa_id: str = Header(None, alias="X-Empresa-ID")
