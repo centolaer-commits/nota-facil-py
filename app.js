@@ -205,7 +205,32 @@ function switchOpTab(tab) {
 function abrirModalEditarEmpresa(id, planoAtual, valorAtual) { document.getElementById('edit-empresa-id').value = id; let p = document.getElementById('edit-plano'); p.value = planoAtual.includes('Inicial') ? 'Inicial' : (planoAtual.includes('Crecimiento') ? 'Crecimiento' : 'VIP'); document.getElementById('edit-valor').value = valorAtual; document.getElementById('modal-editar-empresa').classList.remove('hidden'); document.getElementById('modal-editar-empresa').classList.add('flex'); }
 function fecharModalEditarEmpresa() { document.getElementById('modal-editar-empresa').classList.add('hidden'); document.getElementById('modal-editar-empresa').classList.remove('flex'); }
 async function salvarEdicaoEmpresa() { const id = document.getElementById('edit-empresa-id').value; const plano = document.getElementById('edit-plano').value; const valor = parseFloat(document.getElementById('edit-valor').value) || 0; try { const res = await fetch(`/super-admin/editar-empresa/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({plano: plano, valor_mensalidade: valor}) }); if(res.ok) { showToast("✅ Plan actualizado."); fecharModalEditarEmpresa(); carregarEmpresasSaaS(); } else { showToast("❌ Error.", "error"); } } catch(e) { showToast("❌ Error.", "error"); } }
-async function carregarEmpresasSaaS() { try { const resMet = await fetch('/super-admin/metricas'); if (resMet.ok) { const met = await resMet.json(); document.getElementById('saas-mrr').innerText = met.mrr.toLocaleString('es-PY'); document.getElementById('saas-ativos').innerText = met.clientes_ativos; document.getElementById('saas-vencidos').innerText = met.clientes_vencidos; } const res = await fetch('/super-admin/empresas'); if (res.ok) { const empresas = await res.json(); const tbody = document.getElementById('tabela-saas'); tbody.innerHTML = ''; empresas.forEach(emp => { let corStatus = emp.status === 'Activo' ? 'text-green-400' : 'text-red-400'; tbody.innerHTML += `<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${emp.nome}</td><td class="p-4">${emp.ruc}</td><td class="p-4">${emp.plano}</td><td class="p-4 ${corStatus}">${emp.status}</td><td class="p-4"><button onclick="abrirModalEditarEmpresa(${emp.id}, '${emp.plano}', ${emp.valor})" class="text-blue-400">Editar</button></td></tr>`; }); } } catch(e) {} }
+async function carregarEmpresasSaaS() { 
+    try { 
+        const resMet = await fetch('/super-admin/metricas'); 
+        if (resMet.ok) { 
+            const met = await resMet.json(); 
+            document.getElementById('saas-mrr').innerText = met.mrr.toLocaleString('es-PY'); 
+            document.getElementById('saas-ativos').innerText = met.clientes_ativos; 
+            document.getElementById('saas-vencidos').innerText = met.clientes_vencidos; 
+        } 
+        const res = await fetch('/super-admin/empresas'); 
+        if (res.ok) { 
+            const empresas = await res.json(); 
+            const tbody = document.getElementById('tabela-saas'); 
+            tbody.innerHTML = ''; 
+            empresas.forEach(emp => { 
+                let corStatus = emp.status === 'Activo' ? 'text-green-400' : 'text-red-400'; 
+                // ADICIONAMOS O BOTÃO "COBRAR" BEM AQUI NO FINAL DA LINHA ABAIXO:
+                tbody.innerHTML += `<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${emp.nome}</td><td class="p-4">${emp.ruc}</td><td class="p-4">${emp.plano}</td><td class="p-4 ${corStatus}">${emp.status}</td><td class="p-4 flex gap-3"><button onclick="abrirModalEditarEmpresa(${emp.id}, '${emp.plano}', ${emp.valor})" class="text-blue-400 font-bold hover:underline">Editar</button> <button onclick="gerarFaturaSaaS(${emp.id})" class="text-brand-accent font-bold hover:underline">Generar Factura</button></td></tr>`; 
+            }); 
+        } 
+        
+        // Puxa as faturas assim que carrega as empresas
+        carregarFaturasSaaS();
+        
+    } catch(e) {} 
+}
 function exportarTabelaParaCSV(idTbody, nomeBase) { const tbody = document.getElementById(idTbody); if(!tbody) return; let csv = []; const linhas = tbody.closest('table').querySelectorAll('tr'); for(let i=0;i<linhas.length;i++){ let l=[]; const cols = linhas[i].querySelectorAll('td, th'); for(let j=0;j<cols.length;j++) l.push('"'+cols[j].innerText.replace(/"/g,'""')+'"'); csv.push(l.join(',')); } const blob = new Blob(["\uFEFF"+csv.join('\n')], {type:'text/csv;charset=utf-8;'}); const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download=`${nomeBase}.csv`; link.click(); }
 function abrirModalLegal() { document.getElementById('modal-legal').classList.remove('hidden'); document.getElementById('modal-legal').classList.add('flex'); } function fecharModalLegal() { document.getElementById('modal-legal').classList.add('hidden'); document.getElementById('modal-legal').classList.remove('flex'); }
 function fecharModalAudit() { document.getElementById('modal-audit-details').classList.add('hidden'); document.getElementById('modal-audit-details').classList.remove('flex'); }
@@ -481,5 +506,79 @@ async function gerarPixNaTela(valorGuaranis) {
         fecharModalPix();
         console.error(erro);
         showToast("❌ Error de conexión");
+    }
+}
+
+// ==========================================
+// FUNÇÕES DO SUPER ADMIN (COBRANÇA SIPAP)
+// ==========================================
+
+async function gerarFaturaSaaS(empresaId) {
+    if (!confirm("¿Generar factura de mensualidad para esta empresa? (Plazo: 5 días)")) return;
+    
+    try {
+        const res = await fetch(`/super-admin/gerar-fatura/${empresaId}`, { method: 'POST' });
+        const dados = await res.json();
+        
+        if (res.ok && dados.sucesso) {
+            showToast("✅ " + dados.detail);
+            carregarFaturasSaaS(); // Atualiza a tabela na hora
+        } else {
+            showToast("❌ " + (dados.detail || "Error al generar"), "error");
+        }
+    } catch(e) {
+        showToast("❌ Error de conexión", "error");
+    }
+}
+
+async function carregarFaturasSaaS() {
+    try {
+        const res = await fetch('/super-admin/faturas');
+        if (res.ok) {
+            const faturas = await res.json();
+            const tbody = document.getElementById('tabela-faturas-saas');
+            if (!tbody) return; 
+            
+            tbody.innerHTML = '';
+            faturas.forEach(f => {
+                // Como o Python devolve uma lista (tupla), pegamos pelas posições [0, 1, 2...]
+                const id = f.id || f[0];
+                const nome = f.nome_empresa || f[1];
+                const valor = f.valor || f[2];
+                const venc = (f.data_vencimento || f[3]).split(' ')[0]; // Pega só a data, sem a hora
+                const status = f.status || f[4];
+                
+                let corStatus = status === 'Pago' ? 'text-green-400 font-bold' : 'text-yellow-400 font-bold animate-pulse';
+                let btnAprovar = status === 'Pendente' 
+                    ? `<button onclick="aprovarPagamentoSaaS(${id})" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-bold transition shadow-lg">Aprobar Pago</button>` 
+                    : `<span class="text-gray-500 text-xs font-bold border border-gray-600 px-2 py-1 rounded">✅ Aprobado</span>`;
+
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-700 hover:bg-slate-700/30">
+                        <td class="p-3 text-white font-bold">${nome}</td>
+                        <td class="p-3 text-orange-400 font-bold">Gs. ${Number(valor).toLocaleString('es-PY')}</td>
+                        <td class="p-3 text-gray-400 text-sm">${venc}</td>
+                        <td class="p-3 ${corStatus}">${status}</td>
+                        <td class="p-3 text-center">${btnAprovar}</td>
+                    </tr>
+                `;
+            });
+        }
+    } catch(e) {}
+}
+
+async function aprovarPagamentoSaaS(faturaId) {
+    if (!confirm("¿Confirmar que recibiste la transferencia SIPAP en tu cuenta bancaria?")) return;
+    
+    try {
+        const res = await fetch(`/super-admin/faturas/${faturaId}/pagar`, { method: 'PUT' });
+        if (res.ok) {
+            showToast("✅ Pago Aprobado y registrado!");
+            carregarFaturasSaaS(); // Atualiza a tabela na hora
+        } else {
+            showToast("❌ Error al aprobar", "error");
+        }
+    } catch(e) {
+        showToast("❌ Error de red", "error");
     }
 }
