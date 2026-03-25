@@ -601,3 +601,79 @@ def verificar_status_pix(pagamento_id: str, empresa_id: str = Header(None, alias
         
     except Exception as e:
         return {"sucesso": False, "erro": str(e)}
+    
+    # ==========================================
+# ROTAS DO SUPER ADMIN (COBRANÇA SIPAP)
+# ==========================================
+
+@app.post("/super-admin/gerar-fatura/{empresa_id}")
+def gerar_fatura_manual(empresa_id: int):
+    try:
+        from datetime import datetime, timedelta
+        conn = banco_dados.conectar()
+        cursor = conn.cursor()
+        
+        # Busca o valor que o cliente tem de pagar
+        cursor.execute("SELECT valor_mensalidade FROM empresas WHERE id = %s", (empresa_id,))
+        cliente = cursor.fetchone()
+        
+        if not cliente:
+            return {"sucesso": False, "detail": "Empresa não encontrada."}
+            
+        valor = float(cliente.get('valor_mensalidade', 0))
+        if valor <= 0:
+            return {"sucesso": False, "detail": "Este plano é gratuito."}
+            
+        # Dá 5 dias de prazo para o cliente pagar
+        vencimento = datetime.now() + timedelta(days=5) 
+        
+        # Salva a conta como Pendente
+        cursor.execute('''
+            INSERT INTO faturas_saas (empresa_id, valor, data_vencimento, status, id_pagamento_mp)
+            VALUES (%s, %s, %s, 'Pendente', 'SIPAP')
+        ''', (empresa_id, valor, vencimento))
+        
+        conn.commit()
+        return {"sucesso": True, "detail": "Fatura gerada com sucesso!"}
+    except Exception as e:
+        if 'conn' in locals(): conn.rollback()
+        return {"sucesso": False, "detail": str(e)}
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.get("/super-admin/faturas")
+def listar_faturas():
+    try:
+        conn = banco_dados.conectar()
+        cursor = conn.cursor()
+        # Puxa o nome da empresa e os dados da fatura
+        cursor.execute('''
+            SELECT f.id, e.nome_empresa, f.valor, f.data_vencimento, f.status 
+            FROM faturas_saas f
+            JOIN empresas e ON f.empresa_id = e.id
+            ORDER BY f.id DESC
+        ''')
+        faturas = cursor.fetchall()
+        return faturas
+    except Exception as e:
+        return []
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.put("/super-admin/faturas/{fatura_id}/pagar")
+def aprovar_pagamento(fatura_id: int):
+    try:
+        conn = banco_dados.conectar()
+        cursor = conn.cursor()
+        # Muda o status para Pago
+        cursor.execute("UPDATE faturas_saas SET status = 'Pago' WHERE id = %s", (fatura_id,))
+        conn.commit()
+        return {"sucesso": True}
+    except Exception as e:
+        if 'conn' in locals(): conn.rollback()
+        return {"sucesso": False}
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
