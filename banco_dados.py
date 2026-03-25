@@ -243,7 +243,19 @@ def inicializar_banco():
             cursor.execute("INSERT INTO categorias (empresa_id, nome) VALUES (1, 'General')")
     except Exception as e:
         pass
-
+    try:
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS faturas_saas (
+                id SERIAL PRIMARY KEY,
+                empresa_id INTEGER,
+                valor REAL,
+                data_vencimento TIMESTAMP,
+                status TEXT DEFAULT 'Pendente',
+                id_pagamento_mp TEXT
+            )
+        ''')
+    except Exception as e:
+        pass
     conexao.commit()
     cursor.close()
     conexao.close()
