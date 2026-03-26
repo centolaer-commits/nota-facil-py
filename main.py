@@ -714,3 +714,13 @@ def aprovar_pagamento(fatura_id: int):
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
+
+from fastapi.responses import FileResponse
+
+@app.get("/logo_main.svg")
+def get_logo_main():
+    return FileResponse("logo_main.svg")
+
+@app.get("/logo_icon.svg")
+def get_logo_icon():
+    return FileResponse("logo_icon.svg")        
