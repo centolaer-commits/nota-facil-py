@@ -20,6 +20,11 @@
     }
   </script>
   <style>
+    /* Correção automática de cores para os elementos gerados pelo JavaScript (app.js) */
+    tbody td, tbody span, tbody p { color: #334155 !important; }
+    #lista-produtos > div { color: #334155 !important; background-color: #f8fafc !important; border-color: #e2e8f0 !important; }
+    div[id$="-dropdown"] > div { color: #334155 !important; background-color: #ffffff !important; border-bottom: 1px solid #f1f5f9 !important; }
+    div[id$="-dropdown"] > div:hover { background-color: #f1f5f9 !important; }
     .menu-ativo { background-color: #f1f5f9; border-left: 4px solid #0d9488; color: #0d9488; font-weight: 700; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -146,7 +151,7 @@
 
   <div id="login-screen" class="fixed inset-0 bg-slate-50 flex items-center justify-center z-50 px-4">
     <div class="bg-white p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-full max-w-sm text-center border border-slate-200">
-        <img src="/logo_main.svg" alt="NubePY Logo" class="h-16 mx-auto mb-6">
+        <img src="/logo_main.svg" alt="NubePY Logo" class="h-32 mx-auto mb-6">
         <p class="text-slate-500 mb-8 text-sm font-medium">Facturación SIFEN Integrada</p>
         <div class="space-y-4 mb-8">
             <input type="text" id="login-ruc" placeholder="RUC" class="w-full border-slate-300 border p-4 rounded-xl text-center font-bold bg-slate-50 text-slate-800 focus:bg-white">
@@ -161,7 +166,7 @@
     <div class="max-w-7xl mx-auto p-8">
         <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <div class="flex items-center">
-                <img src="/logo_main.svg" alt="NubePY Hub" class="h-8 md:h-10">
+                <img src="/logo_main.svg" alt="NubePY Hub" class="h-12 md:h-14">
                 <span class="text-brand-accent text-xl ml-3 font-bold">| Hub</span>
             </div>
             <button onclick="window.location.reload()" class="bg-red-50 text-red-600 hover:bg-red-100 font-bold px-6 py-3 rounded-xl border border-red-200 transition">Salir</button>
@@ -230,7 +235,7 @@
     <div id="sidebar" class="absolute md:relative inset-y-0 left-0 w-64 bg-white border-r border-slate-200 shadow-lg md:shadow-none flex flex-col justify-between z-30 transform -translate-x-full md:translate-x-0 transition duration-300 h-full text-slate-600">
       <div class="overflow-y-auto">
         <div class="p-6 border-b border-slate-100 hidden md:flex bg-white flex-col">
-            <img src="/logo_icon.svg" alt="NubePY" class="h-10 mb-2 mx-auto block">
+            <img src="/logo_icon.svg" alt="NubePY" class="h-16 mb-2 mx-auto block">
             <div class="mt-2 bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs text-center shadow-inner"><p class="font-extrabold text-slate-800 truncate text-sm" id="sidebar-nome-loja">...</p><p class="text-brand-accent font-bold mt-1" id="sidebar-rol-loja">...</p></div>
         </div>
         
