@@ -602,7 +602,7 @@ def verificar_status_pix(pagamento_id: str, empresa_id: str = Header(None, alias
     except Exception as e:
         return {"sucesso": False, "erro": str(e)}
     
-    # ==========================================
+  # ==========================================
 # ROTAS DO SUPER ADMIN (COBRANÇA SIPAP)
 # ==========================================
 
@@ -610,7 +610,7 @@ def verificar_status_pix(pagamento_id: str, empresa_id: str = Header(None, alias
 def gerar_fatura_manual(empresa_id: int):
     try:
         from datetime import datetime, timedelta
-        conn = banco_dados.conectar()
+        conn = banco_dados.get_conexao()
         cursor = conn.cursor()
         
         # Busca o valor que o cliente tem de pagar
@@ -642,6 +642,41 @@ def gerar_fatura_manual(empresa_id: int):
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
+@app.get("/super-admin/faturas")
+def listar_faturas():
+    try:
+        conn = banco_dados.get_conexao()
+        cursor = conn.cursor()
+        # Puxa o nome da empresa e os dados da fatura
+        cursor.execute('''
+            SELECT f.id, e.nome_empresa, f.valor, f.data_vencimento, f.status 
+            FROM faturas_saas f
+            JOIN empresas e ON f.empresa_id = e.id
+            ORDER BY f.id DESC
+        ''')
+        faturas = cursor.fetchall()
+        return faturas
+    except Exception as e:
+        return []
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.put("/super-admin/faturas/{fatura_id}/pagar")
+def aprovar_pagamento(fatura_id: int):
+    try:
+        conn = banco_dados.get_conexao()
+        cursor = conn.cursor()
+        # Muda o status para Pago
+        cursor.execute("UPDATE faturas_saas SET status = 'Pago' WHERE id = %s", (fatura_id,))
+        conn.commit()
+        return {"sucesso": True}
+    except Exception as e:
+        if 'conn' in locals(): conn.rollback()
+        return {"sucesso": False}
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
 @app.get("/super-admin/faturas")
 def listar_faturas():
     try:
