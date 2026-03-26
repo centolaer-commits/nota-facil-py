@@ -79,7 +79,8 @@
   </div>
   
   <div id="camera-modal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white p-4 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-800 flex items-center">📷 Escanear</h3><button type="button" onclick="fecharCamera()" class="text-red-500 hover:bg-slate-100 p-2 rounded-full font-bold text-xl leading-none transition">&times;</button></div><div id="reader" class="w-full bg-slate-900 rounded-lg overflow-hidden border-2 border-brand-accent/50 min-h-[250px] flex items-center justify-center text-white text-sm">Iniciando cámara...</div></div></div>
-  
+  <div id="modal-legal" class="fixed inset-0 bg-slate-900/50 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white p-6 rounded-2xl w-full max-w-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 shrink-0"><h3 class="text-xl font-bold text-slate-800">Términos Legales</h3><button type="button" onclick="fecharModalLegal()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl transition">&times;</button></div><div class="overflow-y-auto pr-4 space-y-4 text-sm text-slate-600 scrollbar-thin scrollbar-thumb-slate-300 pb-4"><p class="font-extrabold text-slate-800 text-center mb-6">ACUERDO MARCO NubePY</p></div><div class="pt-4 mt-4 border-t border-slate-200 shrink-0 text-center"><button type="button" onclick="fecharModalLegal()" class="bg-brand-accent text-white font-bold py-3 px-8 rounded-xl">Cerrar</button></div></div></div>
+  <div id="modal-audit-details" class="fixed inset-0 bg-slate-900/50 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white p-6 rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 shrink-0"><h3 class="text-xl font-bold text-slate-800">Detalles</h3><button type="button" onclick="fecharModalAudit()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl transition">&times;</button></div><div class="overflow-y-auto scrollbar-thin rounded-lg border border-slate-200"><table class="w-full text-left bg-white text-sm"><thead class="bg-slate-50 text-slate-500 sticky top-0 border-b border-slate-200"><tr><th class="p-3">Producto</th><th class="p-3 text-center">Sis</th><th class="p-3 text-center">Físico</th><th class="p-3 text-center">Diff</th><th class="p-3 text-right">Impacto</th></tr></thead><tbody id="tabela-audit-detalhes" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div><div class="pt-4 mt-4 shrink-0 text-center"><button onclick="fecharModalAudit()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl border border-slate-700">Cerrar</button></div></div></div>
   <div id="modal-editar-empresa" class="fixed inset-0 bg-slate-900/50 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200"><div class="flex justify-between items-center mb-4 border-b border-slate-200 pb-3"><h3 class="text-xl font-bold text-slate-800">Upgrade</h3><button onclick="fecharModalEditarEmpresa()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button></div><input type="hidden" id="edit-empresa-id"><div class="mb-4"><select id="edit-plano" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800"><option value="Inicial">Inicial</option><option value="Crecimiento">Crecimiento</option><option value="VIP">VIP</option></select></div><div class="mb-6"><input type="number" id="edit-valor" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800"></div><button onclick="salvarEdicaoEmpresa()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-xl hover:bg-brand-accentHover transition shadow-md">Guardar</button></div></div>
   
   <div id="modal-checkout" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
@@ -158,7 +159,6 @@
 
   <div id="superadmin-screen" class="hidden fixed inset-0 bg-slate-50 z-40 overflow-y-auto">
     <div class="max-w-7xl mx-auto p-8">
-        
         <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <div class="flex items-center">
                 <img src="/logo_main.svg" alt="NubePY Hub" class="h-8 md:h-10">
@@ -221,7 +221,6 @@
                 </table>
             </div>
         </div>
-
     </div>
   </div>
 
@@ -350,6 +349,257 @@
       <div id="tela-inventario" class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 flex justify-between items-center border-b border-slate-100 pb-4"><div><h1 class="text-3xl font-extrabold text-slate-800">Inventario</h1></div><div class="flex gap-3"><button onclick="exportarTabelaParaCSV('tabela-estoque', 'Inventario')" class="bg-white border border-slate-300 text-slate-700 px-5 rounded-xl font-bold text-sm hover:bg-slate-50 shadow-sm transition">⬇️ CSV</button><button onclick="toggleFormProducto()" class="bg-brand-accent hover:bg-brand-accentHover text-white px-6 py-3 rounded-xl font-bold shadow-md transition">➕ Nuevo Producto</button></div></header><div id="form-novo-produto" class="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 hidden shadow-inner"><div class="grid grid-cols-1 md:grid-cols-12 gap-5"><div class="md:col-span-3"><label class="text-xs font-bold text-brand-accent block mb-1">Código de Barras</label><div class="flex border-2 border-brand-accent/30 focus-within:border-brand-accent rounded-xl bg-white overflow-hidden"><input type="text" id="novo-cod" class="flex-1 bg-transparent p-3 text-sm text-slate-800 outline-none"><button onclick="abrirCamera('novo-cod')" class="bg-brand-accent text-white px-4 hover:bg-brand-accentHover">📷</button></div></div><div class="md:col-span-3"><label class="text-xs font-bold text-slate-500 block mb-1">Descripción</label><input type="text" id="novo-desc" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 outline-none focus:border-brand-accent"></div><div class="md:col-span-3"><label class="text-xs font-bold text-slate-500 block mb-1">Categoría</label><select id="novo-cat" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 outline-none focus:border-brand-accent"></select></div><div class="md:col-span-3" id="box-novo-prov"><label class="text-xs font-bold text-blue-600 block mb-1">Proveedor (Opcional)</label><select id="novo-prov" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 outline-none focus:border-blue-500"><option value="">Ninguno</option></select></div><div class="md:col-span-4"><label class="text-xs font-bold text-slate-500 block mb-1">Costo (Compra)</label><input type="number" id="novo-custo" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 outline-none focus:border-brand-accent" oninput="calcularLucro()"></div><div class="md:col-span-4"><label class="text-xs font-bold text-brand-accent block mb-1">Precio Venta</label><input type="number" id="novo-preco" class="w-full border-2 border-brand-accent/50 p-3 rounded-xl bg-white text-sm text-slate-800 font-bold outline-none focus:border-brand-accent" oninput="calcularLucro()"><div id="info-lucro" class="text-xs mt-1 font-bold text-slate-500"></div></div><div class="md:col-span-4"><label class="text-xs font-bold text-slate-500 block mb-1">Stock Actual</label><input type="number" id="novo-qtd" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 outline-none focus:border-brand-accent"></div></div><div class="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-200"><button onclick="toggleFormProducto()" class="text-slate-500 hover:bg-slate-200 bg-slate-100 font-bold px-6 py-3 rounded-xl transition">Cancelar</button><button onclick="cadastrarProduto()" class="bg-brand-accent text-white font-bold px-10 py-3 rounded-xl shadow-md hover:bg-brand-accentHover transition">Guardar Producto</button></div></div><div class="flex gap-4 mb-6"><input type="text" id="busca-inventario" placeholder="Buscar producto..." class="flex-1 border border-slate-300 p-3 rounded-xl bg-white text-sm shadow-sm outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20" oninput="filtrarEstoque()"><select id="filtro-cat-inventario" class="w-64 border border-slate-300 p-3 rounded-xl bg-white text-sm shadow-sm outline-none focus:border-brand-accent" onchange="filtrarEstoque()"></select></div><div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-left bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Prod</th><th class="p-4 font-bold">Cat</th><th class="p-4 font-bold">Prov</th><th class="p-4 font-bold text-right">Precios</th><th class="p-4 font-bold text-center">Stock</th><th class="p-4 font-bold">Acc</th></tr></thead><tbody id="tabela-estoque" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody></table></div></div>
       
       <div id="tela-proveedores" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 flex justify-between border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Proveedores</h1><button onclick="document.getElementById('form-novo-proveedor').classList.toggle('hidden'); document.getElementById('prov-id').value='';" class="bg-brand-accent text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-brand-accentHover transition">➕ Nuevo Proveedor</button></header><div id="form-novo-proveedor" class="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 hidden shadow-inner"><input type="hidden" id="prov-id"><div class="grid grid-cols-2 gap-5"><input type="text" id="prov-nome" placeholder="Nombre de la Empresa" class="p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-brand-accent"><input type="text" id="prov-ruc" placeholder="RUC" class="p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-brand-accent"><input type="text" id="prov-tel" placeholder="Teléfono" class="p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-brand-accent"><input type="email" id="prov-email" placeholder="Email" class="p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-brand-accent"><input type="text" id="prov-endereco" placeholder="Dirección Completa" class="col-span-2 p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-brand-accent"></div><div class="flex justify-end mt-6"><button onclick="salvarProveedor()" class="bg-brand-accent text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-brand-accentHover transition">Guardar</button></div></div><div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-left bg-white border-collapse"><thead class="bg-slate-50 text-xs text-slate-500 uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Nombre/RUC</th><th class="p-4 font-bold">Contacto</th><th class="p-4 font-bold">Dirección</th><th class="p-4 font-bold">Acc</th></tr></thead><tbody id="tabela-proveedores" class="text-sm divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+
+      <div id="tela-entrada" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-blue-600">Entrada (Compras)</h1></header><div class="grid grid-cols-3 gap-5 mb-6"><select id="entrada-prov" class="p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-blue-500"></select><input type="text" id="entrada-nro" placeholder="Factura Nro" class="p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-blue-500"><input type="date" id="entrada-data" class="p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-blue-500"></div><div class="border border-slate-200 p-5 rounded-2xl bg-slate-50 mb-6 shadow-inner"><div class="flex bg-white border-2 border-blue-300 focus-within:border-blue-500 rounded-xl mb-4 overflow-hidden"><span class="p-3 text-blue-500">📦</span><input type="text" id="entrada-scanner" placeholder="Escanear..." class="flex-1 bg-transparent text-slate-800 font-bold p-3 outline-none" onkeypress="buscarProdutoEntrada(event)"></div><div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-left text-sm bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 uppercase border-b border-slate-200 text-xs"><tr><th class="p-4 font-bold">Prod</th><th class="p-4 font-bold text-center">Cant</th><th class="p-4 font-bold text-right">Costo</th><th class="p-4 font-bold text-right">Sub</th><th class="p-4"></th></tr></thead><tbody id="tabela-entrada-itens" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div><div class="flex justify-between items-end"><div class="text-4xl font-extrabold text-blue-600">Gs. <span id="entrada-total-tela">0</span></div><button id="btn-salvar-entrada" onclick="salvarEntradaFactura()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-10 py-4 rounded-xl shadow-md transition text-lg">Guardar Factura</button></div></div>
+
+      <div id="tela-remision" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden">
+        <header class="mb-6 border-b border-slate-100 pb-4">
+          <h1 class="text-3xl font-extrabold text-yellow-600">Nota de Remisión</h1>
+          <p class="text-sm text-slate-500 mt-1">Documento legal SIFEN para respaldar el tránsito de mercaderías (Sin abatir stock).</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 shadow-inner">
+                <h3 class="font-bold text-slate-800 mb-2">Datos del Destinatario</h3>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">RUC / Cédula *</label><input type="text" id="rem-ruc-dest" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-yellow-500"></div>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">Razón Social / Nombre *</label><input type="text" id="rem-nome-dest" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-yellow-500"></div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 block mb-1">Motivo del Traslado *</label>
+                    <select id="rem-motivo" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-yellow-500">
+                        <option value="Traslado entre locales de la empresa">Traslado entre locales de la empresa</option>
+                        <option value="Traslado para venta">Traslado para venta</option>
+                        <option value="Traslado por demostración / Exhibición">Traslado por demostración / Exhibición</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 shadow-inner">
+                <h3 class="font-bold text-slate-800 mb-2">Datos del Transporte</h3>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">Chapa del Vehículo *</label><input type="text" id="rem-chapa" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-yellow-500" placeholder="Ej: ABC 123"></div>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">Chofer (Nombre y C.I.) *</label><input type="text" id="rem-chofer" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-yellow-500" placeholder="Ej: Juan Perez - 1234567"></div>
+            </div>
+        </div>
+
+        <div class="border border-slate-200 p-5 rounded-2xl bg-white shadow-sm mb-6">
+            <label class="text-sm font-bold text-slate-700 block mb-3">Escanear productos para el traslado</label>
+            <div class="relative w-full mb-4">
+                <div class="flex items-center bg-slate-50 rounded-xl border-2 border-yellow-300 focus-within:border-yellow-500 transition-all overflow-hidden">
+                    <span class="text-xl pl-3 py-3 shrink-0 text-yellow-500">🔎</span>
+                    <input type="text" id="rem-scanner" placeholder="Escanear producto..." autocomplete="off" class="w-full flex-1 bg-transparent p-3 font-bold focus:outline-none text-slate-800 min-w-0 truncate">
+                </div>
+                <div id="rem-dropdown" class="absolute z-50 w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 hidden max-h-60 overflow-y-auto"></div>
+            </div>
+            
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left bg-white min-w-[500px] border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                        <tr>
+                            <th class="p-3 text-xs font-bold uppercase">Producto</th>
+                            <th class="p-3 text-xs font-bold uppercase text-center w-32">Cantidad</th>
+                            <th class="p-3 text-xs font-bold uppercase text-center w-16">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-remision-itens" class="divide-y divide-slate-100 text-sm text-slate-700">
+                        <tr><td colspan="3" class="p-6 text-center text-slate-400">Ningún producto agregado.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <button type="button" onclick="emitirRemision()" id="btn-emitir-rem" class="w-full bg-yellow-500 text-white font-extrabold py-4 text-xl rounded-xl hover:bg-yellow-600 shadow-lg transition">🚚 Emitir Nota de Remisión (SIFEN)</button>
+        
+        <div id="rem-resultado" class="mt-6 hidden text-center border-t border-slate-100 pt-6">
+            <div class="bg-green-50 p-6 rounded-2xl inline-block shadow-sm border border-green-200">
+                <h2 class="text-xl font-bold text-green-600 mb-4">✅ ¡Remisión Generada!</h2>
+                <a id="btn-rem-pdf" href="#" target="_blank" class="inline-flex bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-700 shadow-md transition">Descargar KuDE (PDF)</a>
+                <button onclick="novaRemision()" class="block w-full mt-4 text-yellow-600 font-bold hover:underline">Nueva Remisión</button>
+            </div>
+        </div>
+        
+        <div class="mt-12 pt-6 border-t border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Últimas Remisiones Emitidas</h3>
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left bg-white text-sm border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Fecha / CDC</th><th class="p-4 font-bold">Destinatario</th><th class="p-4 font-bold">Motivo</th><th class="p-4 font-bold text-center">PDF</th></tr></thead>
+                    <tbody id="tabela-hist-remision" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+
+      <div id="tela-autofactura" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden">
+        <header class="mb-6 border-b border-slate-100 pb-4">
+          <h1 class="text-3xl font-extrabold text-orange-600">Autofactura</h1>
+          <p class="text-sm text-slate-500 mt-1">Documento legal SIFEN para respaldar compras o pagos a personas sin RUC.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 shadow-inner">
+                <h3 class="font-bold text-slate-800 mb-2">Datos del Vendedor / Proveedor</h3>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">Nombre Completo *</label><input type="text" id="auto-nome" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-orange-500"></div>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">C.I. / Documento *</label><input type="text" id="auto-cedula" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-orange-500"></div>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">Dirección *</label><input type="text" id="auto-endereco" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-orange-500"></div>
+            </div>
+
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-center items-center text-center space-y-4 shadow-inner">
+                <div>
+                    <h3 class="font-bold text-slate-800 mb-1">¿Actualizar Inventario?</h3>
+                    <p class="text-xs text-slate-500 max-w-xs mx-auto">Seleccione si esta compra debe sumar productos físicos al stock de la tienda, o si es solo un gasto (ej. servicio).</p>
+                </div>
+                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in mt-2">
+                    <input type="checkbox" name="toggle" id="auto-mover-stock" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                    <label for="auto-mover-stock" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
+                </div>
+                <span class="text-sm font-bold text-orange-600" id="auto-stock-status">SÍ, añadir al stock</span>
+            </div>
+        </div>
+
+        <div class="border border-slate-200 p-5 rounded-2xl bg-white shadow-sm mb-6">
+            <div class="flex justify-between items-end mb-3">
+                <label class="text-sm font-bold text-slate-800">Detalle de la Compra / Gasto</label>
+                <button type="button" onclick="adicionarItemLibreAuto()" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-200 transition">+ Añadir Servicio Manual</button>
+            </div>
+            
+            <div class="relative w-full mb-4">
+                <div class="flex items-center bg-slate-50 rounded-xl border-2 border-orange-300 focus-within:border-orange-500 transition-all overflow-hidden">
+                    <span class="text-xl pl-3 py-3 shrink-0 text-orange-500">🔎</span>
+                    <input type="text" id="auto-scanner" placeholder="Escanear producto para añadir a la autofactura..." autocomplete="off" class="w-full flex-1 bg-transparent p-3 font-bold focus:outline-none text-slate-800 min-w-0 truncate">
+                </div>
+                <div id="auto-dropdown" class="absolute z-50 w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 hidden max-h-60 overflow-y-auto"></div>
+            </div>
+            
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left bg-white min-w-[500px] border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                        <tr>
+                            <th class="p-3 text-xs font-bold uppercase">Descripción</th>
+                            <th class="p-3 text-xs font-bold uppercase text-center w-24">Cantidad</th>
+                            <th class="p-3 text-xs font-bold uppercase text-right w-32">Precio Unit.</th>
+                            <th class="p-3 text-xs font-bold uppercase text-right w-32">Subtotal</th>
+                            <th class="p-3 text-xs font-bold uppercase text-center w-16">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-auto-itens" class="divide-y divide-slate-100 text-sm text-slate-700">
+                        <tr><td colspan="5" class="p-6 text-center text-slate-400">Agregue productos o servicios.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-end gap-4 mb-6">
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 w-full sm:w-64 text-right shadow-inner">
+                <p class="text-sm text-slate-500 font-bold uppercase mb-1">Monto a Pagar</p>
+                <div class="text-4xl font-extrabold text-orange-600">Gs. <span id="auto-total-tela">0</span></div>
+            </div>
+            <button type="button" onclick="emitirAutofactura()" id="btn-emitir-auto" class="w-full sm:w-auto flex-1 bg-orange-500 text-white font-extrabold py-5 text-xl rounded-2xl hover:bg-orange-600 shadow-lg transition">🧾 Emitir Autofactura SIFEN</button>
+        </div>
+        
+        <div id="auto-resultado" class="mt-6 hidden text-center border-t border-slate-100 pt-6">
+            <div class="bg-green-50 p-6 rounded-2xl inline-block shadow-sm border border-green-200">
+                <h2 class="text-xl font-bold text-green-600 mb-4">✅ ¡Autofactura Generada!</h2>
+                <a id="btn-auto-pdf" href="#" target="_blank" class="inline-flex bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-700 shadow-md transition">Descargar KuDE (PDF)</a>
+                <button onclick="novaAutofactura()" class="block w-full mt-4 text-orange-600 font-bold hover:underline">Nueva Autofactura</button>
+            </div>
+        </div>
+        
+        <div class="mt-12 pt-6 border-t border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Últimas Autofacturas Emitidas</h3>
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left bg-white text-sm border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Fecha / CDC</th><th class="p-4 font-bold">Vendedor</th><th class="p-4 font-bold text-right">Monto (Gs)</th><th class="p-4 font-bold text-center">PDF</th></tr></thead>
+                    <tbody id="tabela-hist-auto" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+
+      <div id="tela-categorias" class="max-w-4xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Categorías</h1></header><div class="flex gap-4 mb-8"><input type="text" id="nova-cat-nome" class="flex-1 p-4 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 outline-none focus:border-brand-accent focus:bg-white transition"><button onclick="adicionarCategoria()" class="bg-brand-accent hover:bg-brand-accentHover text-white px-8 rounded-xl font-bold shadow-md transition">Crear</button></div><div class="overflow-hidden border border-slate-200 rounded-xl"><table class="w-full text-left bg-white border-collapse"><tbody id="tabela-categorias" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-dashboard" class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Dashboard</h1></header><div class="grid grid-cols-2 gap-6 mb-8"><div onclick="mudarTela('cierre', null)" class="bg-white border border-slate-200 shadow-sm p-6 rounded-2xl cursor-pointer hover:border-brand-accent transition"><p class="text-slate-500 font-bold uppercase text-xs mb-1">Ventas</p><p class="text-4xl font-extrabold text-slate-800" id="dash-vendas">0</p></div><div onclick="mudarTela('reportes', null)" class="bg-brand-accent p-6 rounded-2xl cursor-pointer hover:bg-brand-accentHover shadow-md transition text-white"><p class="font-bold uppercase text-xs mb-1 opacity-80">Notas SIFEN</p><p class="text-4xl font-extrabold" id="dash-notas">0</p></div></div><div class="bg-slate-50 p-4 rounded-2xl border border-slate-200"><canvas id="grafico-produtos" class="h-80 w-full"></canvas></div></div>
+      
+      <div id="tela-cierre" class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-8 flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Cierre de Caja</h1><div class="flex gap-2"><input type="date" id="filtro-data-inicio-cierre" class="bg-slate-50 border border-slate-300 p-2 rounded-lg text-slate-800 outline-none focus:border-brand-accent"><input type="date" id="filtro-data-fim-cierre" class="bg-slate-50 border border-slate-300 p-2 rounded-lg text-slate-800 outline-none focus:border-brand-accent"><button onclick="carregarCierreCaja()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold hover:bg-slate-700 transition">Filtrar</button></div></header><div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"><div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-inner"><p class="text-xs text-slate-500 font-bold uppercase">Ingresos</p><span id="cierre-vendas" class="font-extrabold text-slate-800 block text-2xl mt-1"></span></div><div class="bg-green-50 border border-green-200 p-5 rounded-2xl shadow-inner"><p class="text-xs text-green-700 font-bold uppercase">Ganancia Bruta (GP)</p><span id="cierre-gp" class="font-extrabold text-green-600 block text-2xl mt-1"></span></div><div class="bg-red-50 border border-red-200 p-5 rounded-2xl shadow-inner"><p class="text-xs text-red-700 font-bold uppercase">Salidas / Retiros</p><span id="cierre-sangrias" class="font-extrabold text-red-600 block text-2xl mt-1"></span></div><div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-inner"><p class="text-xs text-slate-500 font-bold uppercase">Cant. Notas</p><span id="cierre-notas" class="font-extrabold text-slate-800 block text-2xl mt-1"></span></div></div><div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left bg-white text-sm border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Fecha / Hora</th><th class="p-4 font-bold">Tipo</th><th class="p-4 font-bold text-right">Monto</th><th class="p-4 font-bold">Detalle</th></tr></thead><tbody id="tabela-cierre-itens" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-reportes" class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Historial SIFEN</h1></header><div class="flex bg-slate-50 rounded-xl border-2 border-slate-200 focus-within:border-brand-accent transition-all overflow-hidden mb-6"><span class="text-xl p-3 text-slate-400">🔎</span><input type="text" id="busca" placeholder="Buscar por CDC, Cliente o Fecha..." class="w-full bg-transparent p-3 text-slate-800 outline-none" onkeyup="if(event.key==='Enter') buscarNotas()"></div><div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left text-sm bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">CDC / Estado</th><th class="p-4 font-bold">Cliente</th><th class="p-4 font-bold text-right">Total</th><th class="p-4 font-bold text-center">Acciones</th></tr></thead><tbody id="tabela-historico" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-stocktake" class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 flex justify-between items-center border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-yellow-600">Stock Take (Auditoría)</h1><button onclick="salvarStockTake()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-3 font-bold rounded-xl shadow-md transition">Guardar Auditoría</button></header><input type="text" id="busca-st" placeholder="Filtrar producto por nombre o código..." class="w-full p-4 bg-slate-50 border border-slate-300 rounded-xl mb-6 text-slate-800 outline-none focus:border-yellow-500 transition" oninput="filtrarListaStockTake()"><div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left text-sm bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Producto</th><th class="p-4 font-bold text-center">Stock Sistema</th><th class="p-4 font-bold text-center">Conteo Físico</th><th class="p-4 font-bold text-center">Diferencia</th></tr></thead><tbody id="tabela-stocktake" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-variancia" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-8 flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Varianza de Stock</h1><div class="flex gap-2"><input type="date" id="filtro-data-inicio-var" class="bg-slate-50 border border-slate-300 p-2 rounded-lg text-slate-800 outline-none focus:border-brand-accent"><input type="date" id="filtro-data-fim-var" class="bg-slate-50 border border-slate-300 p-2 rounded-lg text-slate-800 outline-none focus:border-brand-accent"><button onclick="carregarRelatorioVariancia()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold hover:bg-slate-700 transition">Filtrar</button></div></header><div class="grid grid-cols-2 gap-6 mb-8"><div class="bg-red-50 border border-red-200 p-6 rounded-2xl text-center shadow-inner"><p class="text-xs text-red-600 font-bold uppercase mb-1">Impacto Financiero Total</p><p class="text-4xl font-extrabold text-red-600" id="var-impacto-total">0</p></div><div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl text-center shadow-inner"><p class="text-xs text-slate-500 font-bold uppercase mb-1">Unidades Perdidas</p><p class="text-4xl font-extrabold text-slate-800" id="var-unidades-total">0</p></div></div><div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left text-sm bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Fecha / Cód</th><th class="p-4 font-bold">Producto</th><th class="p-4 font-bold text-center">Tipo</th><th class="p-4 font-bold text-center">Unidades</th><th class="p-4 font-bold text-right">Impacto (Gs)</th></tr></thead><tbody id="tabela-variancia" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-stocktakereport" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Reportes Históricos (Stock Take)</h1></header><div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left text-sm bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Fecha de Auditoría</th><th class="p-4 font-bold text-center">Ítems Auditados</th><th class="p-4 font-bold text-right">Impacto Financiero</th><th class="p-4 font-bold text-center">Acción</th></tr></thead><tbody id="tabela-stocktakereport" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+
+      <div id="tela-ayuda" class="max-w-4xl mx-auto section-tela hidden">
+        <header class="mb-8 border-b border-slate-200 pb-4">
+            <h1 class="text-3xl font-extrabold text-slate-800">Centro de Ayuda y Soporte</h1>
+            <p class="text-slate-500 mt-2">Encuentra respuestas rápidas o contáctanos directamente.</p>
+        </header>
+
+        <div class="bg-gradient-to-r from-green-500 to-green-400 rounded-3xl p-8 mb-8 flex flex-col md:flex-row justify-between items-center shadow-lg">
+            <div class="mb-6 md:mb-0">
+                <h2 class="text-2xl font-extrabold text-white mb-2">¿Necesitas ayuda urgente?</h2>
+                <p class="text-green-50 text-sm font-medium">Nuestro equipo de soporte está listo para asistirte vía WhatsApp.</p>
+            </div>
+            <a href="https://wa.me/595999000000" target="_blank" class="bg-white text-green-600 font-extrabold px-8 py-4 rounded-xl shadow-md hover:scale-105 transition-transform whitespace-nowrap">
+                💬 Escribir al Soporte
+            </a>
+        </div>
+
+        <h3 class="text-xl font-bold text-slate-800 mb-4">Guía de Navegación</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                <div class="text-brand-accent text-3xl mb-3">🛒</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Punto de Venta (Caja)</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Escanea o busca productos. Haz clic en "Ir al Pago" para emitir la Factura. Si necesitas anular una venta o bajar stock por daño, haz clic en el botón superior "Operaciones (NC / Mermas)" usando la clave de administrador.</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                <div class="text-brand-accent text-3xl mb-3">📦</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Inventario y Compras</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Usa "Productos" para crear ítems. Usa "Entrada (Compras)" para cargar facturas de tus proveedores y sumar stock automáticamente.</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                <div class="text-brand-accent text-3xl mb-3">🚚</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Nota de Remisión</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Genera el documento legal de transporte para tus choferes. Esta nota no descuenta el stock de tu inventario, solo avala el traslado.</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                <div class="text-brand-accent text-3xl mb-3">📈</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Reportes y Cierre</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">En "Ventas y Cierre" puedes ver tu ganancia real (GP) y cerrar el turno de la caja actual. Usa "Historial SIFEN" para reimprimir tickets o PDFs antiguos.</p>
+            </div>
+        </div>
+
+        <h3 class="text-xl font-bold text-slate-800 mb-4">Preguntas Frecuentes</h3>
+        <div class="space-y-3">
+            <details class="bg-white border border-slate-200 rounded-2xl group cursor-pointer shadow-sm">
+                <summary class="font-bold text-slate-800 p-5 flex justify-between items-center outline-none">
+                    ¿Qué pasa si me quedo sin internet?
+                    <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="p-5 pt-0 text-sm text-slate-500 border-t border-slate-100 mt-2 leading-relaxed">
+                    El sistema tiene un modo "Contingencia". Puedes seguir cobrando y el sistema guardará las ventas en una cola local. Cuando el internet regrese, las facturas se enviarán automáticamente a la SIFEN.
+                </div>
+            </details>
+
+            <details class="bg-white border border-slate-200 rounded-2xl group cursor-pointer shadow-sm">
+                <summary class="font-bold text-slate-800 p-5 flex justify-between items-center outline-none">
+                    ¿Cómo corrijo un error en el stock?
+                    <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="p-5 pt-0 text-sm text-slate-500 border-t border-slate-100 mt-2 leading-relaxed">
+                    Ve a <b>Inventario > Auditoría (Stock Take)</b>. Allí puedes contar los productos reales en tu estante y poner la cantidad correcta. El sistema calculará la diferencia y el impacto en dinero automáticamente.
+                </div>
+            </details>
+
+            <details class="bg-white border border-slate-200 rounded-2xl group cursor-pointer shadow-sm">
+                <summary class="font-bold text-slate-800 p-5 flex justify-between items-center outline-none">
+                    ¿Cómo registro un gasto o compra sin RUC?
+                    <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="p-5 pt-0 text-sm text-slate-500 border-t border-slate-100 mt-2 leading-relaxed">
+                    Ve a <b>Reportes > Emitir Autofactura</b>. Te permite justificar la salida de dinero de tu caja por servicios o compras informales, cumpliendo con las normativas del gobierno.
+                </div>
+            </details>
+        </div>
+      </div>
 
       <div id="tela-config" class="max-w-4xl mx-auto bg-white p-10 rounded-3xl shadow-sm border border-slate-200 section-tela hidden transition-colors duration-200">
         <header class="mb-8 border-b border-slate-200 pb-6">
