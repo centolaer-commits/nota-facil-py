@@ -620,7 +620,9 @@ def gerar_fatura_manual(empresa_id: int):
         if not cliente:
             return {"sucesso": False, "detail": "Empresa não encontrada."}
             
-        valor = float(cliente.get('valor_mensalidade', 0))
+        # CORREÇÃO: Lê o valor direto da primeira posição da tupla
+        valor = float(cliente[0]) if cliente[0] else 0.0
+        
         if valor <= 0:
             return {"sucesso": False, "detail": "Este plano é gratuito."}
             
@@ -634,7 +636,7 @@ def gerar_fatura_manual(empresa_id: int):
         ''', (empresa_id, valor, vencimento))
         
         conn.commit()
-        return {"sucesso": True, "detail": "Fatura gerada com sucesso!"}
+        return {"sucesso": True, "detail": "Factura generada con éxito!"}
     except Exception as e:
         if 'conn' in locals(): conn.rollback()
         return {"sucesso": False, "detail": str(e)}
