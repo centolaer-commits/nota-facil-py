@@ -1,72 +1,672 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="es" class="bg-slate-50">
 <head>
-    <meta charset="UTF-8">
-    <title>Nota Fácil PY - Emissor</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 p-8">
-    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h1 class="text-2xl font-bold text-blue-600 mb-6">Nota Fácil PY 🇵🇾</h1>
-            <div class="space-y-4">
-                <input type="text" id="ruc" value="80012345-6" class="w-full border p-2 rounded">
-                <input type="text" id="cliente" class="w-full border p-2 rounded" placeholder="Nome do Cliente">
-                <input type="number" id="valor" class="w-full border p-2 rounded" placeholder="Valor Total (Gs)">
-                <button onclick="emitirNota()" class="w-full bg-green-500 text-white font-bold py-3 rounded hover:bg-green-600">🚀 Emitir Nota</button>
-            </div>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NubePY | Gestión SIFEN</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: { 
+          colors: { 
+            brand: { primary: '#ffffff', accent: '#0d9488', accentHover: '#0f766e', light: '#f8fafc' } 
+          } 
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Correção automática de cores para os elementos gerados pelo JavaScript (app.js) */
+    tbody td, tbody span, tbody p { color: #334155 !important; }
+    #lista-produtos > div { color: #334155 !important; background-color: #f8fafc !important; border-color: #e2e8f0 !important; }
+    div[id$="-dropdown"] > div { color: #334155 !important; background-color: #ffffff !important; border-bottom: 1px solid #f1f5f9 !important; }
+    div[id$="-dropdown"] > div:hover { background-color: #f1f5f9 !important; }
+    .menu-ativo { background-color: #f1f5f9; border-left: 4px solid #0d9488; color: #0d9488; font-weight: 700; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .toast-enter { transform: translateX(100%); opacity: 0; }
+    .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 300ms ease-out; }
+    .toast-exit { transform: translateX(0); opacity: 1; }
+    .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 300ms ease-in; }
+    input::placeholder, select::placeholder { color: #94a3b8; opacity: 1; }
+    input, select, textarea { color: #1e293b; transition: all 0.2s; }
+    input:focus, select:focus { border-color: #0d9488; outline: none; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); }
+    @keyframes toast-progress { from { width: 100%; } to { width: 0%; } }
+    
+    .toggle-checkbox:checked { right: 0; border-color: #0d9488; }
+    .toggle-checkbox:checked + .toggle-label { background-color: #0d9488; }
+    .toggle-checkbox { right: 0; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
+    .toggle-label { width: 3rem; height: 1.5rem; background-color: #cbd5e1; border-radius: 9999px; transition: all 0.3s; cursor: pointer; }
 
-            <div id="resultado" class="mt-8 hidden border-t pt-6 text-center">
-                <h2 class="text-xl font-bold text-green-600">✅ Aprovada!</h2>
-                <img id="qrcode-img" src="" class="mx-auto mt-4 w-40 h-40 border p-2">
-                <a id="btn-pdf" href="#" target="_blank" class="inline-block mt-4 bg-red-500 text-white px-6 py-2 rounded font-bold hover:bg-red-600">📄 Baixar PDF da Nota</a>
+    @media print {
+        body * { visibility: hidden; }
+        #print-area, #print-area * { visibility: visible; }
+        #print-area { position: absolute; left: 0; top: 0; width: 80mm; padding: 0; margin: 0; background: white; color: black; font-family: 'Courier New', Courier, monospace; }
+    }
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+  </style>
+</head>
+<body class="bg-slate-50 font-sans h-[100dvh] overflow-hidden flex flex-col md:flex-row text-slate-800 relative">
+
+  <div id="print-area" class="hidden text-black bg-white w-[80mm] p-2 text-xs"></div>
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+  
+  <div id="modal-tutorial-mp" class="fixed inset-0 bg-slate-900/50 z-[70] hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-white p-8 rounded-2xl w-full max-w-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+          <div class="flex justify-between items-center mb-6 border-b border-slate-200 pb-4 shrink-0">
+              <h3 class="text-2xl font-extrabold text-blue-600 flex items-center gap-3">📘 Guía: PixBridge y Mercado Pago</h3>
+              <button onclick="fecharModalTutorialMP()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl leading-none">&times;</button>
+          </div>
+          <div class="overflow-y-auto scrollbar-thin pr-4 space-y-6 text-sm text-slate-600 pb-4">
+              <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                  <h4 class="font-bold text-blue-800 mb-2">1. Requisitos para abrir la cuenta (Paraguay a Brasil)</h4>
+                  <p class="mb-2">El Banco Central de Brasil exige documentación brasileña. Para operar legalmente, necesitas:</p>
+                  <ul class="list-disc pl-5 space-y-1 text-slate-600">
+                      <li>Un <b>CPF</b> (Cadastro de Personas Físicas).</li>
+                      <li>Un <b>Número de Teléfono de Brasil</b> (Chip SIM activo para recibir SMS).</li>
+                      <li>Si eres empresa registrada en Brasil, un CNPJ.</li>
+                  </ul>
+              </div>
+              <div>
+                  <h4 class="font-bold text-slate-800 text-lg mb-2">2. Crear la cuenta en Mercado Pago</h4>
+                  <p>Descarga la app de Mercado Pago Brasil o ingresa a <a href="https://www.mercadopago.com.br" target="_blank" class="text-blue-600 hover:underline font-bold">mercadopago.com.br</a>.</p>
+              </div>
+          </div>
+          <div class="pt-6 mt-2 border-t border-slate-200 shrink-0 text-center">
+              <button onclick="fecharModalTutorialMP()" class="bg-blue-600 text-white font-bold py-3 px-10 rounded-xl hover:bg-blue-700 shadow-md">Entendido</button>
+          </div>
+      </div>
+  </div>
+  
+  <div id="camera-modal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white p-4 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-slate-800 flex items-center">📷 Escanear</h3><button type="button" onclick="fecharCamera()" class="text-red-500 hover:bg-slate-100 p-2 rounded-full font-bold text-xl leading-none transition">&times;</button></div><div id="reader" class="w-full bg-slate-900 rounded-lg overflow-hidden border-2 border-brand-accent/50 min-h-[250px] flex items-center justify-center text-white text-sm">Iniciando cámara...</div></div></div>
+  <div id="modal-legal" class="fixed inset-0 bg-slate-900/50 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white p-6 rounded-2xl w-full max-w-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 shrink-0"><h3 class="text-xl font-bold text-slate-800">Términos Legales</h3><button type="button" onclick="fecharModalLegal()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl transition">&times;</button></div><div class="overflow-y-auto pr-4 space-y-4 text-sm text-slate-600 scrollbar-thin scrollbar-thumb-slate-300 pb-4"><p class="font-extrabold text-slate-800 text-center mb-6 text-lg">ACUERDO MARCO Y TÉRMINOS DE USO NubePY</p>
+<div class="space-y-4 text-justify leading-relaxed">
+    <p><strong>1. Aceptación de los Términos:</strong> Al acceder y utilizar NubePY, usted acepta estar sujeto a estos términos y condiciones. El uso continuado de la plataforma constituye su aceptación de cualquier modificación futura.</p>
+    <p><strong>2. Uso del Sistema SIFEN:</strong> NubePY actúa exclusivamente como un proveedor de software y puente técnico para la emisión de Documentos Tributarios Electrónicos (DTE) ante la SET de Paraguay. El usuario es el único responsable legal y tributario por la veracidad, exactitud y legalidad de los datos emitidos en sus facturas.</p>
+    <p><strong>3. Privacidad y Seguridad de Datos:</strong> Nos comprometemos a proteger la confidencialidad de sus datos comerciales. Sus credenciales, certificados digitales (.p12) y datos de clientes están encriptados. No compartiremos su información con terceros, excepto cuando sea requerido por la SET o por orden judicial.</p>
+    <p><strong>4. Disponibilidad del Servicio (SLA):</strong> Nos esforzamos por mantener una disponibilidad del servicio del 99.9%. Sin embargo, NubePY no se hace responsable por interrupciones derivadas de cortes de internet locales del usuario, fallas en los servidores gubernamentales de la SET o eventos de fuerza mayor.</p>
+    <p><strong>5. Suscripción y Pagos (SaaS):</strong> El acceso continuo al sistema está sujeto al pago puntual de la mensualidad correspondiente a su plan. El atraso en el pago posterior a la fecha de vencimiento podrá resultar en la suspensión temporal de la cuenta y de la capacidad de emitir facturas.</p>
+    <p><strong>6. Integración de Pagos (PixBridge):</strong> La conexión con pasarelas de pago como Mercado Pago es una herramienta facilitadora. NubePY no retiene fondos ni se hace responsable por bloqueos de cuenta, tasas o políticas aplicadas directamente por las entidades bancarias o financieras.</p>
+</div></div><div class="pt-4 mt-4 border-t border-slate-200 shrink-0 text-center"><button type="button" onclick="fecharModalLegal()" class="bg-brand-accent text-white font-bold py-3 px-8 rounded-xl">Cerrar</button></div></div></div>
+  <div id="modal-audit-details" class="fixed inset-0 bg-slate-900/50 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white p-6 rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 shrink-0"><h3 class="text-xl font-bold text-slate-800">Detalles</h3><button type="button" onclick="fecharModalAudit()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl transition">&times;</button></div><div class="overflow-y-auto scrollbar-thin rounded-lg border border-slate-200"><table class="w-full text-left bg-white text-sm"><thead class="bg-slate-50 text-slate-500 sticky top-0 border-b border-slate-200"><tr><th class="p-3">Producto</th><th class="p-3 text-center">Sis</th><th class="p-3 text-center">Físico</th><th class="p-3 text-center">Diff</th><th class="p-3 text-right">Impacto</th></tr></thead><tbody id="tabela-audit-detalhes" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div><div class="pt-4 mt-4 shrink-0 text-center"><button onclick="fecharModalAudit()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl border border-slate-700">Cerrar</button></div></div></div>
+  <div id="modal-editar-empresa" class="fixed inset-0 bg-slate-900/50 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200"><div class="flex justify-between items-center mb-4 border-b border-slate-200 pb-3"><h3 class="text-xl font-bold text-slate-800">Upgrade</h3><button onclick="fecharModalEditarEmpresa()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button></div><input type="hidden" id="edit-empresa-id"><div class="mb-4"><select id="edit-plano" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800"><option value="Inicial">Inicial</option><option value="Crecimiento">Crecimiento</option><option value="VIP">VIP</option></select></div><div class="mb-6"><input type="number" id="edit-valor" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800"></div><button onclick="salvarEdicaoEmpresa()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-xl hover:bg-brand-accentHover transition shadow-md">Guardar</button></div></div>
+  
+  <div id="modal-checkout" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-white p-8 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200">
+        <div class="flex justify-between items-center mb-6 border-b border-slate-200 pb-4">
+          <h3 class="text-2xl font-bold text-slate-800">Finalizar Venta</h3>
+          <button onclick="fecharCheckout()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl leading-none">&times;</button>
+        </div>
+        <div class="text-center mb-6">
+          <p class="text-sm text-slate-500 uppercase font-bold mb-1">Monto a Cobrar</p>
+          <p class="text-5xl font-extrabold text-brand-accent">Gs. <span id="checkout-total">0</span></p>
+        </div>
+        <div class="mb-6">
+          <label class="text-xs font-bold text-slate-500 block mb-2">Método de Pago</label>
+          <select id="checkout-metodo" class="w-full border-2 border-slate-200 p-4 rounded-xl text-lg font-bold bg-white text-slate-800" onchange="actualizarTroco()">
+            <option value="Efectivo">💵 Efectivo (Guaraníes)</option>
+            <option value="Tarjeta">💳 Tarjeta (POS)</option>
+            <option value="Transferencia">📱 Transferencia Bancaria PY</option>
+            <option value="Pix">💠 PIX Automático (Mercado Pago)</option>
+          </select>
+        </div>
+        <div id="box-vuelto" class="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div class="flex items-center gap-4">
+            <div class="flex-1">
+              <label class="text-xs font-bold text-slate-500 block mb-1">Recibido</label>
+              <input type="number" id="checkout-recebido" placeholder="0" class="w-full border border-slate-300 p-3 rounded-lg text-xl font-bold text-center bg-white text-slate-800" oninput="actualizarTroco()">
+            </div>
+            <div class="flex-1 text-center">
+              <label class="text-xs font-bold text-slate-500 block mb-1">Vuelto</label>
+              <p class="text-3xl font-extrabold text-green-600">Gs. <span id="checkout-vuelto">0</span></p>
+            </div>
+          </div>
+        </div>
+        <button type="button" onclick="confirmarVenta()" id="btn-confirmar-venta" class="w-full bg-brand-accent text-white font-bold py-4 text-xl rounded-xl shadow-lg hover:bg-brand-accentHover transition">✔️ Emitir Factura</button>
+      </div>
+  </div>
+
+  <div id="modal-pix" class="fixed inset-0 bg-slate-900/50 z-[60] hidden flex-col items-center justify-center p-4 backdrop-blur-md">
+      <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl border border-slate-200 text-center relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-accent to-blue-500"></div>
+        <button onclick="fecharModalPix()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 font-bold text-2xl leading-none transition">&times;</button>
+        <h3 class="text-2xl font-extrabold text-slate-800 mb-1 mt-4">Pagamento via PIX</h3>
+        <p class="text-sm text-slate-500 mb-6">Escanea el código con tu banco de Brasil</p>
+        <div class="bg-white p-4 rounded-2xl shadow-inner inline-block mb-4 border-4 border-slate-100">
+            <img id="pix-qrcode-img" src="" alt="QR Code Pix" class="w-48 h-48 mx-auto hidden">
+            <div id="pix-loading" class="w-48 h-48 flex items-center justify-center">
+                <svg class="animate-spin h-8 w-8 text-brand-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </div>
+        </div>
+        <p class="text-3xl font-extrabold text-slate-800 mb-2">R$ <span id="pix-valor-reais">0,00</span></p>
+        <div class="mt-6 space-y-3">
+            <button type="button" onclick="copiarCodigoPix()" class="w-full bg-slate-100 text-slate-800 font-bold py-3 px-4 rounded-xl hover:bg-slate-200 transition flex items-center justify-center gap-2 border border-slate-300">
+                Copiar Código
+            </button>
+            <p class="text-xs text-slate-500 italic">Aprobación automática en pantalla</p>
+        </div>
+      </div>
+  </div> 
+
+  <div id="modal-sangria" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200"><div class="flex justify-between items-center mb-6 border-b border-slate-200 pb-4"><h3 class="text-xl font-bold text-slate-800">💸 Retiro de Caja</h3><button type="button" onclick="fecharModalSangria()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl transition">&times;</button></div><input type="number" id="sangria-valor" placeholder="Gs. 50000" class="w-full border border-slate-300 p-3 rounded-lg text-lg font-bold mb-4 bg-slate-50 text-slate-800"><input type="text" id="sangria-motivo" placeholder="Motivo..." class="w-full border border-slate-300 p-3 rounded-lg text-sm mb-6 bg-slate-50 text-slate-800"><button onclick="salvarSangria()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-lg transition">Guardar</button></div></div>
+  
+  <div id="modal-auth-supervisor" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200"><div class="flex justify-between items-center mb-6 border-b border-slate-200 pb-4"><h3 class="text-xl font-bold text-slate-800">🔒 Autorización</h3><button onclick="fecharAuthSupervisor()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl">&times;</button></div><p class="text-sm text-slate-500 mb-4">Contraseña de Administrador:</p><input type="password" id="auth-admin-senha" placeholder="..." class="w-full border border-slate-300 p-3 rounded-lg text-lg font-bold mb-6 bg-slate-50 text-slate-800 text-center" onkeypress="if(event.key === 'Enter') validarSupervisor()"><button onclick="validarSupervisor()" class="w-full bg-brand-accent text-white font-bold py-3 rounded-lg">Verificar</button></div></div>
+
+  <div id="login-screen" class="fixed inset-0 bg-slate-50 flex items-center justify-center z-50 px-4">
+    <div class="bg-white p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] w-full max-w-sm text-center border border-slate-200">
+        <img src="/logo_main.svg" alt="NubePY Logo" class="h-32 mx-auto mb-6">
+        <p class="text-slate-500 mb-8 text-sm font-medium">Facturación SIFEN Integrada</p>
+        <div class="space-y-4 mb-8">
+            <input type="text" id="login-ruc" placeholder="RUC" class="w-full border-slate-300 border p-4 rounded-xl text-center font-bold bg-slate-50 text-slate-800 focus:bg-white">
+            <input type="password" id="login-senha" placeholder="Contraseña" class="w-full border-slate-300 border p-4 rounded-xl text-center font-bold bg-slate-50 text-slate-800 focus:bg-white" onkeypress="if(event.key === 'Enter') fazerLogin()">
+        </div>
+        <button type="button" id="btn-login" onclick="fazerLogin()" class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl hover:bg-brand-accentHover shadow-lg shadow-brand-accent/30 transition text-lg">Ingresar</button>
+        <p id="erro-login" class="text-red-600 mt-4 text-sm font-bold hidden bg-red-50 p-3 rounded-lg border border-red-100">Error</p>
+        <p class="mt-6 text-xs text-slate-400">
+            Al ingresar, aceptas nuestro 
+            <button type="button" onclick="document.getElementById('modal-legal').classList.replace('hidden', 'flex')" class="text-brand-accent font-bold hover:underline">Acuerdo Marco y Términos Legales</button>.
+        </p>
+    </div>
+  </div>
+
+  <div id="superadmin-screen" class="hidden fixed inset-0 bg-slate-50 z-40 overflow-y-auto">
+    <div class="max-w-7xl mx-auto p-8">
+        <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex items-center">
+                <img src="/logo_main.svg" alt="NubePY Hub" class="h-12 md:h-14">
+                <span class="text-brand-accent text-xl ml-3 font-bold">| Hub</span>
+            </div>
+            <button onclick="window.location.reload()" class="bg-red-50 text-red-600 hover:bg-red-100 font-bold px-6 py-3 rounded-xl border border-red-200 transition">Salir</button>
+        </header>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden"><div class="absolute right-0 top-0 h-full w-1 bg-green-500"></div><h3 class="text-slate-500 text-sm font-bold uppercase mb-2">MRR</h3><p class="text-4xl font-extrabold text-slate-800">Gs. <span id="saas-mrr">0</span></p></div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"><h3 class="text-slate-500 text-sm font-bold uppercase mb-2">Activos</h3><p class="text-4xl font-extrabold text-brand-accent"><span id="saas-ativos">0</span></p></div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden"><div class="absolute right-0 top-0 h-full w-1 bg-red-500"></div><h3 class="text-slate-500 text-sm font-bold uppercase mb-2">Vencidos</h3><p class="text-4xl font-extrabold text-red-500"><span id="saas-vencidos">0</span></p></div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-xl font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">➕ Nueva Suscripción</h3>
+                <div class="space-y-4">
+                    <input type="text" id="sa-nome" placeholder="Nombre" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
+                    <input type="text" id="sa-ruc" placeholder="RUC" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
+                    <select id="sa-plano" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800"><option value="Inicial">Inicial</option><option value="Crecimiento">Crecimiento</option><option value="VIP">VIP</option></select>
+                    <input type="number" id="sa-valor" placeholder="Mensualidad" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
+                    <input type="text" id="sa-pass-admin" placeholder="Pass Admin" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-brand-light text-slate-800 font-bold">
+                    <input type="text" id="sa-pass-caja" placeholder="Pass Caja" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-brand-light text-slate-800 font-bold">
+                    <button onclick="criarEmpresaSaaS()" class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl hover:bg-brand-accentHover shadow-md">Crear</button>
+                </div>
+            </div>
+            
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 text-slate-500 text-xs border-y border-slate-200"><tr><th class="p-4 font-bold uppercase">Empresa</th><th class="p-4 font-bold uppercase">RUC</th><th class="p-4 font-bold uppercase">Plan</th><th class="p-4 font-bold uppercase">Estado</th><th class="p-4 font-bold uppercase">Acción</th></tr></thead>
+                        <tbody id="tabela-saas" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-bold mb-4">📊 Histórico</h2>
-            <div id="total-notas" class="text-blue-600 font-bold mb-4">0 Notas</div>
-            <div class="border rounded overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50"><tr><th class="p-2">Cliente</th><th class="p-2 text-right">Valor</th></tr></thead>
-                    <tbody id="tabela-historico"></tbody>
+        <div class="bg-white p-6 rounded-2xl shadow-sm mt-8 border border-slate-200">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <img src="/logo_icon.svg" alt="SIPAP" class="h-6">
+                    <h2 class="text-xl font-bold text-slate-800">Control de Mensualidades (SIPAP)</h2>
+                </div>
+                <button onclick="carregarFaturasSaaS()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition border border-slate-200">🔄 Actualizar</button>
+            </div>
+            <div class="overflow-x-auto rounded-lg border border-slate-200">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 text-sm">
+                            <th class="p-4 font-bold uppercase text-xs">Cliente</th>
+                            <th class="p-4 font-bold uppercase text-xs">Valor</th>
+                            <th class="p-4 font-bold uppercase text-xs">Vencimiento</th>
+                            <th class="p-4 font-bold uppercase text-xs">Estado</th>
+                            <th class="p-4 font-bold uppercase text-xs text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-faturas-saas" class="divide-y divide-slate-200 bg-white text-sm text-slate-700">
+                    </tbody>
                 </table>
             </div>
         </div>
     </div>
+  </div>
 
-    <script>
-        async function emitirNota() {
-            const res = await fetch('/emitir-nota', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ruc_emissor: document.getElementById('ruc').value,
-                    nome_cliente: document.getElementById('cliente').value,
-                    valor_total: parseFloat(document.getElementById('valor').value)
-                })
-            });
-            const dados = await res.json();
-            if (dados.link_qrcode) {
-                document.getElementById('resultado').classList.remove('hidden');
-                document.getElementById('qrcode-img').src = dados.link_qrcode;
-                document.getElementById('btn-pdf').href = dados.link_pdf; // Ativa o link do PDF!
-                carregarHistorico();
-            }
-        }
+  <div id="mobile-header" class="flex md:hidden bg-white text-slate-800 p-4 justify-between items-center z-20 w-full hidden border-b border-slate-200 shadow-sm"><img src="/logo_main.svg" alt="NubePY" class="h-8"><button type="button" onclick="toggleSidebar()" class="text-3xl text-brand-accent">☰</button></div>
 
-        async function carregarHistorico() {
-            const res = await fetch('/listar-notas');
-            const dados = await res.json();
-            document.getElementById('total-notas').innerText = dados.total_notas_emitidas + " Notas";
-            const tbody = document.getElementById('tabela-historico');
-            tbody.innerHTML = '';
-            dados.historico.reverse().forEach(nota => {
-                tbody.innerHTML += `<tr class="border-t"><td class="p-2">${nota.nome_cliente}</td><td class="p-2 text-right">Gs. ${nota.valor_total.toLocaleString()}</td></tr>`;
-            });
-        }
-        window.onload = carregarHistorico;
-    </script>
+  <div id="app-screen" class="hidden flex-1 h-full overflow-hidden relative w-full bg-slate-50">
+    <div id="sidebar" class="absolute md:relative inset-y-0 left-0 w-64 bg-white border-r border-slate-200 shadow-lg md:shadow-none flex flex-col justify-between z-30 transform -translate-x-full md:translate-x-0 transition duration-300 h-full text-slate-600">
+      <div class="overflow-y-auto">
+        <div class="p-6 border-b border-slate-100 hidden md:flex bg-white flex-col">
+            <img src="/logo_icon.svg" alt="NubePY" class="h-16 mb-2 mx-auto block">
+            <div class="mt-2 bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs text-center shadow-inner"><p class="font-extrabold text-slate-800 truncate text-sm" id="sidebar-nome-loja">...</p><p class="text-brand-accent font-bold mt-1" id="sidebar-rol-loja">...</p></div>
+        </div>
+        
+        <nav class="mt-4 flex flex-col p-3 space-y-1 font-medium">
+          <button type="button" onclick="mudarTela('pos', this)" class="nav-btn menu-ativo p-3 rounded-xl text-left hover:bg-slate-50 flex items-center transition">🛒 Punto de Venta</button>
+          
+          <div id="nav-group-inventario" class="mt-2">
+            <button type="button" onclick="toggleAcordeao('menu-inv', 'seta-inv')" class="w-full p-3 rounded-xl text-left hover:bg-slate-50 flex justify-between items-center transition">📦 Inventario <span id="seta-inv" class="text-xs text-slate-400">▼</span></button>
+            <div id="menu-inv" class="hidden flex-col pl-4 mt-1 space-y-1 border-l-2 border-slate-100 ml-2">
+              <button onclick="mudarTela('inventario', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Productos</button>
+              <button id="btn-nav-proveedores" onclick="mudarTela('proveedores', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Proveedores</button>
+              <button id="btn-nav-entrada" onclick="mudarTela('entrada', this)" class="nav-btn p-2 text-sm text-left text-blue-600 font-bold">Entrada (Compras)</button>
+              <button id="btn-nav-remision" onclick="mudarTela('remision', this)" class="nav-btn p-2 text-sm text-left text-yellow-600 font-bold">Nota de Remisión</button>
+              <button onclick="mudarTela('categorias', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Categorías</button>
+              <button id="btn-nav-stocktake" onclick="mudarTela('stocktake', this)" class="nav-btn p-2 text-sm text-left text-brand-accent font-bold">Auditoría (Stock)</button>
+            </div>
+          </div>
+          
+          <button id="nav-btn-dashboard" onclick="mudarTela('dashboard', this)" class="nav-btn p-3 rounded-xl text-left flex items-center mt-2 hover:bg-slate-50 transition">📊 Dashboard</button>
+          
+          <div id="nav-group-reportes" class="mt-2">
+            <button type="button" onclick="toggleAcordeao('menu-rep', 'seta-rep')" class="w-full p-3 rounded-xl text-left hover:bg-slate-50 flex justify-between items-center transition">📈 Reportes / Ventas <span id="seta-rep" class="text-xs text-slate-400">▼</span></button>
+            <div id="menu-rep" class="hidden flex-col pl-4 mt-1 space-y-1 border-l-2 border-slate-100 ml-2">
+              <button onclick="mudarTela('cierre', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Ventas y Cierre</button>
+              <button id="btn-nav-autofactura" onclick="mudarTela('autofactura', this)" class="nav-btn p-2 text-sm text-left text-orange-600 font-bold">Emitir Autofactura</button>
+              <button onclick="mudarTela('reportes', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Historial SIFEN</button>
+              <button id="btn-nav-variancia" onclick="mudarTela('variancia', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Varianza de Stock</button>
+              <button id="btn-nav-stocktakereport" onclick="mudarTela('stocktakereport', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Reportes Stock Take</button>
+            </div>
+          </div>
+
+          <button id="nav-btn-config" onclick="mudarTela('config', this)" class="nav-btn p-3 rounded-xl text-left flex items-center mt-2 hover:bg-slate-50 transition">⚙️ Ajustes</button>
+          <button id="nav-btn-ayuda" onclick="mudarTela('ayuda', this)" class="nav-btn p-3 rounded-xl text-left flex items-center mt-2 text-green-600 hover:bg-green-50 transition font-bold">❓ Ayuda / Soporte</button>
+
+        </nav>
+      </div>
+      <div class="p-4 border-t border-slate-200"><button onclick="window.location.reload()" class="w-full text-red-600 hover:bg-red-50 p-3 rounded-xl text-sm font-bold transition border border-transparent hover:border-red-200">Cerrar Sesión</button></div>
+    </div>
+
+    <div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 z-20 hidden md:hidden backdrop-blur-sm"></div>
+
+    <div class="flex-1 p-4 md:p-8 pb-32 md:pb-8 overflow-y-auto w-full h-full relative scrollbar-thin scrollbar-thumb-slate-300">
+      
+      <div id="tela-pos" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela relative">
+        <div id="bloqueio-caixa" class="absolute inset-0 bg-white/95 backdrop-blur-md z-40 hidden flex-col items-center justify-center p-6 rounded-3xl"><div class="text-center max-w-sm bg-white p-10 rounded-3xl shadow-2xl border border-slate-200"><h2 class="text-3xl font-extrabold text-slate-800 mb-4">Caja Cerrada</h2><input type="number" id="valor-abertura-caixa" placeholder="Gs. 0" class="w-full border-2 border-brand-accent/30 focus:border-brand-accent p-4 rounded-xl text-xl font-bold text-center text-slate-800 bg-slate-50 mb-6 outline-none transition"><button onclick="abrirTurnoCaixa()" class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl shadow-lg shadow-brand-accent/20 hover:bg-brand-accentHover text-lg transition">Abrir Caja</button></div></div>
+        
+        <header class="mb-6 flex flex-col sm:flex-row justify-between border-b border-slate-100 pb-4 gap-4">
+            <div class="flex items-center gap-3"><h1 class="text-3xl font-extrabold text-slate-800">Punto de Venta</h1><span id="badge-conexao" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200 hidden">Online</span></div>
+            <div class="flex gap-2">
+                <button type="button" onclick="abrirAuthSupervisor()" class="text-purple-600 bg-purple-50 hover:bg-purple-100 font-bold text-sm px-4 py-2 rounded-lg border border-purple-200 transition">🔒 Operaciones</button>
+                <button onclick="abrirModalSangria()" class="text-sm bg-slate-100 text-slate-700 px-4 py-2 rounded-lg font-bold border border-slate-200 hover:bg-slate-200 transition">💸 Retiro</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-5 bg-slate-50 rounded-2xl border border-slate-200"><div class="md:col-span-1"><input type="text" id="ruc" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-500 shadow-sm" readonly></div><div class="md:col-span-2"><input type="text" id="cliente" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-slate-800 text-sm shadow-sm focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 outline-none" placeholder="Nombre del Cliente"></div></div>
+        
+        <div class="border border-slate-200 p-5 rounded-2xl bg-white shadow-sm mb-6">
+            <div class="flex bg-slate-50 rounded-xl border-2 border-brand-accent/30 focus-within:border-brand-accent transition-all overflow-hidden mb-4 shadow-inner">
+                <span class="text-xl p-3 text-brand-accent flex items-center">🔎</span>
+                <input type="text" id="scanner-barras" placeholder="Escanear producto o buscar por nombre..." class="flex-1 bg-transparent p-3 font-bold text-slate-800 outline-none" oninput="filtrarPOS()" onkeypress="verificarScanner(event)">
+                <button onclick="abrirCamera('scanner-barras')" class="bg-brand-accent hover:bg-brand-accentHover text-white px-5 font-bold transition">📷</button>
+            </div>
+            <div id="pos-dropdown" class="absolute z-50 w-full bg-white border border-slate-200 shadow-xl rounded-xl hidden max-h-60 overflow-y-auto"></div>
+            <div id="lista-produtos" class="space-y-2 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200"></div>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row justify-between items-end mb-6 p-6 bg-slate-50 rounded-2xl border border-slate-200">
+            <div class="w-full sm:w-1/2 space-y-3">
+                <div class="flex justify-between text-sm text-slate-600"><span>Subtotal:</span><span class="font-bold text-slate-800">Gs. <span id="subtotal-tela">0</span></span></div>
+                <div class="flex justify-between text-sm border-b border-slate-200 pb-3"><button onclick="pedirDescuento()" class="text-brand-accent font-bold hover:underline">Desc (%)</button><span class="text-red-500 font-bold">- Gs. <span id="descuento-tela">0</span></span></div>
+                <div class="flex justify-between items-end pt-2">
+                    <p class="text-sm font-bold text-slate-500 uppercase">Total a Pagar</p>
+                    <div class="text-4xl font-extrabold text-brand-accent">Gs. <span id="valor-total-tela">0</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="abrirCheckout()" id="btn-emitir" class="w-full bg-brand-accent text-white font-extrabold py-5 text-xl rounded-2xl shadow-lg shadow-brand-accent/20 hover:bg-brand-accentHover hover:-translate-y-0.5 transition-all">💳 Procesar Pago</button>
+        
+        <div id="resultado" class="mt-8 hidden text-center border-t border-slate-100 pt-8">
+            <div class="bg-green-50 p-8 rounded-3xl inline-block shadow-sm border border-green-200 w-full max-w-md">
+                <h2 class="text-2xl font-extrabold text-green-600 mb-6" id="texto-resultado">✅ ¡Factura Aprobada!</h2>
+                <img id="qrcode-img" src="" class="mx-auto mb-6 w-40 h-40 bg-white object-contain rounded-2xl border-4 border-white shadow-sm">
+                <div class="flex flex-col gap-3 mb-6">
+                    <button type="button" onclick="imprimirTicketLocal()" class="bg-brand-accent hover:bg-brand-accentHover text-white px-6 py-4 rounded-xl font-bold shadow-md transition text-lg">🖨️ Imprimir Ticket 80mm</button>
+                    <button type="button" onclick="enviarWhatsApp()" class="bg-[#25D366] hover:bg-[#1ebd5a] text-white px-6 py-4 rounded-xl font-bold shadow-md transition text-lg flex items-center justify-center gap-2">💬 Enviar al WhatsApp</button>
+                    <a id="btn-pdf" href="#" target="_blank" class="bg-white hover:bg-slate-50 text-slate-700 px-6 py-4 rounded-xl font-bold shadow-sm transition border border-slate-300 text-lg">📄 Descargar PDF A4</a>
+                </div>
+                <button onclick="novaVenda()" class="text-brand-accent font-bold hover:underline block w-full pt-4 border-t border-green-200">Realizar Nueva Venta</button>
+            </div>
+        </div>
+      </div>
+
+      <div id="tela-operaciones" class="max-w-6xl mx-auto section-tela hidden">
+        <header class="mb-6 flex justify-between items-center border-b border-slate-200 pb-4">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-800">🔒 Operaciones de Supervisor</h1>
+                <p class="text-sm text-slate-500 mt-1">Retiro de inventario o devolución de valores.</p>
+            </div>
+            <button onclick="mudarTela('pos', document.querySelector('.nav-btn'))" class="bg-white text-slate-700 px-5 py-2.5 rounded-xl font-bold border border-slate-300 hover:bg-slate-50 shadow-sm transition">🔙 Volver al POS</button>
+        </header>
+
+        <div class="flex gap-3 mb-6">
+            <button onclick="switchOpTab('nc')" id="tab-nc-btn" class="flex-1 bg-purple-600 text-white font-bold py-4 rounded-xl shadow-md transition text-lg">🧾 Nota de Crédito</button>
+            <button onclick="switchOpTab('merma')" id="tab-merma-btn" class="flex-1 bg-white text-slate-500 font-bold py-4 rounded-xl hover:bg-slate-50 border border-slate-300 transition text-lg">🗑️ Registrar Baja (Mermas)</button>
+        </div>
+
+        <div id="op-nc-content" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 block">
+            <div class="grid grid-cols-2 gap-4 mb-6"><input type="text" id="nc-cdc" placeholder="CDC Original (44 digitos)" class="p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono text-slate-800 focus:border-purple-500 outline-none"><input type="text" id="nc-cliente" placeholder="Cliente RUC / Nombre" class="p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:border-purple-500 outline-none"></div><div class="border border-slate-200 p-5 rounded-2xl bg-slate-50 shadow-inner mb-6"><label class="text-sm font-bold text-slate-700 block mb-3">Escanear productos DEVUELTOS por el cliente</label><div class="flex bg-white border-2 border-purple-300 focus-within:border-purple-500 rounded-xl mb-4 overflow-hidden"><span class="p-3 text-purple-500">🔎</span><input type="text" id="nc-scanner" placeholder="Buscar prod devuelto..." class="flex-1 bg-transparent text-slate-800 font-bold p-3 outline-none" oninput="filtrarNC()" onkeypress="verificarScannerNC(event)"></div><div id="nc-dropdown" class="absolute w-full bg-white border border-slate-200 hidden max-h-60 overflow-y-auto rounded-xl shadow-xl"></div><div id="nc-lista-produtos" class="space-y-2 max-h-64 overflow-y-auto"></div></div><div class="flex justify-end mb-6"><div class="text-right bg-purple-50 p-4 rounded-xl border border-purple-100"><p class="text-sm font-bold text-purple-600 uppercase mb-1">Total a Devolver</p><div class="text-4xl font-extrabold text-purple-700">Gs. <span id="nc-valor-total-tela">0</span></div></div></div><button onclick="emitirNotaCredito()" id="btn-emitir-nc" class="w-full bg-purple-600 text-white font-extrabold py-5 text-xl rounded-xl shadow-lg hover:bg-purple-700 transition">Emitir NC (SIFEN)</button>
+        </div>
+        <div id="op-merma-content" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hidden">
+            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 shadow-inner"><div class="grid grid-cols-12 gap-4 items-end"><div class="col-span-5 relative"><label class="text-xs font-bold text-slate-500 block mb-1">Producto</label><input type="text" id="merma-cod" placeholder="Buscar..." class="w-full p-3 bg-white border border-slate-300 rounded-xl text-sm focus:border-red-500 outline-none" oninput="filtrarMerma()" onkeypress="buscarParaMerma(event)"><div id="merma-dropdown" class="absolute w-full bg-white border border-slate-200 hidden max-h-60 overflow-y-auto z-50 rounded-xl shadow-xl"></div></div><div class="col-span-2"><label class="text-xs font-bold text-slate-500 block mb-1">Stock</label><input type="text" id="merma-atual" class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-center text-slate-500" readonly></div><div class="col-span-2"><label class="text-xs font-bold text-red-500 block mb-1">Bajar</label><input type="number" id="merma-add" placeholder="Cant" class="w-full p-3 border-2 border-red-300 focus:border-red-500 bg-white rounded-xl text-center font-bold text-slate-800 outline-none"></div><div class="col-span-3"><label class="text-xs font-bold text-slate-500 block mb-1">Motivo</label><select id="merma-motivo" class="w-full p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none"><option value="Dañado">Dañado</option><option value="Vencido">Vencido</option><option value="Pérdida">Pérdida</option><option value="Uso Interno">Uso Interno</option></select></div><div class="col-span-12 mt-4"><button onclick="salvarMerma()" class="w-full bg-red-50 text-red-600 font-bold py-4 border border-red-200 rounded-xl hover:bg-red-600 hover:text-white transition text-lg">Procesar Baja Definitiva</button></div></div></div><table class="w-full text-left border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-y border-slate-200"><tr><th class="p-4">Fecha</th><th class="p-4">Prod</th><th class="p-4">Cant</th><th class="p-4">Motivo</th><th class="p-4 text-right">Pérdida</th></tr></thead><tbody id="tabela-mermas" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody></table>
+        </div>
+      </div>
+      
+      <div id="tela-inventario" class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 flex justify-between items-center border-b border-slate-100 pb-4"><div><h1 class="text-3xl font-extrabold text-slate-800">Inventario</h1></div><div class="flex gap-3"><button onclick="exportarTabelaParaCSV('tabela-estoque', 'Inventario')" class="bg-white border border-slate-300 text-slate-700 px-5 rounded-xl font-bold text-sm hover:bg-slate-50 shadow-sm transition">⬇️ CSV</button><button onclick="toggleFormProducto()" class="bg-brand-accent hover:bg-brand-accentHover text-white px-6 py-3 rounded-xl font-bold shadow-md transition">➕ Nuevo Producto</button></div></header><div id="form-novo-produto" class="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 hidden shadow-inner"><div class="grid grid-cols-1 md:grid-cols-12 gap-5"><div class="md:col-span-3"><label class="text-xs font-bold text-brand-accent block mb-1">Código de Barras</label><div class="flex border-2 border-brand-accent/30 focus-within:border-brand-accent rounded-xl bg-white overflow-hidden"><input type="text" id="novo-cod" class="flex-1 bg-transparent p-3 text-sm text-slate-800 outline-none"><button onclick="abrirCamera('novo-cod')" class="bg-brand-accent text-white px-4 hover:bg-brand-accentHover">📷</button></div></div><div class="md:col-span-3"><label class="text-xs font-bold text-slate-500 block mb-1">Descripción</label><input type="text" id="novo-desc" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 outline-none focus:border-brand-accent"></div><div class="md:col-span-3"><label class="text-xs font-bold text-slate-500 block mb-1">Categoría</label><select id="novo-cat" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 outline-none focus:border-brand-accent"></select></div><div class="md:col-span-3" id="box-novo-prov"><label class="text-xs font-bold text-blue-600 block mb-1">Proveedor (Opcional)</label><select id="novo-prov" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 outline-none focus:border-blue-500"><option value="">Ninguno</option></select></div><div class="md:col-span-4"><label class="text-xs font-bold text-slate-500 block mb-1">Costo (Compra)</label><input type="number" id="novo-custo" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 outline-none focus:border-brand-accent" oninput="calcularLucro()"></div><div class="md:col-span-4"><label class="text-xs font-bold text-brand-accent block mb-1">Precio Venta</label><input type="number" id="novo-preco" class="w-full border-2 border-brand-accent/50 p-3 rounded-xl bg-white text-sm text-slate-800 font-bold outline-none focus:border-brand-accent" oninput="calcularLucro()"><div id="info-lucro" class="text-xs mt-1 font-bold text-slate-500"></div></div><div class="md:col-span-4"><label class="text-xs font-bold text-slate-500 block mb-1">Stock Actual</label><input type="number" id="novo-qtd" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 outline-none focus:border-brand-accent"></div></div><div class="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-200"><button onclick="toggleFormProducto()" class="text-slate-500 hover:bg-slate-200 bg-slate-100 font-bold px-6 py-3 rounded-xl transition">Cancelar</button><button onclick="cadastrarProduto()" class="bg-brand-accent text-white font-bold px-10 py-3 rounded-xl shadow-md hover:bg-brand-accentHover transition">Guardar Producto</button></div></div><div class="flex gap-4 mb-6"><input type="text" id="busca-inventario" placeholder="Buscar producto..." class="flex-1 border border-slate-300 p-3 rounded-xl bg-white text-sm shadow-sm outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20" oninput="filtrarEstoque()"><select id="filtro-cat-inventario" class="w-64 border border-slate-300 p-3 rounded-xl bg-white text-sm shadow-sm outline-none focus:border-brand-accent" onchange="filtrarEstoque()"></select></div><div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-left bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Prod</th><th class="p-4 font-bold">Cat</th><th class="p-4 font-bold">Prov</th><th class="p-4 font-bold text-right">Precios</th><th class="p-4 font-bold text-center">Stock</th><th class="p-4 font-bold">Acc</th></tr></thead><tbody id="tabela-estoque" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-proveedores" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 flex justify-between border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Proveedores</h1><button onclick="document.getElementById('form-novo-proveedor').classList.toggle('hidden'); document.getElementById('prov-id').value='';" class="bg-brand-accent text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-brand-accentHover transition">➕ Nuevo Proveedor</button></header><div id="form-novo-proveedor" class="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 hidden shadow-inner"><input type="hidden" id="prov-id"><div class="grid grid-cols-2 gap-5"><input type="text" id="prov-nome" placeholder="Nombre de la Empresa" class="p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-brand-accent"><input type="text" id="prov-ruc" placeholder="RUC" class="p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-brand-accent"><input type="text" id="prov-tel" placeholder="Teléfono" class="p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-brand-accent"><input type="email" id="prov-email" placeholder="Email" class="p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-brand-accent"><input type="text" id="prov-endereco" placeholder="Dirección Completa" class="col-span-2 p-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-brand-accent"></div><div class="flex justify-end mt-6"><button onclick="salvarProveedor()" class="bg-brand-accent text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-brand-accentHover transition">Guardar</button></div></div><div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-left bg-white border-collapse"><thead class="bg-slate-50 text-xs text-slate-500 uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Nombre/RUC</th><th class="p-4 font-bold">Contacto</th><th class="p-4 font-bold">Dirección</th><th class="p-4 font-bold">Acc</th></tr></thead><tbody id="tabela-proveedores" class="text-sm divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+
+      <div id="tela-entrada" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-blue-600">Entrada (Compras)</h1></header><div class="grid grid-cols-3 gap-5 mb-6"><select id="entrada-prov" class="p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-blue-500"></select><input type="text" id="entrada-nro" placeholder="Factura Nro" class="p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-blue-500"><input type="date" id="entrada-data" class="p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 outline-none focus:border-blue-500"></div><div class="border border-slate-200 p-5 rounded-2xl bg-slate-50 mb-6 shadow-inner"><div class="flex bg-white border-2 border-blue-300 focus-within:border-blue-500 rounded-xl mb-4 overflow-hidden"><span class="p-3 text-blue-500">📦</span><input type="text" id="entrada-scanner" placeholder="Escanear..." class="flex-1 bg-transparent text-slate-800 font-bold p-3 outline-none" onkeypress="buscarProdutoEntrada(event)"></div><div class="overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-left text-sm bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 uppercase border-b border-slate-200 text-xs"><tr><th class="p-4 font-bold">Prod</th><th class="p-4 font-bold text-center">Cant</th><th class="p-4 font-bold text-right">Costo</th><th class="p-4 font-bold text-right">Sub</th><th class="p-4"></th></tr></thead><tbody id="tabela-entrada-itens" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div><div class="flex justify-between items-end"><div class="text-4xl font-extrabold text-blue-600">Gs. <span id="entrada-total-tela">0</span></div><button id="btn-salvar-entrada" onclick="salvarEntradaFactura()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-10 py-4 rounded-xl shadow-md transition text-lg">Guardar Factura</button></div></div>
+
+      <div id="tela-remision" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden">
+        <header class="mb-6 border-b border-slate-100 pb-4">
+          <h1 class="text-3xl font-extrabold text-yellow-600">Nota de Remisión</h1>
+          <p class="text-sm text-slate-500 mt-1">Documento legal SIFEN para respaldar el tránsito de mercaderías (Sin abatir stock).</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 shadow-inner">
+                <h3 class="font-bold text-slate-800 mb-2">Datos del Destinatario</h3>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">RUC / Cédula *</label><input type="text" id="rem-ruc-dest" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-yellow-500"></div>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">Razón Social / Nombre *</label><input type="text" id="rem-nome-dest" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-yellow-500"></div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 block mb-1">Motivo del Traslado *</label>
+                    <select id="rem-motivo" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-yellow-500">
+                        <option value="Traslado entre locales de la empresa">Traslado entre locales de la empresa</option>
+                        <option value="Traslado para venta">Traslado para venta</option>
+                        <option value="Traslado por demostración / Exhibición">Traslado por demostración / Exhibición</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 shadow-inner">
+                <h3 class="font-bold text-slate-800 mb-2">Datos del Transporte</h3>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">Chapa del Vehículo *</label><input type="text" id="rem-chapa" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-yellow-500" placeholder="Ej: ABC 123"></div>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">Chofer (Nombre y C.I.) *</label><input type="text" id="rem-chofer" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-yellow-500" placeholder="Ej: Juan Perez - 1234567"></div>
+            </div>
+        </div>
+
+        <div class="border border-slate-200 p-5 rounded-2xl bg-white shadow-sm mb-6">
+            <label class="text-sm font-bold text-slate-700 block mb-3">Escanear productos para el traslado</label>
+            <div class="relative w-full mb-4">
+                <div class="flex items-center bg-slate-50 rounded-xl border-2 border-yellow-300 focus-within:border-yellow-500 transition-all overflow-hidden">
+                    <span class="text-xl pl-3 py-3 shrink-0 text-yellow-500">🔎</span>
+                    <input type="text" id="rem-scanner" placeholder="Escanear producto..." autocomplete="off" class="w-full flex-1 bg-transparent p-3 font-bold focus:outline-none text-slate-800 min-w-0 truncate">
+                </div>
+                <div id="rem-dropdown" class="absolute z-50 w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 hidden max-h-60 overflow-y-auto"></div>
+            </div>
+            
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left bg-white min-w-[500px] border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                        <tr>
+                            <th class="p-3 text-xs font-bold uppercase">Producto</th>
+                            <th class="p-3 text-xs font-bold uppercase text-center w-32">Cantidad</th>
+                            <th class="p-3 text-xs font-bold uppercase text-center w-16">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-remision-itens" class="divide-y divide-slate-100 text-sm text-slate-700">
+                        <tr><td colspan="3" class="p-6 text-center text-slate-400">Ningún producto agregado.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <button type="button" onclick="emitirRemision()" id="btn-emitir-rem" class="w-full bg-yellow-500 text-white font-extrabold py-4 text-xl rounded-xl hover:bg-yellow-600 shadow-lg transition">🚚 Emitir Nota de Remisión (SIFEN)</button>
+        
+        <div id="rem-resultado" class="mt-6 hidden text-center border-t border-slate-100 pt-6">
+            <div class="bg-green-50 p-6 rounded-2xl inline-block shadow-sm border border-green-200">
+                <h2 class="text-xl font-bold text-green-600 mb-4">✅ ¡Remisión Generada!</h2>
+                <a id="btn-rem-pdf" href="#" target="_blank" class="inline-flex bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-700 shadow-md transition">Descargar KuDE (PDF)</a>
+                <button onclick="novaRemision()" class="block w-full mt-4 text-yellow-600 font-bold hover:underline">Nueva Remisión</button>
+            </div>
+        </div>
+        
+        <div class="mt-12 pt-6 border-t border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Últimas Remisiones Emitidas</h3>
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left bg-white text-sm border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Fecha / CDC</th><th class="p-4 font-bold">Destinatario</th><th class="p-4 font-bold">Motivo</th><th class="p-4 font-bold text-center">PDF</th></tr></thead>
+                    <tbody id="tabela-hist-remision" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+
+      <div id="tela-autofactura" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden">
+        <header class="mb-6 border-b border-slate-100 pb-4">
+          <h1 class="text-3xl font-extrabold text-orange-600">Autofactura</h1>
+          <p class="text-sm text-slate-500 mt-1">Documento legal SIFEN para respaldar compras o pagos a personas sin RUC.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 shadow-inner">
+                <h3 class="font-bold text-slate-800 mb-2">Datos del Vendedor / Proveedor</h3>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">Nombre Completo *</label><input type="text" id="auto-nome" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-orange-500"></div>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">C.I. / Documento *</label><input type="text" id="auto-cedula" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-orange-500"></div>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">Dirección *</label><input type="text" id="auto-endereco" class="w-full bg-white border border-slate-300 p-3 rounded-xl text-sm text-slate-800 outline-none focus:border-orange-500"></div>
+            </div>
+
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-center items-center text-center space-y-4 shadow-inner">
+                <div>
+                    <h3 class="font-bold text-slate-800 mb-1">¿Actualizar Inventario?</h3>
+                    <p class="text-xs text-slate-500 max-w-xs mx-auto">Seleccione si esta compra debe sumar productos físicos al stock de la tienda, o si es solo un gasto (ej. servicio).</p>
+                </div>
+                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in mt-2">
+                    <input type="checkbox" name="toggle" id="auto-mover-stock" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                    <label for="auto-mover-stock" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
+                </div>
+                <span class="text-sm font-bold text-orange-600" id="auto-stock-status">SÍ, añadir al stock</span>
+            </div>
+        </div>
+
+        <div class="border border-slate-200 p-5 rounded-2xl bg-white shadow-sm mb-6">
+            <div class="flex justify-between items-end mb-3">
+                <label class="text-sm font-bold text-slate-800">Detalle de la Compra / Gasto</label>
+                <button type="button" onclick="adicionarItemLibreAuto()" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-200 transition">+ Añadir Servicio Manual</button>
+            </div>
+            
+            <div class="relative w-full mb-4">
+                <div class="flex items-center bg-slate-50 rounded-xl border-2 border-orange-300 focus-within:border-orange-500 transition-all overflow-hidden">
+                    <span class="text-xl pl-3 py-3 shrink-0 text-orange-500">🔎</span>
+                    <input type="text" id="auto-scanner" placeholder="Escanear producto para añadir a la autofactura..." autocomplete="off" class="w-full flex-1 bg-transparent p-3 font-bold focus:outline-none text-slate-800 min-w-0 truncate">
+                </div>
+                <div id="auto-dropdown" class="absolute z-50 w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 hidden max-h-60 overflow-y-auto"></div>
+            </div>
+            
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left bg-white min-w-[500px] border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                        <tr>
+                            <th class="p-3 text-xs font-bold uppercase">Descripción</th>
+                            <th class="p-3 text-xs font-bold uppercase text-center w-24">Cantidad</th>
+                            <th class="p-3 text-xs font-bold uppercase text-right w-32">Precio Unit.</th>
+                            <th class="p-3 text-xs font-bold uppercase text-right w-32">Subtotal</th>
+                            <th class="p-3 text-xs font-bold uppercase text-center w-16">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-auto-itens" class="divide-y divide-slate-100 text-sm text-slate-700">
+                        <tr><td colspan="5" class="p-6 text-center text-slate-400">Agregue productos o servicios.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-end gap-4 mb-6">
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 w-full sm:w-64 text-right shadow-inner">
+                <p class="text-sm text-slate-500 font-bold uppercase mb-1">Monto a Pagar</p>
+                <div class="text-4xl font-extrabold text-orange-600">Gs. <span id="auto-total-tela">0</span></div>
+            </div>
+            <button type="button" onclick="emitirAutofactura()" id="btn-emitir-auto" class="w-full sm:w-auto flex-1 bg-orange-500 text-white font-extrabold py-5 text-xl rounded-2xl hover:bg-orange-600 shadow-lg transition">🧾 Emitir Autofactura SIFEN</button>
+        </div>
+        
+        <div id="auto-resultado" class="mt-6 hidden text-center border-t border-slate-100 pt-6">
+            <div class="bg-green-50 p-6 rounded-2xl inline-block shadow-sm border border-green-200">
+                <h2 class="text-xl font-bold text-green-600 mb-4">✅ ¡Autofactura Generada!</h2>
+                <a id="btn-auto-pdf" href="#" target="_blank" class="inline-flex bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-700 shadow-md transition">Descargar KuDE (PDF)</a>
+                <button onclick="novaAutofactura()" class="block w-full mt-4 text-orange-600 font-bold hover:underline">Nueva Autofactura</button>
+            </div>
+        </div>
+        
+        <div class="mt-12 pt-6 border-t border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Últimas Autofacturas Emitidas</h3>
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left bg-white text-sm border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Fecha / CDC</th><th class="p-4 font-bold">Vendedor</th><th class="p-4 font-bold text-right">Monto (Gs)</th><th class="p-4 font-bold text-center">PDF</th></tr></thead>
+                    <tbody id="tabela-hist-auto" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+
+      <div id="tela-categorias" class="max-w-4xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Categorías</h1></header><div class="flex gap-4 mb-8"><input type="text" id="nova-cat-nome" class="flex-1 p-4 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 outline-none focus:border-brand-accent focus:bg-white transition"><button onclick="adicionarCategoria()" class="bg-brand-accent hover:bg-brand-accentHover text-white px-8 rounded-xl font-bold shadow-md transition">Crear</button></div><div class="overflow-hidden border border-slate-200 rounded-xl"><table class="w-full text-left bg-white border-collapse"><tbody id="tabela-categorias" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-dashboard" class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Dashboard</h1></header><div class="grid grid-cols-2 gap-6 mb-8"><div onclick="mudarTela('cierre', null)" class="bg-white border border-slate-200 shadow-sm p-6 rounded-2xl cursor-pointer hover:border-brand-accent transition"><p class="text-slate-500 font-bold uppercase text-xs mb-1">Ventas</p><p class="text-4xl font-extrabold text-slate-800" id="dash-vendas">0</p></div><div onclick="mudarTela('reportes', null)" class="bg-brand-accent p-6 rounded-2xl cursor-pointer hover:bg-brand-accentHover shadow-md transition text-white"><p class="font-bold uppercase text-xs mb-1 opacity-80">Notas SIFEN</p><p class="text-4xl font-extrabold" id="dash-notas">0</p></div></div><div class="bg-slate-50 p-4 rounded-2xl border border-slate-200"><canvas id="grafico-produtos" class="h-80 w-full"></canvas></div></div>
+      
+      <div id="tela-cierre" class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-8 flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Cierre de Caja</h1><div class="flex gap-2"><input type="date" id="filtro-data-inicio-cierre" class="bg-slate-50 border border-slate-300 p-2 rounded-lg text-slate-800 outline-none focus:border-brand-accent"><input type="date" id="filtro-data-fim-cierre" class="bg-slate-50 border border-slate-300 p-2 rounded-lg text-slate-800 outline-none focus:border-brand-accent"><button onclick="carregarCierreCaja()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold hover:bg-slate-700 transition">Filtrar</button></div></header><div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"><div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-inner"><p class="text-xs text-slate-500 font-bold uppercase">Ingresos</p><span id="cierre-vendas" class="font-extrabold text-slate-800 block text-2xl mt-1"></span></div><div class="bg-green-50 border border-green-200 p-5 rounded-2xl shadow-inner"><p class="text-xs text-green-700 font-bold uppercase">Ganancia Bruta (GP)</p><span id="cierre-gp" class="font-extrabold text-green-600 block text-2xl mt-1"></span></div><div class="bg-red-50 border border-red-200 p-5 rounded-2xl shadow-inner"><p class="text-xs text-red-700 font-bold uppercase">Salidas / Retiros</p><span id="cierre-sangrias" class="font-extrabold text-red-600 block text-2xl mt-1"></span></div><div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-inner"><p class="text-xs text-slate-500 font-bold uppercase">Cant. Notas</p><span id="cierre-notas" class="font-extrabold text-slate-800 block text-2xl mt-1"></span></div></div><div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left bg-white text-sm border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Fecha / Hora</th><th class="p-4 font-bold">Tipo</th><th class="p-4 font-bold text-right">Monto</th><th class="p-4 font-bold">Detalle</th></tr></thead><tbody id="tabela-cierre-itens" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-reportes" class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Historial SIFEN</h1></header><div class="flex bg-slate-50 rounded-xl border-2 border-slate-200 focus-within:border-brand-accent transition-all overflow-hidden mb-6"><span class="text-xl p-3 text-slate-400">🔎</span><input type="text" id="busca" placeholder="Buscar por CDC, Cliente o Fecha..." class="w-full bg-transparent p-3 text-slate-800 outline-none" onkeyup="if(event.key==='Enter') buscarNotas()"></div><div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left text-sm bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">CDC / Estado</th><th class="p-4 font-bold">Cliente</th><th class="p-4 font-bold text-right">Total</th><th class="p-4 font-bold text-center">Acciones</th></tr></thead><tbody id="tabela-historico" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-stocktake" class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 flex justify-between items-center border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-yellow-600">Stock Take (Auditoría)</h1><button onclick="salvarStockTake()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-3 font-bold rounded-xl shadow-md transition">Guardar Auditoría</button></header><input type="text" id="busca-st" placeholder="Filtrar producto por nombre o código..." class="w-full p-4 bg-slate-50 border border-slate-300 rounded-xl mb-6 text-slate-800 outline-none focus:border-yellow-500 transition" oninput="filtrarListaStockTake()"><div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left text-sm bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Producto</th><th class="p-4 font-bold text-center">Stock Sistema</th><th class="p-4 font-bold text-center">Conteo Físico</th><th class="p-4 font-bold text-center">Diferencia</th></tr></thead><tbody id="tabela-stocktake" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-variancia" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-8 flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Varianza de Stock</h1><div class="flex gap-2"><input type="date" id="filtro-data-inicio-var" class="bg-slate-50 border border-slate-300 p-2 rounded-lg text-slate-800 outline-none focus:border-brand-accent"><input type="date" id="filtro-data-fim-var" class="bg-slate-50 border border-slate-300 p-2 rounded-lg text-slate-800 outline-none focus:border-brand-accent"><button onclick="carregarRelatorioVariancia()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold hover:bg-slate-700 transition">Filtrar</button></div></header><div class="grid grid-cols-2 gap-6 mb-8"><div class="bg-red-50 border border-red-200 p-6 rounded-2xl text-center shadow-inner"><p class="text-xs text-red-600 font-bold uppercase mb-1">Impacto Financiero Total</p><p class="text-4xl font-extrabold text-red-600" id="var-impacto-total">0</p></div><div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl text-center shadow-inner"><p class="text-xs text-slate-500 font-bold uppercase mb-1">Unidades Perdidas</p><p class="text-4xl font-extrabold text-slate-800" id="var-unidades-total">0</p></div></div><div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left text-sm bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Fecha / Cód</th><th class="p-4 font-bold">Producto</th><th class="p-4 font-bold text-center">Tipo</th><th class="p-4 font-bold text-center">Unidades</th><th class="p-4 font-bold text-right">Impacto (Gs)</th></tr></thead><tbody id="tabela-variancia" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+      
+      <div id="tela-stocktakereport" class="max-w-5xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200 section-tela hidden"><header class="mb-6 border-b border-slate-100 pb-4"><h1 class="text-3xl font-extrabold text-slate-800">Reportes Históricos (Stock Take)</h1></header><div class="overflow-x-auto border border-slate-200 rounded-xl"><table class="w-full text-left text-sm bg-white border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"><tr><th class="p-4 font-bold">Fecha de Auditoría</th><th class="p-4 font-bold text-center">Ítems Auditados</th><th class="p-4 font-bold text-right">Impacto Financiero</th><th class="p-4 font-bold text-center">Acción</th></tr></thead><tbody id="tabela-stocktakereport" class="divide-y divide-slate-100 text-slate-700"></tbody></table></div></div>
+
+      <div id="tela-ayuda" class="max-w-4xl mx-auto section-tela hidden">
+        <header class="mb-8 border-b border-slate-200 pb-4">
+            <h1 class="text-3xl font-extrabold text-slate-800">Centro de Ayuda y Soporte</h1>
+            <p class="text-slate-500 mt-2">Encuentra respuestas rápidas o contáctanos directamente.</p>
+        </header>
+
+        <div class="bg-gradient-to-r from-green-500 to-green-400 rounded-3xl p-8 mb-8 flex flex-col md:flex-row justify-between items-center shadow-lg">
+            <div class="mb-6 md:mb-0">
+                <h2 class="text-2xl font-extrabold text-white mb-2">¿Necesitas ayuda urgente?</h2>
+                <p class="text-green-50 text-sm font-medium">Nuestro equipo de soporte está listo para asistirte vía WhatsApp.</p>
+            </div>
+            <a href="https://wa.me/595999000000" target="_blank" class="bg-white text-green-600 font-extrabold px-8 py-4 rounded-xl shadow-md hover:scale-105 transition-transform whitespace-nowrap">
+                💬 Escribir al Soporte
+            </a>
+        </div>
+
+        <h3 class="text-xl font-bold text-slate-800 mb-4">Guía de Navegación</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                <div class="text-brand-accent text-3xl mb-3">🛒</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Punto de Venta (Caja)</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Escanea o busca productos. Haz clic en "Ir al Pago" para emitir la Factura. Si necesitas anular una venta o bajar stock por daño, haz clic en el botón superior "Operaciones (NC / Mermas)" usando la clave de administrador.</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                <div class="text-brand-accent text-3xl mb-3">📦</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Inventario y Compras</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Usa "Productos" para crear ítems. Usa "Entrada (Compras)" para cargar facturas de tus proveedores y sumar stock automáticamente.</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                <div class="text-brand-accent text-3xl mb-3">🚚</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Nota de Remisión</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Genera el documento legal de transporte para tus choferes. Esta nota no descuenta el stock de tu inventario, solo avala el traslado.</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                <div class="text-brand-accent text-3xl mb-3">📈</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Reportes y Cierre</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">En "Ventas y Cierre" puedes ver tu ganancia real (GP) y cerrar el turno de la caja actual. Usa "Historial SIFEN" para reimprimir tickets o PDFs antiguos.</p>
+            </div>
+        </div>
+
+        <h3 class="text-xl font-bold text-slate-800 mb-4">Preguntas Frecuentes</h3>
+        <div class="space-y-3">
+            <details class="bg-white border border-slate-200 rounded-2xl group cursor-pointer shadow-sm">
+                <summary class="font-bold text-slate-800 p-5 flex justify-between items-center outline-none">
+                    ¿Qué pasa si me quedo sin internet?
+                    <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="p-5 pt-0 text-sm text-slate-500 border-t border-slate-100 mt-2 leading-relaxed">
+                    El sistema tiene un modo "Contingencia". Puedes seguir cobrando y el sistema guardará las ventas en una cola local. Cuando el internet regrese, las facturas se enviarán automáticamente a la SIFEN.
+                </div>
+            </details>
+
+            <details class="bg-white border border-slate-200 rounded-2xl group cursor-pointer shadow-sm">
+                <summary class="font-bold text-slate-800 p-5 flex justify-between items-center outline-none">
+                    ¿Cómo corrijo un error en el stock?
+                    <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="p-5 pt-0 text-sm text-slate-500 border-t border-slate-100 mt-2 leading-relaxed">
+                    Ve a <b>Inventario > Auditoría (Stock Take)</b>. Allí puedes contar los productos reales en tu estante y poner la cantidad correcta. El sistema calculará la diferencia y el impacto en dinero automáticamente.
+                </div>
+            </details>
+
+            <details class="bg-white border border-slate-200 rounded-2xl group cursor-pointer shadow-sm">
+                <summary class="font-bold text-slate-800 p-5 flex justify-between items-center outline-none">
+                    ¿Cómo registro un gasto o compra sin RUC?
+                    <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="p-5 pt-0 text-sm text-slate-500 border-t border-slate-100 mt-2 leading-relaxed">
+                    Ve a <b>Reportes > Emitir Autofactura</b>. Te permite justificar la salida de dinero de tu caja por servicios o compras informales, cumpliendo con las normativas del gobierno.
+                </div>
+            </details>
+        </div>
+      </div>
+
+      <div id="tela-config" class="max-w-4xl mx-auto bg-white p-10 rounded-3xl shadow-sm border border-slate-200 section-tela hidden transition-colors duration-200">
+        <header class="mb-8 border-b border-slate-200 pb-6">
+            <h1 class="text-3xl font-extrabold text-slate-800 flex items-center gap-3">
+                <svg class="w-8 h-8 stroke-brand-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                Ajustes Generales
+            </h1>
+        </header>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div class="space-y-5 md:border-r md:border-slate-200 md:pr-10">
+                <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-lg">Empresa y SIFEN</h3>
+                <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nombre Empresa</label><input type="text" id="conf-nome" class="w-full border border-slate-300 p-3 rounded-xl text-sm bg-slate-50 text-slate-800 focus:border-brand-accent outline-none focus:bg-white shadow-inner"></div>
+                <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">RUC Emisor</label><input type="text" id="conf-ruc" class="w-full border border-slate-200 p-3 rounded-xl text-sm bg-slate-100 text-slate-400 font-mono cursor-not-allowed" readonly></div>
+                <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Dirección</label><input type="text" id="conf-endereco" class="w-full border border-slate-300 p-3 rounded-xl text-sm bg-slate-50 text-slate-800 focus:border-brand-accent outline-none focus:bg-white shadow-inner"></div>
+                <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Código CSC (Seguridad)</label><input type="text" id="conf-csc" class="w-full border border-slate-300 p-3 rounded-xl text-sm bg-slate-50 text-slate-800 focus:border-brand-accent outline-none focus:bg-white shadow-inner"></div>
+                <div><label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Contraseña SIFEN (.p12)</label><input type="password" id="conf-senha-cert" class="w-full border border-slate-300 p-3 rounded-xl text-sm bg-slate-50 text-slate-800 focus:border-brand-accent outline-none focus:bg-white shadow-inner"></div>
+            </div>
+
+            <div class="space-y-5">
+                <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-2 text-lg">Integración de Pagos</h3>
+                <div class="bg-blue-50 border border-blue-200 p-5 rounded-2xl shadow-sm">
+                    <label class="text-xs font-bold text-blue-800 uppercase mb-2 block flex items-center gap-2"><svg class="w-5 h-5 stroke-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Mercado Pago Access Token</label>
+                    <input type="text" id="conf-mp-token" placeholder="APP_USR-..." class="w-full border border-blue-300 p-3 rounded-xl text-sm bg-white text-slate-800 focus:border-blue-500 outline-none font-mono shadow-inner mb-3">
+                    <button type="button" onclick="abrirModalTutorialMP()" class="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1">📘 ¿Cómo obtener mi Token?</button>
+                </div>
+
+                <div class="border-2 border-dashed border-brand-accent/40 p-6 rounded-2xl text-center bg-brand-accent/5 hover:border-brand-accent transition cursor-pointer mt-4">
+                    <svg class="w-12 h-12 stroke-brand-accent mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <p class="text-sm font-bold text-slate-700 mb-2">Certificado Digital (Firma)</p>
+                    <input type="file" id="arquivo-cert" accept=".p12,.pfx" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-brand-accent file:text-white file:font-bold hover:file:bg-brand-accentHover cursor-pointer mx-auto mt-2">
+                </div>
+                <button type="button" onclick="fazerUploadCertificado()" class="w-full bg-slate-800 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-slate-700 transition">Subir Archivo P12</button>
+            </div>
+        </div>
+
+        <button type="button" onclick="salvarConfiguracao()" class="w-full bg-brand-accent text-white font-extrabold py-5 mt-10 rounded-2xl hover:bg-brand-accentHover transition shadow-lg shadow-brand-accent/20 text-xl">Guardar Configuración General</button>
+
+        <div class="mt-10 pt-10 border-t border-slate-200">
+            <h3 class="text-xl font-bold text-slate-800 mb-5">Estado de Conexión SIFEN</h3>
+            <div class="flex flex-col md:flex-row items-center gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-inner">
+                <div class="flex-1"><p class="font-bold text-slate-800 text-lg">Ambiente de Emisión Actual</p><p class="text-sm text-slate-500 mt-1">Cambie a Producción solo cuando SET lo apruebe.</p></div>
+                <select id="conf-ambiente" onchange="alterarAmbienteSifen()" class="w-full md:w-auto border-2 border-brand-accent p-4 rounded-xl font-extrabold text-brand-accent outline-none bg-white shadow-sm cursor-pointer"><option value="testes">🟡 Entorno de Pruebas</option><option value="produccion">🟢 Entorno de Producción</option></select>
+            </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/app.js?v=2"></script>
 </body>
 </html>

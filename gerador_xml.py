@@ -1,43 +1,141 @@
-from lxml import etree
+import random
+from datetime import datetime
 
-def construir_xml_sifen(dados_nota):
-    # 1. Cria a tag principal do sistema SIFEN (rDE)
-    rDE = etree.Element("rDE", xmlns="http://ekuatia.set.gov.py/sifen/xsd")
-    
-    # 2. Versão do Formato
-    dVerFor = etree.SubElement(rDE, "dVerFor")
-    dVerFor.text = "150" 
-    
-    # 3. Bloco do Documento Eletrônico (DE)
-    DE = etree.SubElement(rDE, "DE")
-    
-    id_nota = etree.SubElement(DE, "Id")
-    id_nota.text = "01234567890123456789012345678901234567890123"
-    
-    # 4. Dados do Emissor
-    emissor = etree.SubElement(DE, "Emissor")
-    ruc_em = etree.SubElement(emissor, "dRucEm")
-    ruc_em.text = dados_nota.ruc_emissor
-    
-    # 5. Dados do Recebedor
-    recebedor = etree.SubElement(DE, "Recebedor")
-    nom_rec = etree.SubElement(recebedor, "dNomRec")
-    nom_rec.text = dados_nota.nome_cliente
-    
-    # 6. Totais e CÁLCULO INTELIGENTE DO IMPOSTO (IVA 10%)
-    totais = etree.SubElement(DE, "Totais")
-    val_tot = etree.SubElement(totais, "dTotOpe")
-    val_tot.text = str(dados_nota.valor_total)
+def calcular_dv_modulo11(numero_str):
+    soma = 0
+    peso = 2
+    for digito in reversed(numero_str):
+        soma += int(digito) * peso
+        peso += 1
+        if peso > 7:
+            peso = 2
+    resto = soma % 11
+    dv = 11 - resto
+    if dv >= 10: dv = 0
+    return str(dv)
 
-    # A matemática: Arredondamos para 2 casas decimais para evitar erros com centavos
-    valor_iva_calculado = round(dados_nota.valor_total / 11, 2)
-
-    # Criamos a tag de impostos que a Receita exige
-    impostos = etree.SubElement(totais, "Impostos")
-    iva_10 = etree.SubElement(impostos, "dIVA10")
-    iva_10.text = str(valor_iva_calculado)
-
-    # Converte para XML formatado
-    xml_string = etree.tostring(rDE, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8")
+def gerar_cdc_sifen(ruc_emissor, tipo_doc="01", estab="001", pex="001", numero_nota="0000001", data_emissao=None, tipo_emissao="1"):
+    if not data_emissao: data_emissao = datetime.now()
     
-    return xml_string
+    if "-" in ruc_emissor:
+        ruc_base, ruc_dv = ruc_emissor.split("-")
+    else:
+        ruc_base = ruc_emissor[:-1]
+        ruc_dv = ruc_emissor[-1]
+    
+    ruc_base = ruc_base.zfill(8)
+    tipo_contribuyente = "2" 
+    fecha_str = data_emissao.strftime("%Y%m%d")
+    codigo_aleatorio = str(random.randint(1, 999999999)).zfill(9)
+
+    cdc_43 = f"{tipo_doc}{ruc_base}{ruc_dv}{estab}{pex}{numero_nota}{tipo_contribuyente}{fecha_str}{tipo_emissao}{codigo_aleatorio}"
+    dv_cdc = calcular_dv_modulo11(cdc_43)
+    return f"{cdc_43}{dv_cdc}"
+
+def construir_xml_sifen(dados, config_empresa):
+    """
+    Constrói a árvore XML completa com base no Manual Técnico da SIFEN (V150)
+    """
+    cdc_real = gerar_cdc_sifen(dados.ruc_emissor)
+    csc = config_empresa.get("csc", "0000000000000000")
+    data_hora_atual = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+    
+    # Dados da Empresa
+    nome_empresa = config_empresa.get("nome_empresa", "Empresa S.A.")
+    if "-" in dados.ruc_emissor:
+        ruc_emissor_base, ruc_emissor_dv = dados.ruc_emissor.split("-")
+    else:
+        ruc_emissor_base = dados.ruc_emissor[:-1]
+        ruc_emissor_dv = dados.ruc_emissor[-1]
+        
+    # Dados do Cliente (Se não tiver RUC, assumimos Consumidor Final)
+    cliente_nome = dados.nome_cliente if dados.nome_cliente else "Consumidor Final"
+    
+    # 1. Montagem dos Itens (gCamItem) e somatórios
+    xml_itens = ""
+    total_iva = 0
+    
+    for i, item in enumerate(dados.itens, 1):
+        descricao = item.descricao
+        quantidade = item.quantidade
+        preco_unitario = item.preco_unitario
+        subtotal_item = quantidade * preco_unitario
+        iva_item = round(subtotal_item / 11, 2) # Cálculo padrão IVA 10%
+        total_iva += iva_item
+        
+        # Tag oficial de cada linha da fatura
+        xml_itens += f"""
+            <gCamItem>
+                <dTipOp>1</dTipOp>
+                <dCodInt>{item.codigo_barras or '000'}</dCodInt>
+                <dDesProSer>{descricao}</dDesProSer>
+                <dCantProSer>{quantidade}</dCantProSer>
+                <gValorItem>
+                    <dPUniProSer>{preco_unitario}</dPUniProSer>
+                    <dTotBruOpeItem>{subtotal_item}</dTotBruOpeItem>
+                </gValorItem>
+                <gCamIVA>
+                    <iAfecIVA>1</iAfecIVA>
+                    <dPropIVA>100</dPropIVA>
+                    <dTasaIVA>10</ddTasaIVA>
+                    <dLiqIVAItem>{iva_item}</dLiqIVAItem>
+                </gCamIVA>
+            </gCamItem>"""
+
+    # 2. Estrutura Raiz (rDE)
+    xml_bruto = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rDE xmlns="http://ekuatia.set.gov.py/sifen/xsd">
+    <dVerFor>150</dVerFor>
+    <DE Id="{cdc_real}">
+        <dDVId>{cdc_real[-1]}</dDVId>
+        <dFecFirma>{data_hora_atual}</dFecFirma>
+        <dSisFact>1</dSisFact>
+        <gOpeDE>
+            <iTipEmi>1</iTipEmi>
+            <dDesTipEmi>Normal</dDesTipEmi>
+            <dCodSeg>{csc}</dCodSeg>
+        </gOpeDE>
+        <gTimb>
+            <iTiDE>1</iTiDE>
+            <dNumTim>12345678</dNumTim>
+            <dEst>001</dEst>
+            <dPunExp>001</dPunExp>
+            <dNumDoc>0000001</dNumDoc>
+        </gTimb>
+        <gDatGralOpe>
+            <dFeEmiDE>{data_hora_atual}</dFeEmiDE>
+            <gEmis>
+                <dRucEm>{ruc_emissor_base}</dRucEm>
+                <dDVEmi>{ruc_emissor_dv}</dDVEmi>
+                <dNomEmi>{nome_empresa}</dNomEmi>
+            </gEmis>
+            <gDatRec>
+                <iNatRec>1</iNatRec>
+                <dNomRec>{cliente_nome}</dNomRec>
+            </gDatRec>
+        </gDatGralOpe>
+        <gDtipDE>
+            <gCamFE>
+                <iIndPres>1</iIndPres>
+            </gCamFE>
+        </gDtipDE>
+        <gTotSub>
+            <dSubExe>0</dSubExe>
+            <dSubExo>0</dSubExo>
+            <dSub5>0</dSub5>
+            <dSub10>{dados.valor_total}</dSub10>
+            <dTotOpe>{dados.valor_total}</dTotOpe>
+            <dTotGralOpe>{dados.valor_total}</dTotGralOpe>
+            <dIVA5>0</dIVA5>
+            <dIVA10>{total_iva}</dIVA10>
+            <dLiqTotIVA5>0</dLiqTotIVA5>
+            <dLiqTotIVA10>{total_iva}</dLiqTotIVA10>
+            <dTotalIVA>{total_iva}</dTotalIVA>
+        </gTotSub>
+        <gDetGral>
+            {xml_itens}
+        </gDetGral>
+    </DE>
+</rDE>"""
+    
+    return xml_bruto, cdc_real

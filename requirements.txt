@@ -1,6 +1,14 @@
 fastapi
 uvicorn
 pydantic
+qrcode
+reportlab
+python-multipart
+fpdf
+psycopg2-binary
+cryptography
+signxml
+lxml
+zeep
 requests
-qrcode[pil]
-fpdf2
+mercadopago==2.3.0
