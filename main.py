@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Header, Query
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Header, Query#
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
@@ -15,6 +16,13 @@ from conexao_sifen import enviar_xml_para_sifen
 import banco_dados
 
 app = FastAPI(title="NubePY SaaS - SIFEN")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # O asterisco permite que o seu novo domínio se conecte
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 if not os.path.exists("notas_pdf"): os.makedirs("notas_pdf")
 if not os.path.exists("certificados"): os.makedirs("certificados")
