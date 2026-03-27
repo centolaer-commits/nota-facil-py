@@ -159,6 +159,10 @@
         </div>
         <button type="button" id="btn-login" onclick="fazerLogin()" class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl hover:bg-brand-accentHover shadow-lg shadow-brand-accent/30 transition text-lg">Ingresar</button>
         <p id="erro-login" class="text-red-600 mt-4 text-sm font-bold hidden bg-red-50 p-3 rounded-lg border border-red-100">Error</p>
+        <p class="mt-6 text-xs text-slate-400">
+            Al ingresar, aceptas nuestro 
+            <button type="button" onclick="document.getElementById('modal-legal').classList.replace('hidden', 'flex')" class="text-brand-accent font-bold hover:underline">Acuerdo Marco y Términos Legales</button>.
+        </p>
     </div>
   </div>
 
