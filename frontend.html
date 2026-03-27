@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Nota Fácil PY - Emissor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h1 class="text-2xl font-bold text-blue-600 mb-6">Nota Fácil PY 🇵🇾</h1>
+            <div class="space-y-4">
+                <input type="text" id="ruc" value="80012345-6" class="w-full border p-2 rounded">
+                <input type="text" id="cliente" class="w-full border p-2 rounded" placeholder="Nome do Cliente">
+                <input type="number" id="valor" class="w-full border p-2 rounded" placeholder="Valor Total (Gs)">
+                <button onclick="emitirNota()" class="w-full bg-green-500 text-white font-bold py-3 rounded hover:bg-green-600">🚀 Emitir Nota</button>
+            </div>
+
+            <div id="resultado" class="mt-8 hidden border-t pt-6 text-center">
+                <h2 class="text-xl font-bold text-green-600">✅ Aprovada!</h2>
+                <img id="qrcode-img" src="" class="mx-auto mt-4 w-40 h-40 border p-2">
+                <a id="btn-pdf" href="#" target="_blank" class="inline-block mt-4 bg-red-500 text-white px-6 py-2 rounded font-bold hover:bg-red-600">📄 Baixar PDF da Nota</a>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">📊 Histórico</h2>
+            <div id="total-notas" class="text-blue-600 font-bold mb-4">0 Notas</div>
+            <div class="border rounded overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50"><tr><th class="p-2">Cliente</th><th class="p-2 text-right">Valor</th></tr></thead>
+                    <tbody id="tabela-historico"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function emitirNota() {
+            const res = await fetch('/emitir-nota', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ruc_emissor: document.getElementById('ruc').value,
+                    nome_cliente: document.getElementById('cliente').value,
+                    valor_total: parseFloat(document.getElementById('valor').value)
+                })
+            });
+            const dados = await res.json();
+            if (dados.link_qrcode) {
+                document.getElementById('resultado').classList.remove('hidden');
+                document.getElementById('qrcode-img').src = dados.link_qrcode;
+                document.getElementById('btn-pdf').href = dados.link_pdf; // Ativa o link do PDF!
+                carregarHistorico();
+            }
+        }
+
+        async function carregarHistorico() {
+            const res = await fetch('/listar-notas');
+            const dados = await res.json();
+            document.getElementById('total-notas').innerText = dados.total_notas_emitidas + " Notas";
+            const tbody = document.getElementById('tabela-historico');
+            tbody.innerHTML = '';
+            dados.historico.reverse().forEach(nota => {
+                tbody.innerHTML += `<tr class="border-t"><td class="p-2">${nota.nome_cliente}</td><td class="p-2 text-right">Gs. ${nota.valor_total.toLocaleString()}</td></tr>`;
+            });
+        }
+        window.onload = carregarHistorico;
+    </script>
+</body>
+</html>
