@@ -579,10 +579,7 @@ def listar_notas(busca: Optional[str] = "", inicio: Optional[str] = None, fim: O
 def api_cierre_caja(inicio: Optional[str] = None, fim: Optional[str] = None, x_empresa_id: int = Header(...)):
     return banco_dados.obter_fechamento_caixa(x_empresa_id, inicio, fim)
 
-@app.get("/painel")
-def abrir_painel():
-    return FileResponse("frontend.html")
-# Existing code...
+@app.get("/")
 @app.get("/painel")
 def abrir_painel():
     return FileResponse("frontend.html")
