@@ -239,6 +239,12 @@ def validar_admin(dados: ValidacaoAdmin, x_empresa_id: int = Header(...)):
         return {"sucesso": True}
     raise HTTPException(status_code=401, detail="Contraseña incorrecta")
 
+
+@app.get("/")
+async def root():
+    """Rota raiz - serve o sistema principal"""
+    return FileResponse("frontend.html", media_type="text/html")
+
 @app.get("/super-admin/empresas")
 def listar_todas_empresas():
     return banco_dados.listar_todas_empresas()
