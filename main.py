@@ -737,10 +737,9 @@ def get_logo_main():
 
 @app.get("/logo_icon.svg")
 def get_logo_icon():
+    return FileResponse("logo_icon.svg")
 
 @app.get("/demo")
 async def pagina_demo():
     """Serve a página HTML da demo"""
-    return FileResponse("demo.html", media_type="text/html")
-
-    return FileResponse("logo_icon.svg")        
+    return FileResponse("demo.html", media_type="text/html")        
