@@ -27,6 +27,12 @@ app.add_middleware(
 if not os.path.exists("notas_pdf"): os.makedirs("notas_pdf")
 if not os.path.exists("certificados"): os.makedirs("certificados")
 
+@app.on_event("startup")
+def startup_event():
+    """Injeta dados de demo no banco ao iniciar o servidor"""
+    banco_dados.injetar_dados_demo()
+    print("[STARTUP] Dados de demo verificados/injetados.")
+
 class DadosLogin(BaseModel):
     ruc: str
     senha: str

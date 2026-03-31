@@ -898,3 +898,51 @@ def obter_nota_por_cdc(empresa_id, cdc):
             "link_qrcode": linha[5], "metodo_pago": linha[6]
         }
     return None
+
+def injetar_dados_demo():
+    """Cria o usuário de teste público (RUC 9999999-9) e produtos de demo"""
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    
+    # Verificar se empresa demo já existe
+    cursor.execute("SELECT id FROM empresas WHERE ruc = %s", ('9999999-9',))
+    empresa = cursor.fetchone()
+    
+    if not empresa:
+        from datetime import date, timedelta
+        vencimento = date.today() + timedelta(days=365)
+        # Inserir empresa demo
+        cursor.execute('''
+            INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        ''', ('Usuário Público Demo', '9999999-9', 'demo123', 'demo123', 'Demo', 'Activo', vencimento, 0))
+        empresa_id = cursor.fetchone()[0]
+        
+        # Garantir categoria General para a empresa demo
+        cursor.execute("SELECT 1 FROM categorias WHERE empresa_id = %s AND nome = %s", (empresa_id, 'General'))
+        if not cursor.fetchone():
+            cursor.execute("INSERT INTO categorias (empresa_id, nome) VALUES (%s, %s)", (empresa_id, 'General'))
+        
+        # Injetar 3 produtos de teste
+        produtos_demo = [
+            ('ARR-001', 'Arroz Premium 1kg', 'General', '', 10000, 12500, 45, ''),
+            ('ACE-002', 'Aceite Girasol 900ml', 'General', '', 15000, 18500, 28, ''),
+            ('AZU-003', 'Azúcar Refinado 1kg', 'General', '', 7000, 8500, 62, '')
+        ]
+        
+        for cod, desc, cat, subcat, custo, venda, qtd, prov in produtos_demo:
+            cursor.execute('''
+                INSERT INTO produtos (empresa_id, codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (empresa_id, codigo_barras) DO NOTHING
+            ''', (empresa_id, cod, desc, cat, subcat, custo, venda, qtd, prov))
+        
+        conexao.commit()
+        print(f"[DEMO] Empresa demo criada (ID: {empresa_id}) com 3 produtos de teste.")
+    else:
+        empresa_id = empresa[0]
+        print(f"[DEMO] Empresa demo já existe (ID: {empresa_id}).")
+    
+    cursor.close()
+    conexao.close()
