@@ -931,22 +931,69 @@ def injetar_dados_demo():
             print(f"[DEMO] Empresa demo criada (ID: {empresa_id}).")
         
         # ========== LIMPEZA SELETIVA ==========
-        print(f"[DEMO] Limpando dados existentes para empresa ID {empresa_id}...")
+        print(f"[DEMO] LIMPEZA FORÇADA: Deletando todos os dados existentes para empresa ID {empresa_id}...")
+        
+        # Ordem segura considerando possíveis foreign keys
+        # 1. Notas (dependem apenas de empresa_id)
         cursor.execute("DELETE FROM notas WHERE empresa_id = %s", (empresa_id,))
+        print(f"[DEMO]   - Notas removidas: {cursor.rowcount}")
+        
+        # 2. Produtos (podem referenciar categorias e provedores)
         cursor.execute("DELETE FROM produtos WHERE empresa_id = %s", (empresa_id,))
-        cursor.execute("DELETE FROM proveedores WHERE empresa_id = %s", (empresa_id,))
+        print(f"[DEMO]   - Produtos removidos: {cursor.rowcount}")
+        
+        # 3. Categorias (referenciadas por produtos, mas já deletamos produtos)
         cursor.execute("DELETE FROM categorias WHERE empresa_id = %s", (empresa_id,))
+        print(f"[DEMO]   - Categorias removidas: {cursor.rowcount}")
+        
+        # 4. Provedores
+        cursor.execute("DELETE FROM proveedores WHERE empresa_id = %s", (empresa_id,))
+        print(f"[DEMO]   - Provedores removidos: {cursor.rowcount}")
+        
+        # 5. Outras tabelas (se existirem)
+        try:
+            cursor.execute("DELETE FROM compras WHERE empresa_id = %s", (empresa_id,))
+            print(f"[DEMO]   - Compras removidas: {cursor.rowcount}")
+        except:
+            pass
+        
+        try:
+            cursor.execute("DELETE FROM autofacturas WHERE empresa_id = %s", (empresa_id,))
+            print(f"[DEMO]   - Autofacturas removidas: {cursor.rowcount}")
+        except:
+            pass
+        
+        try:
+            cursor.execute("DELETE FROM mermas WHERE empresa_id = %s", (empresa_id,))
+            print(f"[DEMO]   - Mermas removidas: {cursor.rowcount}")
+        except:
+            pass
+        
+        try:
+            cursor.execute("DELETE FROM notas_credito WHERE empresa_id = %s", (empresa_id,))
+            print(f"[DEMO]   - Notas crédito removidas: {cursor.rowcount}")
+        except:
+            pass
+        
+        try:
+            cursor.execute("DELETE FROM notas_remision WHERE empresa_id = %s", (empresa_id,))
+            print(f"[DEMO]   - Notas remisión removidas: {cursor.rowcount}")
+        except:
+            pass
+        
         # Não deletar caixa_sessoes para manter estado aberto se existir
-        print(f"[DEMO] Dados antigos removidos.")
+        print(f"[DEMO] LIMPEZA FORÇADA CONCLUÍDA.")
         
         # ========== CATEGORIAS ==========
         categorias = ['General', 'Bebidas', 'Lácteos', 'Limpeza', 'Enlatados', 'Panadería', 'Carnes']
+        total_categorias = 0
         for cat in categorias:
             cursor.execute('''
                 INSERT INTO categorias (empresa_id, nome)
                 VALUES (%s, %s)
             ''', (empresa_id, cat))
-        print(f"[DEMO] {len(categorias)} categorias criadas.")
+            total_categorias += cursor.rowcount
+        print(f"[DEMO] {total_categorias}/{len(categorias)} categorias criadas.")
         
         # ========== PROVEDORES ==========
         provedores = [
@@ -957,12 +1004,14 @@ def injetar_dados_demo():
             ('Mayorista Py S.R.L.', '80056789-5', '021 678 901', 'pedidos@mayoristapy.com.py', 'Av. Brasília 456, Pedro Juan Caballero')
         ]
         
+        total_provedores = 0
         for nome, ruc, telefone, email, endereco in provedores:
             cursor.execute('''
                 INSERT INTO proveedores (empresa_id, nome, ruc, telefone, email, endereco)
                 VALUES (%s, %s, %s, %s, %s, %s)
             ''', (empresa_id, nome, ruc, telefone, email, endereco))
-        print(f"[DEMO] {len(provedores)} provedores criados.")
+            total_provedores += cursor.rowcount
+        print(f"[DEMO] {total_provedores}/{len(provedores)} provedores criados.")
         
         # ========== PRODUTOS ==========
         produtos = [
@@ -989,12 +1038,14 @@ def injetar_dados_demo():
             ('CAF-020', 'Café Molido 500g', 'Bebidas', '', 18000, 23500, 16)
         ]
         
+        total_produtos = 0
         for cod, desc, cat, subcat, custo, venda, qtd in produtos:
             cursor.execute('''
                 INSERT INTO produtos (empresa_id, codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, '')
             ''', (empresa_id, cod, desc, cat, subcat, custo, venda, qtd))
-        print(f"[DEMO] {len(produtos)} produtos criados.")
+            total_produtos += cursor.rowcount
+        print(f"[DEMO] {total_produtos}/{len(produtos)} produtos criados.")
         
         # ========== VENDAS (ÚLTIMOS 30 DIAS) ==========
         metodos_pago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Efectivo', 'Tarjeta']
@@ -1011,6 +1062,7 @@ def injetar_dados_demo():
         
         # Gerar 25 vendas nos últimos 30 dias
         hoje = datetime.now()
+        total_vendas = 0
         for i in range(25):
             # Data aleatória nos últimos 30 dias
             dias_atras = random.randint(0, 30)
@@ -1061,7 +1113,8 @@ def injetar_dados_demo():
                 data_venda,
                 metodo
             ))
-        print(f"[DEMO] 25 vendas históricas criadas.")
+            total_vendas += cursor.rowcount
+        print(f"[DEMO] {total_vendas}/25 vendas históricas criadas.")
         
         # ========== CAIXA ABERTO (PARA DEMO) ==========
         # Verificar se já existe uma sessão de caixa aberta
@@ -1077,11 +1130,11 @@ def injetar_dados_demo():
             print(f"[DEMO] Sessão de caixa aberta criada.")
         
         conexao.commit()
-        print(f"[DEMO] Dados de demo completos injetados com sucesso. Empresa ID: {empresa_id}")
-        print(f"[DEMO] - {len(categorias)} categorias")
-        print(f"[DEMO] - {len(provedores)} provedores")
-        print(f"[DEMO] - {len(produtos)} produtos")
-        print(f"[DEMO] - 25 vendas históricas")
+        print(f"[DEMO] ✅ Dados de demo completos injetados com sucesso. Empresa ID: {empresa_id}")
+        print(f"[DEMO]   - {total_categorias}/{len(categorias)} categorias")
+        print(f"[DEMO]   - {total_provedores}/{len(provedores)} provedores")
+        print(f"[DEMO]   - {total_produtos}/{len(produtos)} produtos")
+        print(f"[DEMO]   - {total_vendas}/25 vendas históricas")
         return empresa_id
         
     except Exception as e:
