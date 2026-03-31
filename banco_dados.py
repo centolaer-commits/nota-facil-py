@@ -930,14 +930,23 @@ def injetar_dados_demo():
             empresa_id = cursor.fetchone()[0]
             print(f"[DEMO] Empresa demo criada (ID: {empresa_id}).")
         
+        # ========== LIMPEZA SELETIVA ==========
+        print(f"[DEMO] Limpando dados existentes para empresa ID {empresa_id}...")
+        cursor.execute("DELETE FROM notas WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM produtos WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM proveedores WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM categorias WHERE empresa_id = %s", (empresa_id,))
+        # Não deletar caixa_sessoes para manter estado aberto se existir
+        print(f"[DEMO] Dados antigos removidos.")
+        
         # ========== CATEGORIAS ==========
         categorias = ['General', 'Bebidas', 'Lácteos', 'Limpeza', 'Enlatados', 'Panadería', 'Carnes']
         for cat in categorias:
             cursor.execute('''
                 INSERT INTO categorias (empresa_id, nome)
                 VALUES (%s, %s)
-                ON CONFLICT (empresa_id, nome) DO NOTHING
             ''', (empresa_id, cat))
+        print(f"[DEMO] {len(categorias)} categorias criadas.")
         
         # ========== PROVEDORES ==========
         provedores = [
@@ -952,8 +961,8 @@ def injetar_dados_demo():
             cursor.execute('''
                 INSERT INTO proveedores (empresa_id, nome, ruc, telefone, email, endereco)
                 VALUES (%s, %s, %s, %s, %s, %s)
-                ON CONFLICT (empresa_id, ruc) DO NOTHING
             ''', (empresa_id, nome, ruc, telefone, email, endereco))
+        print(f"[DEMO] {len(provedores)} provedores criados.")
         
         # ========== PRODUTOS ==========
         produtos = [
@@ -984,8 +993,8 @@ def injetar_dados_demo():
             cursor.execute('''
                 INSERT INTO produtos (empresa_id, codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, '')
-                ON CONFLICT (empresa_id, codigo_barras) DO NOTHING
             ''', (empresa_id, cod, desc, cat, subcat, custo, venda, qtd))
+        print(f"[DEMO] {len(produtos)} produtos criados.")
         
         # ========== VENDAS (ÚLTIMOS 30 DIAS) ==========
         metodos_pago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Efectivo', 'Tarjeta']
@@ -1052,6 +1061,7 @@ def injetar_dados_demo():
                 data_venda,
                 metodo
             ))
+        print(f"[DEMO] 25 vendas históricas criadas.")
         
         # ========== CAIXA ABERTO (PARA DEMO) ==========
         # Verificar se já existe uma sessão de caixa aberta
@@ -1064,6 +1074,7 @@ def injetar_dados_demo():
                 INSERT INTO caixa_sessoes (empresa_id, data_abertura, valor_abertura, status)
                 VALUES (%s, CURRENT_TIMESTAMP, 500000, 'ABERTO')
             ''', (empresa_id,))
+            print(f"[DEMO] Sessão de caixa aberta criada.")
         
         conexao.commit()
         print(f"[DEMO] Dados de demo completos injetados com sucesso. Empresa ID: {empresa_id}")
