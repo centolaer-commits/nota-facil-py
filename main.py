@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Header, Query#
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import os
@@ -735,8 +735,6 @@ def aprovar_pagamento(fatura_id: int):
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
-from fastapi.responses import FileResponse
-
 @app.get("/logo_main.svg")
 def get_logo_main():
     return FileResponse("logo_main.svg")
@@ -747,5 +745,69 @@ def get_logo_icon():
 
 @app.get("/demo")
 async def pagina_demo():
-    """Serve a página HTML da demo"""
-    return FileResponse("demo.html", media_type="text/html")        
+    """Login automático para demo e entrega do sistema completo"""
+    # Autenticar usuário demo programaticamente
+    resultado = banco_dados.autenticar_usuario('9999999-9', 'demo123')
+    if not resultado["sucesso"]:
+        # Fallback: criar dados demo se não existirem (segurança)
+        banco_dados.injetar_dados_demo()
+        resultado = banco_dados.autenticar_usuario('9999999-9', 'demo123')
+    
+    empresa_id = resultado["empresa_id"]
+    rol = resultado["rol"]
+    plano = resultado["plano"]
+    plano_primeira = plano.split(' ')[0]
+    
+    # Ler o frontend.html original
+    with open("frontend.html", "r", encoding="utf-8") as f:
+        html_content = f.read()
+    
+    # Script de autologin a ser injetado antes do fechamento do </body>
+    script_autologin = f"""
+    <script>
+        // Injeção automática de credenciais demo
+        document.addEventListener('DOMContentLoaded', function() {{
+            empresaAtualId = {empresa_id};
+            rolUsuario = '{rol}';
+            planoAtivo = '{plano}';
+            
+            // Esconder tela de login e mostrar aplicativo
+            const loginScreen = document.getElementById('login-screen');
+            if (loginScreen) loginScreen.classList.add('hidden');
+            
+            const appScreen = document.getElementById('app-screen');
+            if (appScreen) {{
+                appScreen.classList.remove('hidden');
+                appScreen.classList.add('flex');
+            }}
+            
+            const mobileHeader = document.getElementById('mobile-header');
+            if (mobileHeader) mobileHeader.classList.remove('hidden');
+            
+            const sidebarRol = document.getElementById('sidebar-rol-loja');
+            if (sidebarRol) sidebarRol.innerText = (rolUsuario === 'admin') ? 
+                `Dueño | Plan {plano_primeira}` : `Cajero | Plan {plano_primeira}`;
+            
+            // Mostrar todos os elementos de navegação
+            const idsTodos = ['nav-group-inventario','nav-btn-dashboard','nav-group-reportes',
+                'btn-nav-stocktake','btn-nav-stocktakereport','btn-nav-proveedores','btn-nav-entrada',
+                'btn-nav-remision','btn-nav-autofactura','btn-nav-variancia','nav-btn-config',
+                'nav-btn-ayuda','btn-cerrar-turno'];
+            idsTodos.forEach(id => {{
+                const el = document.getElementById(id);
+                if(el) el.style.display = '';
+            }});
+            
+            const boxNovoProv = document.getElementById('box-novo-prov');
+            if(boxNovoProv) boxNovoProv.style.display = 'block';
+            
+            console.log('[DEMO] Login automático realizado: Empresa ID', empresaAtualId, 'Rol', rolUsuario);
+        }});
+    </script>
+    </body>
+    """
+    
+    # Substituir o fechamento </body> pelo script + </body>
+    html_content = html_content.replace('</body>', script_autologin)
+    
+    return HTMLResponse(content=html_content, media_type="text/html")        
