@@ -931,26 +931,19 @@ def injetar_dados_demo():
             print(f"[DEMO] Empresa demo criada (ID: {empresa_id}).")
         
         # ========== LIMPEZA SELETIVA ==========
-        print(f"[DEMO] LIMPEZA FORÇADA: Deletando todos os dados existentes para empresa ID {empresa_id}...")
+        print(f"[DEMO] LIMPEZA FORÇADA: Deletando vendas e produtos existentes para empresa ID {empresa_id}...")
         
-        # Ordem segura considerando possíveis foreign keys
-        # 1. Notas (dependem apenas de empresa_id)
+        # 1. Notas (vendas)
         cursor.execute("DELETE FROM notas WHERE empresa_id = %s", (empresa_id,))
-        print(f"[DEMO]   - Notas removidas: {cursor.rowcount}")
+        notas_deleted = cursor.rowcount
+        print(f"[DEMO]   - Notas removidas: {notas_deleted}")
         
-        # 2. Produtos (podem referenciar categorias e provedores)
+        # 2. Produtos
         cursor.execute("DELETE FROM produtos WHERE empresa_id = %s", (empresa_id,))
-        print(f"[DEMO]   - Produtos removidos: {cursor.rowcount}")
+        produtos_deleted = cursor.rowcount
+        print(f"[DEMO]   - Produtos removidos: {produtos_deleted}")
         
-        # 3. Categorias (referenciadas por produtos, mas já deletamos produtos)
-        cursor.execute("DELETE FROM categorias WHERE empresa_id = %s", (empresa_id,))
-        print(f"[DEMO]   - Categorias removidas: {cursor.rowcount}")
-        
-        # 4. Provedores
-        cursor.execute("DELETE FROM proveedores WHERE empresa_id = %s", (empresa_id,))
-        print(f"[DEMO]   - Provedores removidos: {cursor.rowcount}")
-        
-        # 5. Outras tabelas (se existirem)
+        # 3. Outras tabelas (se existirem)
         try:
             cursor.execute("DELETE FROM compras WHERE empresa_id = %s", (empresa_id,))
             print(f"[DEMO]   - Compras removidas: {cursor.rowcount}")
@@ -981,8 +974,8 @@ def injetar_dados_demo():
         except:
             pass
         
-        # Não deletar caixa_sessoes para manter estado aberto se existir
-        print(f"[DEMO] LIMPEZA FORÇADA CONCLUÍDA.")
+        # NÃO deletar categorias e provedores (podem ter constraints únicas)
+        print(f"[DEMO] LIMPEZA FORÇADA CONCLUÍDA. Categorias e provedores mantidos.")
         
         # ========== CATEGORIAS ==========
         categorias = ['General', 'Bebidas', 'Lácteos', 'Limpeza', 'Enlatados', 'Panadería', 'Carnes']

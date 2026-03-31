@@ -928,23 +928,30 @@ def reset_demo():
             empresa_id = cursor.fetchone()[0]
             print(f"[RESET DEMO] Enterprise created (ID: {empresa_id})")
         
-        # 2. FORCE DELETE ALL DATA FOR THIS ENTERPRISE
-        print(f"[RESET DEMO] Deleting all existing data for enterprise {empresa_id}...")
+        # 2. FORCE DELETE ALL DATA FOR THIS ENTERPRISE (except categories and providers that might be shared)
+        print(f"[RESET DEMO] Deleting existing sales and products for enterprise {empresa_id}...")
         cursor.execute("DELETE FROM notas WHERE empresa_id = %s", (empresa_id,))
         notas_deleted = cursor.rowcount
         cursor.execute("DELETE FROM produtos WHERE empresa_id = %s", (empresa_id,))
         produtos_deleted = cursor.rowcount
-        cursor.execute("DELETE FROM categorias WHERE empresa_id = %s", (empresa_id,))
-        categorias_deleted = cursor.rowcount
-        cursor.execute("DELETE FROM proveedores WHERE empresa_id = %s", (empresa_id,))
-        provedores_deleted = cursor.rowcount
+        # Do NOT delete categories and providers; they might be shared or have constraints
+        categorias_deleted = 0
+        provedores_deleted = 0
         
-        # 3. Insert categories
-        categorias = ['General', 'Bebidas', 'Lácteos', 'Limpeza', 'Enlatados', 'Panadería', 'Carnes']
-        for cat in categorias:
-            cursor.execute('INSERT INTO categorias (empresa_id, nome) VALUES (%s, %s)', (empresa_id, cat))
+        # 3. Ensure categories exist (use ON CONFLICT to avoid duplicate key errors)
+        categorias_list = ['General', 'Bebidas', 'Lácteos', 'Limpeza', 'Enlatados', 'Panadería', 'Carnes']
+        categories_created = 0
+        for cat in categorias_list:
+            # Try to insert, if conflict (name already exists), do nothing
+            cursor.execute('''
+                INSERT INTO categorias (empresa_id, nome)
+                VALUES (%s, %s)
+                ON CONFLICT (nome) DO NOTHING
+            ''', (empresa_id, cat))
+            categories_created += cursor.rowcount
+        print(f"[RESET DEMO] Categories ensured: {categories_created} new, {len(categorias_list)-categories_created} already exist.")
         
-        # 4. Insert providers
+        # 4. Insert providers with ON CONFLICT
         provedores = [
             ('Distribuidora Central S.A.', '80012345-1', '021 234 567', 'ventas@distcentral.com.py', 'Av. Eusebio Ayala km 4.5, Asunción'),
             ('Importadora del Este S.R.L.', '80023456-2', '021 345 678', 'contacto@importeste.com.py', 'Av. España 1234, Ciudad del Este'),
@@ -952,11 +959,15 @@ def reset_demo():
             ('Alimentos Norte S.A.', '80045678-4', '021 567 890', 'ventas@alimentosnorte.com.py', 'Av. Perú 789, Concepción'),
             ('Mayorista Py S.R.L.', '80056789-5', '021 678 901', 'pedidos@mayoristapy.com.py', 'Av. Brasília 456, Pedro Juan Caballero')
         ]
+        providers_created = 0
         for nome, ruc, telefone, email, endereco in provedores:
             cursor.execute('''
                 INSERT INTO proveedores (empresa_id, nome, ruc, telefone, email, endereco)
                 VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (empresa_id, ruc) DO NOTHING
             ''', (empresa_id, nome, ruc, telefone, email, endereco))
+            providers_created += cursor.rowcount
+        print(f"[RESET DEMO] Providers ensured: {providers_created} new, {len(provedores)-providers_created} already exist.")
         
         # 5. Insert 20 products
         produtos = [
@@ -1066,8 +1077,10 @@ def reset_demo():
                 "provedores": provedores_deleted
             },
             "created": {
-                "categorias": len(categorias),
-                "provedores": len(provedores),
+                "categorias": categories_created,
+                "categorias_total": len(categorias_list),
+                "provedores": providers_created,
+                "provedores_total": len(provedores),
                 "produtos": len(produtos),
                 "vendas": 25
             }
