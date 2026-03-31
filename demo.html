@@ -3,9 +3,507 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NubePY Demo</title>
+    <title>NubePY Demo | Sandbox Interactivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { 
+                    colors: { 
+                        brand: { 
+                            primary: '#ffffff', 
+                            accent: '#0d9488', 
+                            accentHover: '#0f766e', 
+                            light: '#f8fafc' 
+                        } 
+                    } 
+                }
+            }
+        }
+    </script>
+    <style>
+        .menu-ativo { background-color: #f1f5f9; border-left: 4px solid #0d9488; color: #0d9488; font-weight: 700; }
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        .cart-item { border-bottom: 1px solid #e2e8f0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body>
-    <h1>Ambiente de Teste Iniciado</h1>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+    
+    <!-- Barra superior -->
+    <div class="bg-white shadow-sm border-b border-slate-200 p-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-brand-accent flex items-center justify-center text-white font-bold text-xl">N</div>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800">NubePY <span class="text-brand-accent">DEMO</span></h1>
+                <p class="text-xs text-slate-500">Ambiente de prueba - Datos estáticos simulados</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-bold border border-green-200">
+                🟢 Sesión Demo Activa
+            </div>
+            <div class="text-right">
+                <p class="text-sm text-slate-500">Tiempo restante</p>
+                <p class="font-bold text-slate-800">55:30 min</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row h-[calc(100vh-5rem)]">
+        
+        <!-- Sidebar de navegación -->
+        <div class="lg:w-64 bg-white border-r border-slate-200 p-6 flex flex-col justify-between">
+            <div>
+                <div class="mb-8">
+                    <h2 class="text-slate-500 text-sm font-bold uppercase mb-3">Navegación</h2>
+                    <nav class="space-y-2">
+                        <button class="menu-ativo w-full text-left p-3 rounded-xl hover:bg-slate-50 transition flex items-center gap-3">
+                            🛒 Punto de Venta
+                        </button>
+                        <button class="w-full text-left p-3 rounded-xl hover:bg-slate-50 transition flex items-center gap-3">
+                            📦 Inventario
+                        </button>
+                        <button class="w-full text-left p-3 rounded-xl hover:bg-slate-50 transition flex items-center gap-3">
+                            📊 Dashboard
+                        </button>
+                        <button class="w-full text-left p-3 rounded-xl hover:bg-slate-50 transition flex items-center gap-3">
+                            📈 Reportes
+                        </button>
+                        <button class="w-full text-left p-3 rounded-xl hover:bg-slate-50 transition flex items-center gap-3">
+                            ⚙️ Ajustes
+                        </button>
+                    </nav>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
+                    <h3 class="font-bold text-slate-800 mb-2">📋 Información de la Demo</h3>
+                    <p class="text-sm text-slate-600 mb-3">Esta es una simulación completa del sistema NubePY con datos estáticos. No se realizan llamadas a API ni conexiones a base de datos.</p>
+                    <ul class="text-xs text-slate-500 space-y-1">
+                        <li>✅ 3 productos de ejemplo</li>
+                        <li>✅ Carrinho interactivo</li>
+                        <li>✅ Simulación de cobro</li>
+                        <li>✅ Interfaz idéntica al sistema real</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-4">
+                <button onclick="window.location.href='https://nubepy.com'" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl transition mb-2">
+                    🌐 Volver al sitio web
+                </button>
+                <p class="text-xs text-center text-slate-400 mt-4">Demo limitada a 1 hora • Máx 10 transacciones</p>
+            </div>
+        </div>
+
+        <!-- Área principal - Punto de Venta -->
+        <div class="flex-1 p-6 overflow-y-auto">
+            <div class="max-w-6xl mx-auto">
+                
+                <!-- Encabezado del POS -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-3xl font-extrabold text-slate-800 mb-2">Punto de Venta - DEMO</h1>
+                            <p class="text-slate-500">Simulación interactiva del sistema de facturación electrónica</p>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                            <p class="text-sm text-slate-500 mb-1">Saldo en caja demo</p>
+                            <p class="text-3xl font-extrabold text-green-600">Gs. 1.250.000</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenido de dos columnas -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <!-- Columna izquierda - Productos -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-bold text-slate-800">📦 Productos Disponibles</h2>
+                                <div class="text-sm text-slate-500">3 productos estáticos</div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- Producto 1 -->
+                                <div class="product-card bg-white border border-slate-200 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:border-brand-accent"
+                                     onclick="agregarAlCarrito('001', 'Arroz Premium 1kg', 12500, 1)">
+                                    <div class="w-full h-40 bg-slate-100 rounded-lg mb-4 flex items-center justify-center">
+                                        <span class="text-4xl">🍚</span>
+                                    </div>
+                                    <h3 class="font-bold text-slate-800 text-lg mb-1">Arroz Premium 1kg</h3>
+                                    <p class="text-slate-500 text-sm mb-3">Alimento básico • Código: ARR-001</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-2xl font-extrabold text-slate-800">Gs. 12.500</span>
+                                        <button class="bg-brand-accent text-white p-2 rounded-lg hover:bg-brand-accentHover">
+                                            ➕ Agregar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Producto 2 -->
+                                <div class="product-card bg-white border border-slate-200 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:border-brand-accent"
+                                     onclick="agregarAlCarrito('002', 'Aceite Girasol 900ml', 18500, 1)">
+                                    <div class="w-full h-40 bg-slate-100 rounded-lg mb-4 flex items-center justify-center">
+                                        <span class="text-4xl">🫒</span>
+                                    </div>
+                                    <h3 class="font-bold text-slate-800 text-lg mb-1">Aceite Girasol 900ml</h3>
+                                    <p class="text-slate-500 text-sm mb-3">Aceite comestible • Código: ACE-002</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-2xl font-extrabold text-slate-800">Gs. 18.500</span>
+                                        <button class="bg-brand-accent text-white p-2 rounded-lg hover:bg-brand-accentHover">
+                                            ➕ Agregar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Producto 3 -->
+                                <div class="product-card bg-white border border-slate-200 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:border-brand-accent"
+                                     onclick="agregarAlCarrito('003', 'Azúcar Refinado 1kg', 8500, 1)">
+                                    <div class="w-full h-40 bg-slate-100 rounded-lg mb-4 flex items-center justify-center">
+                                        <span class="text-4xl">🍬</span>
+                                    </div>
+                                    <h3 class="font-bold text-slate-800 text-lg mb-1">Azúcar Refinado 1kg</h3>
+                                    <p class="text-slate-500 text-sm mb-3">Endulzante • Código: AZU-003</p>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-2xl font-extrabold text-slate-800">Gs. 8.500</span>
+                                        <button class="bg-brand-accent text-white p-2 rounded-lg hover:bg-brand-accentHover">
+                                            ➕ Agregar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 pt-6 border-t border-slate-200">
+                                <p class="text-sm text-slate-500 text-center">
+                                    En el sistema real, aquí aparecerían todos los productos de tu inventario, 
+                                    con búsqueda en tiempo real y gestión de stock.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Panel de información -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                            <h2 class="text-xl font-bold text-slate-800 mb-4">ℹ️ Características del Sistema Real</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-slate-50 p-4 rounded-xl">
+                                    <div class="text-2xl mb-2">🧾</div>
+                                    <h3 class="font-bold text-slate-800 mb-1">Facturación SIFEN</h3>
+                                    <p class="text-sm text-slate-600">Emisión automática de documentos tributarios electrónicos ante la SET.</p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-xl">
+                                    <div class="text-2xl mb-2">📱</div>
+                                    <h3 class="font-bold text-slate-800 mb-1">PIX Automático</h3>
+                                    <p class="text-sm text-slate-600">Cobros instantáneos vía PIX Brasil con aprobación automática en pantalla.</p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-xl">
+                                    <div class="text-2xl mb-2">📊</div>
+                                    <h3 class="font-bold text-slate-800 mb-1">Dashboard en Tiempo Real</h3>
+                                    <p class="text-sm text-slate-600">Métricas de ventas, stock y desempeño financiero actualizadas al instante.</p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-xl">
+                                    <div class="text-2xl mb-2">⚡</div>
+                                    <h3 class="font-bold text-slate-800 mb-1">Multi-dispositivo</h3>
+                                    <p class="text-sm text-slate-600">Acceso desde celular, tablet o computadora con sincronización automática.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna derecha - Carrinho y cobro -->
+                    <div class="lg:col-span-1">
+                        <!-- Carrinho de compras -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+                            <h2 class="text-xl font-bold text-slate-800 mb-4">🛒 Carrinho de Compra</h2>
+                            
+                            <div id="lista-carrito" class="mb-6 max-h-80 overflow-y-auto no-scrollbar">
+                                <!-- Los ítems del carrito aparecerán aquí -->
+                                <div id="carrito-vacio" class="text-center py-8 text-slate-400">
+                                    <div class="text-5xl mb-4">🛒</div>
+                                    <p class="font-bold text-slate-500">Tu carrito está vacío</p>
+                                    <p class="text-sm text-slate-400 mt-2">Haz clic en los productos para agregarlos</p>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-slate-200 pt-4">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-slate-600">Subtotal</span>
+                                    <span class="font-bold text-slate-800">Gs. <span id="subtotal">0</span></span>
+                                </div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-slate-600">IVA (10%)</span>
+                                    <span class="font-bold text-slate-800">Gs. <span id="iva">0</span></span>
+                                </div>
+                                <div class="flex justify-between mb-4 text-lg font-bold">
+                                    <span class="text-slate-800">Total a Cobrar</span>
+                                    <span class="text-brand-accent">Gs. <span id="total">0</span></span>
+                                </div>
+
+                                <button onclick="simularCobro()" 
+                                        class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl hover:bg-brand-accentHover transition text-lg shadow-lg shadow-brand-accent/20">
+                                    💳 Simular Cobro
+                                </button>
+                                
+                                <button onclick="vaciarCarrito()" 
+                                        class="w-full bg-slate-100 text-slate-800 font-bold py-3 rounded-xl hover:bg-slate-200 transition mt-3">
+                                    🗑️ Vaciar Carrito
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Panel de cobro simulado -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                            <h2 class="text-xl font-bold text-slate-800 mb-4">💰 Simulación de Cobro</h2>
+                            
+                            <div class="bg-slate-50 p-4 rounded-xl mb-4">
+                                <p class="text-sm text-slate-500 mb-2">Monto a cobrar</p>
+                                <p class="text-4xl font-extrabold text-brand-accent text-center">Gs. <span id="monto-cobro">0</span></p>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="text-sm font-bold text-slate-600 block mb-2">Método de pago</label>
+                                <select id="metodo-pago" class="w-full border border-slate-300 p-3 rounded-lg bg-white">
+                                    <option value="efectivo">💵 Efectivo (Guaraníes)</option>
+                                    <option value="tarjeta">💳 Tarjeta (POS)</option>
+                                    <option value="transferencia">📱 Transferencia Bancaria PY</option>
+                                    <option value="pix">💠 PIX Automático (Brasil)</option>
+                                </select>
+                            </div>
+
+                            <div id="panel-efectivo" class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                                <label class="text-sm font-bold text-slate-600 block mb-2">Monto recibido</label>
+                                <input type="number" id="monto-recibido" placeholder="0" 
+                                       class="w-full border border-blue-300 p-3 rounded-lg text-xl font-bold text-center bg-white text-slate-800"
+                                       oninput="calcularVuelto()">
+                                <div class="mt-3">
+                                    <p class="text-sm text-slate-500">Vuelto</p>
+                                    <p class="text-2xl font-extrabold text-green-600">Gs. <span id="vuelto">0</span></p>
+                                </div>
+                            </div>
+
+                            <div id="panel-pix" class="bg-green-50 border border-green-200 rounded-xl p-4 mb-4 hidden">
+                                <p class="text-sm text-slate-600 mb-2">🔗 En el sistema real:</p>
+                                <ul class="text-xs text-slate-500 space-y-1">
+                                    <li>• Se genera código PIX instantáneo</li>
+                                    <li>• Cliente escanea con su banco</li>
+                                    <li>• Aprobación automática en pantalla</li>
+                                    <li>• Factura SIFEN emitida automáticamente</li>
+                                </ul>
+                            </div>
+
+                            <button onclick="finalizarVenta()" 
+                                    class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 transition text-lg shadow-lg shadow-green-600/20">
+                                ✅ Finalizar Venta Demo
+                            </button>
+
+                            <p class="text-xs text-center text-slate-400 mt-4">
+                                Esta simulación no emite facturas reales ni procesa pagos.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pie de página informativo -->
+                <div class="mt-8 bg-white border border-slate-200 rounded-2xl p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-slate-800 mb-2">¿Listo para implementar NubePY en tu negocio?</h3>
+                            <p class="text-slate-600">Esta demo muestra solo una fracción de las capacidades del sistema completo.</p>
+                        </div>
+                        <div class="mt-4 md:mt-0">
+                            <a href="https://nubepy.com" 
+                               class="bg-brand-accent text-white font-bold px-8 py-3 rounded-xl hover:bg-brand-accentHover transition inline-block">
+                                📞 Contactar para una demo personalizada
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de interacción DEMO -->
+    <script>
+        // Variables del carrito
+        let carrito = [];
+        let subtotal = 0;
+        let iva = 0;
+        let total = 0;
+
+        // Actualizar display de montos
+        function actualizarMontos() {
+            subtotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            iva = Math.round(subtotal * 0.10);
+            total = subtotal + iva;
+
+            document.getElementById('subtotal').textContent = subtotal.toLocaleString();
+            document.getElementById('iva').textContent = iva.toLocaleString();
+            document.getElementById('total').textContent = total.toLocaleString();
+            document.getElementById('monto-cobro').textContent = total.toLocaleString();
+
+            // Mostrar/ocultar carrito vacío
+            if (carrito.length > 0) {
+                document.getElementById('carrito-vacio').classList.add('hidden');
+            } else {
+                document.getElementById('carrito-vacio').classList.remove('hidden');
+            }
+
+            // Actualizar panel de efectivo
+            calcularVuelto();
+        }
+
+        // Agregar producto al carrito
+        function agregarAlCarrito(id, nombre, precio, cantidad) {
+            const itemExistente = carrito.find(item => item.id === id);
+            
+            if (itemExistente) {
+                itemExistente.cantidad += cantidad;
+            } else {
+                carrito.push({ id, nombre, precio, cantidad });
+            }
+
+            actualizarMontos();
+            renderizarCarrito();
+        }
+
+        // Renderizar carrito en pantalla
+        function renderizarCarrito() {
+            const contenedor = document.getElementById('lista-carrito');
+            
+            // Limpiar contenedor
+            contenedor.innerHTML = '';
+
+            if (carrito.length === 0) {
+                contenedor.innerHTML = `
+                    <div id="carrito-vacio" class="text-center py-8 text-slate-400">
+                        <div class="text-5xl mb-4">🛒</div>
+                        <p class="font-bold text-slate-500">Tu carrito está vacío</p>
+                        <p class="text-sm text-slate-400 mt-2">Haz clic en los productos para agregarlos</p>
+                    </div>
+                `;
+                return;
+            }
+
+            carrito.forEach(item => {
+                const itemHTML = `
+                    <div class="cart-item p-3 hover:bg-slate-50 rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-bold text-slate-800">${item.nombre}</h4>
+                                <p class="text-sm text-slate-500">Gs. ${item.precio.toLocaleString()} c/u</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="cambiarCantidad('${item.id}', -1)" 
+                                            class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center hover:bg-slate-200">
+                                        −
+                                    </button>
+                                    <span class="font-bold w-8 text-center">${item.cantidad}</span>
+                                    <button onclick="cambiarCantidad('${item.id}', 1)" 
+                                            class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center hover:bg-slate-200">
+                                        +
+                                    </button>
+                                </div>
+                                <span class="font-bold text-slate-800 w-20 text-right">
+                                    Gs. ${(item.precio * item.cantidad).toLocaleString()}
+                                </span>
+                                <button onclick="eliminarDelCarrito('${item.id}')" 
+                                        class="text-red-500 hover:text-red-700 p-1">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                contenedor.innerHTML += itemHTML;
+            });
+        }
+
+        // Cambiar cantidad de un ítem
+        function cambiarCantidad(id, delta) {
+            const item = carrito.find(item => item.id === id);
+            if (item) {
+                item.cantidad += delta;
+                if (item.cantidad < 1) {
+                    eliminarDelCarrito(id);
+                } else {
+                    actualizarMontos();
+                    renderizarCarrito();
+                }
+            }
+        }
+
+        // Eliminar ítem del carrito
+        function eliminarDelCarrito(id) {
+            carrito = carrito.filter(item => item.id !== id);
+            actualizarMontos();
+            renderizarCarrito();
+        }
+
+        // Vaciar carrito
+        function vaciarCarrito() {
+            carrito = [];
+            actualizarMontos();
+            renderizarCarrito();
+        }
+
+        // Calcular vuelto
+        function calcularVuelto() {
+            const recibido = parseFloat(document.getElementById('monto-recibido').value) || 0;
+            const vuelto = Math.max(0, recibido - total);
+            document.getElementById('vuelto').textContent = vuelto.toLocaleString();
+        }
+
+        // Simular cobro
+        function simularCobro() {
+            if (carrito.length === 0) {
+                alert('⚠️ Agrega productos al carrito primero');
+                return;
+            }
+
+            alert(`💸 Simulación de cobro:\nTotal: Gs. ${total.toLocaleString()}\n\nEn el sistema real, se emitiría una factura SIFEN y se procesaría el pago.`);
+        }
+
+        // Finalizar venta
+        function finalizarVenta() {
+            if (carrito.length === 0) {
+                alert('El carrito está vacío');
+                return;
+            }
+
+            const metodo = document.getElementById('metodo-pago').value;
+            
+            let mensaje = `✅ VENTA DEMO FINALIZADA\n`;
+            mensaje += `Productos: ${carrito.length}\n`;
+            mensaje += `Total: Gs. ${total.toLocaleString()}\n`;
+            mensaje += `Método: ${document.getElementById('metodo-pago').selectedOptions[0].text}\n\n`;
+            mensaje += `En el sistema real:\n`;
+            mensaje += `• Factura SIFEN emitida automáticamente\n`;
+            mensaje += `• Stock actualizado en tiempo real\n`;
+            mensaje += `• Registro en historial de ventas\n`;
+            mensaje += `• Dashboard actualizado al instante`;
+
+            alert(mensaje);
+            
+            // Resetear carrito después de venta
+            vaciarCarrito();
+        }
+
+        // Cambiar visibilidad de paneles de pago
+        document.getElementById('metodo-pago').addEventListener('change', function() {
+            const metodo = this.value;
+            document.getElementById('panel-efectivo').classList.toggle('hidden', metodo !== 'efectivo');
+            document.getElementById('panel-pix').classList.toggle('hidden', metodo !== 'pix');
+        });
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            actualizarMontos();
+            calcularVuelto();
+        });
+    </script>
+
 </body>
 </html>
