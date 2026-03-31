@@ -502,7 +502,7 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
     try:
         if caminho_cert and os.path.exists(caminho_cert) and senha_cert:
             xml_final_assinado = assinar_documento(xml_bruto, caminho_cert, senha_cert)
-            retorno_sifen = enviar_xml_para_sifen(xml_final_assinado, caminho_cert, senha_cert, ambiente)
+            retorno_sifen = enviar_xml_para_sifen(xml_final_assinado, caminho_cert, senha_cert, ambiente, ruc_emissor=config['ruc'])
             
             if retorno_sifen["sucesso"]:
                 status_sifen = f"Aprobado (Cod: {retorno_sifen.get('codigo_retorno', 'OK')})"

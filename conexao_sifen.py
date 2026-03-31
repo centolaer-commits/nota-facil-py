@@ -32,8 +32,18 @@ def extrair_certificados_temporarios(caminho_p12, senha):
         
     return cert_path, key_path
 
-def enviar_xml_para_sifen(xml_assinado, caminho_p12, senha, ambiente="testes"):
+def enviar_xml_para_sifen(xml_assinado, caminho_p12, senha, ambiente="testes", ruc_emissor=None):
     """Envia o XML para a SIFEN usando SOAP e mTLS"""
+    
+    # Escudo SIFEN: usuário demo nunca envia dados reais para a SET
+    if ruc_emissor == "9999999-9":
+        print(f"[SIFEN DEMO] Bloqueio de envio real para usuário demo (RUC {ruc_emissor})")
+        return {
+            "sucesso": True,
+            "codigo_retorno": "0000",
+            "mensagem_retorno": "Simulación exitosa (Modo Demo)",
+            "raw_response": "DEMO-MOCK"
+        }
     
     # URLs oficiais baseadas no manual
     if ambiente == "produccion":
