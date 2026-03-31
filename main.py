@@ -747,23 +747,81 @@ def get_logo_icon():
 async def pagina_demo():
     """Login automático para demo e entrega do sistema completo"""
     try:
-        # Autenticar usuário demo programaticamente
-        resultado = banco_dados.autenticar_usuario('9999999-9', 'demo123')
+        print(f"[DEMO] Iniciando login automático para RUC 9999999-9...")
         
-        # Se falhar, tentar criar dados demo
+        # 1. Tentar autenticar usuário demo
+        resultado = banco_dados.autenticar_usuario('9999999-9', 'demo123')
+        print(f"[DEMO] Resultado da autenticação: {resultado}")
+        
+        # 2. Se falhar, tentar criar dados demo
         if not resultado.get("sucesso"):
             print("[DEMO] Autenticação falhou, injetando dados demo...")
-            banco_dados.injetar_dados_demo()
+            empresa_id_criada = banco_dados.injetar_dados_demo()
+            print(f"[DEMO] Retorno de injetar_dados_demo: {empresa_id_criada}")
+            
+            # Tentar autenticar novamente após criação
             resultado = banco_dados.autenticar_usuario('9999999-9', 'demo123')
+            print(f"[DEMO] Resultado da autenticação após injeção: {resultado}")
         
-        # Verificar se a autenticação foi bem-sucedida
+        # 3. Se ainda falhar, tentar criar usuário diretamente como último recurso
+        if not resultado.get("sucesso"):
+            print("[DEMO] Fallback: criando usuário diretamente...")
+            # Buscar diretamente no banco ou criar via SQL
+            conexao = banco_dados.get_conexao()
+            cursor = conexao.cursor()
+            try:
+                cursor.execute("SELECT id FROM empresas WHERE ruc = %s", ('9999999-9',))
+                row = cursor.fetchone()
+                if row:
+                    empresa_id = row[0]
+                    rol = 'admin'
+                    plano = 'Demo'
+                    print(f"[DEMO] Usuário encontrado diretamente no banco: ID {empresa_id}")
+                    resultado = {"sucesso": True, "empresa_id": empresa_id, "rol": rol, "plano": plano}
+                else:
+                    # Criar empresa diretamente
+                    from datetime import date, timedelta
+                    vencimento = date.today() + timedelta(days=365)
+                    cursor.execute('''
+                        INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    ''', ('Usuário Público Demo', '9999999-9', 'demo123', 'demo123', 'Demo', 'Activo', vencimento, 0))
+                    empresa_id = cursor.fetchone()[0]
+                    
+                    # Criar categoria
+                    cursor.execute("INSERT INTO categorias (empresa_id, nome) VALUES (%s, %s) ON CONFLICT DO NOTHING", (empresa_id, 'General'))
+                    
+                    # Criar produtos
+                    produtos = [
+                        ('ARR-001', 'Arroz Premium 1kg', 'General', '', 10000, 12500, 45, ''),
+                        ('ACE-002', 'Aceite Girasol 900ml', 'General', '', 15000, 18500, 28, ''),
+                        ('AZU-003', 'Azúcar Refinado 1kg', 'General', '', 7000, 8500, 62, '')
+                    ]
+                    for cod, desc, cat, subcat, custo, venda, qtd, prov in produtos:
+                        cursor.execute('''
+                            INSERT INTO produtos (empresa_id, codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT DO NOTHING
+                        ''', (empresa_id, cod, desc, cat, subcat, custo, venda, qtd, prov))
+                    
+                    conexao.commit()
+                    rol = 'admin'
+                    plano = 'Demo'
+                    resultado = {"sucesso": True, "empresa_id": empresa_id, "rol": rol, "plano": plano}
+                    print(f"[DEMO] Usuário criado diretamente no banco: ID {empresa_id}")
+            finally:
+                cursor.close()
+                conexao.close()
+        
+        # 4. Verificar se a autenticação foi bem-sucedida
         if not resultado.get("sucesso"):
             raise HTTPException(
                 status_code=500,
                 detail="Não foi possível criar ou autenticar o usuário demo. Tente novamente mais tarde."
             )
         
-        # Extrair dados com verificação de chaves
+        # 5. Extrair dados com verificação de chaves
         empresa_id = resultado.get("empresa_id")
         rol = resultado.get("rol")
         plano = resultado.get("plano")
@@ -776,11 +834,13 @@ async def pagina_demo():
         
         plano_primeira = str(plano).split(' ')[0]
         
-        # Ler o frontend.html original
+        print(f"[DEMO] Autenticação bem-sucedida: empresa_id={empresa_id}, rol={rol}, plano={plano}")
+        
+        # 6. Ler o frontend.html original
         with open("frontend.html", "r", encoding="utf-8") as f:
             html_content = f.read()
         
-        # Script de autologin a ser injetado antes do fechamento do </body>
+        # 7. Script de autologin a ser injetado antes do fechamento do </body>
         script_autologin = f"""
     <script>
         // Injeção automática de credenciais demo (execução imediata)

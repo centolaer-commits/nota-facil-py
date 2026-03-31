@@ -901,6 +901,8 @@ def obter_nota_por_cdc(empresa_id, cdc):
 
 def injetar_dados_demo():
     """Cria o usuário de teste público (RUC 9999999-9) e produtos de demo"""
+    conexao = None
+    cursor = None
     try:
         conexao = get_conexao()
         cursor = conexao.cursor()
@@ -908,25 +910,25 @@ def injetar_dados_demo():
         from datetime import date, timedelta
         vencimento = date.today() + timedelta(days=365)
         
-        # Inserir empresa demo com ON CONFLICT seguro
-        cursor.execute('''
-            INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (ruc) DO NOTHING
-            RETURNING id
-        ''', ('Usuário Público Demo', '9999999-9', 'demo123', 'demo123', 'Demo', 'Activo', vencimento, 0))
+        # Verificar se empresa demo já existe
+        cursor.execute("SELECT id FROM empresas WHERE ruc = %s", ('9999999-9',))
+        existing = cursor.fetchone()
         
-        result = cursor.fetchone()
-        if result:
-            empresa_id = result[0]
-            print(f"[DEMO] Empresa demo criada (ID: {empresa_id}).")
-        else:
-            # Empresa já existe, obter ID
-            cursor.execute("SELECT id FROM empresas WHERE ruc = %s", ('9999999-9',))
-            empresa_id = cursor.fetchone()[0]
+        if existing:
+            empresa_id = existing[0]
             print(f"[DEMO] Empresa demo já existe (ID: {empresa_id}).")
+        else:
+            # Inserir empresa demo
+            cursor.execute('''
+                INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            ''', ('Usuário Público Demo', '9999999-9', 'demo123', 'demo123', 'Demo', 'Activo', vencimento, 0))
+            
+            empresa_id = cursor.fetchone()[0]
+            print(f"[DEMO] Empresa demo criada (ID: {empresa_id}).")
         
-        # Garantir categoria General para a empresa demo com ON CONFLICT
+        # Garantir categoria General para a empresa demo
         cursor.execute('''
             INSERT INTO categorias (empresa_id, nome)
             VALUES (%s, %s)
@@ -948,13 +950,17 @@ def injetar_dados_demo():
             ''', (empresa_id, cod, desc, cat, subcat, custo, venda, qtd, prov))
         
         conexao.commit()
-        print(f"[DEMO] Dados de demo verificados/injetados com sucesso.")
+        print(f"[DEMO] Dados de demo verificados/injetados com sucesso. Empresa ID: {empresa_id}")
+        return empresa_id
         
     except Exception as e:
         print(f"[DEMO ERRO] {e}")
+        if conexao:
+            conexao.rollback()
         # Não propaga o erro para não crashar o servidor
+        return None
     finally:
-        if 'cursor' in locals():
+        if cursor:
             cursor.close()
-        if 'conexao' in locals():
+        if conexao:
             conexao.close()
