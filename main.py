@@ -765,44 +765,42 @@ async def pagina_demo():
     # Script de autologin a ser injetado antes do fechamento do </body>
     script_autologin = f"""
     <script>
-        // Injeção automática de credenciais demo
-        document.addEventListener('DOMContentLoaded', function() {{
-            empresaAtualId = {empresa_id};
-            rolUsuario = '{rol}';
-            planoAtivo = '{plano}';
-            
-            // Esconder tela de login e mostrar aplicativo
-            const loginScreen = document.getElementById('login-screen');
-            if (loginScreen) loginScreen.classList.add('hidden');
-            
-            const appScreen = document.getElementById('app-screen');
-            if (appScreen) {{
-                appScreen.classList.remove('hidden');
-                appScreen.classList.add('flex');
-            }}
-            
-            const mobileHeader = document.getElementById('mobile-header');
-            if (mobileHeader) mobileHeader.classList.remove('hidden');
-            
-            const sidebarRol = document.getElementById('sidebar-rol-loja');
-            if (sidebarRol) sidebarRol.innerText = (rolUsuario === 'admin') ? 
-                `Dueño | Plan {plano_primeira}` : `Cajero | Plan {plano_primeira}`;
-            
-            // Mostrar todos os elementos de navegação
-            const idsTodos = ['nav-group-inventario','nav-btn-dashboard','nav-group-reportes',
-                'btn-nav-stocktake','btn-nav-stocktakereport','btn-nav-proveedores','btn-nav-entrada',
-                'btn-nav-remision','btn-nav-autofactura','btn-nav-variancia','nav-btn-config',
-                'nav-btn-ayuda','btn-cerrar-turno'];
-            idsTodos.forEach(id => {{
-                const el = document.getElementById(id);
-                if(el) el.style.display = '';
-            }});
-            
-            const boxNovoProv = document.getElementById('box-novo-prov');
-            if(boxNovoProv) boxNovoProv.style.display = 'block';
-            
-            console.log('[DEMO] Login automático realizado: Empresa ID', empresaAtualId, 'Rol', rolUsuario);
+        // Injeção automática de credenciais demo (execução imediata)
+        empresaAtualId = {empresa_id};
+        rolUsuario = '{rol}';
+        planoAtivo = '{plano}';
+        
+        // Esconder tela de login e mostrar aplicativo
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) loginScreen.classList.add('hidden');
+        
+        const appScreen = document.getElementById('app-screen');
+        if (appScreen) {{
+            appScreen.classList.remove('hidden');
+            appScreen.classList.add('flex');
+        }}
+        
+        const mobileHeader = document.getElementById('mobile-header');
+        if (mobileHeader) mobileHeader.classList.remove('hidden');
+        
+        const sidebarRol = document.getElementById('sidebar-rol-loja');
+        if (sidebarRol) sidebarRol.innerText = (rolUsuario === 'admin') ? 
+            `Dueño | Plan {plano_primeira}` : `Cajero | Plan {plano_primeira}`;
+        
+        // Mostrar todos os elementos de navegação
+        const idsTodos = ['nav-group-inventario','nav-btn-dashboard','nav-group-reportes',
+            'btn-nav-stocktake','btn-nav-stocktakereport','btn-nav-proveedores','btn-nav-entrada',
+            'btn-nav-remision','btn-nav-autofactura','btn-nav-variancia','nav-btn-config',
+            'nav-btn-ayuda','btn-cerrar-turno'];
+        idsTodos.forEach(id => {{
+            const el = document.getElementById(id);
+            if(el) el.style.display = '';
         }});
+        
+        const boxNovoProv = document.getElementById('box-novo-prov');
+        if(boxNovoProv) boxNovoProv.style.display = 'block';
+        
+        console.log('[DEMO] Login automático realizado: Empresa ID', empresaAtualId, 'Rol', rolUsuario);
     </script>
     </body>
     """
