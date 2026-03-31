@@ -895,4 +895,196 @@ async def pagina_demo():
         raise HTTPException(
             status_code=500,
             detail=f"Erro interno na preparação da demo: {str(e)}"
-        )        
+        )
+
+@app.get("/reset-demo")
+def reset_demo():
+    """Manual trigger to rebuild the demo showroom with 5 providers, 20 products, 25 sales"""
+    import json
+    import random
+    from datetime import datetime, date, timedelta
+    
+    conexao = None
+    cursor = None
+    try:
+        conexao = banco_dados.get_conexao()
+        cursor = conexao.cursor()
+        
+        # 1. Find or create demo enterprise
+        cursor.execute("SELECT id FROM empresas WHERE ruc = %s", ('9999999-9',))
+        existing = cursor.fetchone()
+        
+        if existing:
+            empresa_id = existing[0]
+            print(f"[RESET DEMO] Enterprise found (ID: {empresa_id})")
+        else:
+            # Create enterprise
+            vencimento = date.today() + timedelta(days=365)
+            cursor.execute('''
+                INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            ''', ('Usuário Público Demo', '9999999-9', 'demo123', 'demo123', 'Demo', 'Activo', vencimento, 0))
+            empresa_id = cursor.fetchone()[0]
+            print(f"[RESET DEMO] Enterprise created (ID: {empresa_id})")
+        
+        # 2. FORCE DELETE ALL DATA FOR THIS ENTERPRISE
+        print(f"[RESET DEMO] Deleting all existing data for enterprise {empresa_id}...")
+        cursor.execute("DELETE FROM notas WHERE empresa_id = %s", (empresa_id,))
+        notas_deleted = cursor.rowcount
+        cursor.execute("DELETE FROM produtos WHERE empresa_id = %s", (empresa_id,))
+        produtos_deleted = cursor.rowcount
+        cursor.execute("DELETE FROM categorias WHERE empresa_id = %s", (empresa_id,))
+        categorias_deleted = cursor.rowcount
+        cursor.execute("DELETE FROM proveedores WHERE empresa_id = %s", (empresa_id,))
+        provedores_deleted = cursor.rowcount
+        
+        # 3. Insert categories
+        categorias = ['General', 'Bebidas', 'Lácteos', 'Limpeza', 'Enlatados', 'Panadería', 'Carnes']
+        for cat in categorias:
+            cursor.execute('INSERT INTO categorias (empresa_id, nome) VALUES (%s, %s)', (empresa_id, cat))
+        
+        # 4. Insert providers
+        provedores = [
+            ('Distribuidora Central S.A.', '80012345-1', '021 234 567', 'ventas@distcentral.com.py', 'Av. Eusebio Ayala km 4.5, Asunción'),
+            ('Importadora del Este S.R.L.', '80023456-2', '021 345 678', 'contacto@importeste.com.py', 'Av. España 1234, Ciudad del Este'),
+            ('Proveedores del Sur S.A.', '80034567-3', '021 456 789', 'info@proveedorsur.com.py', 'Av. San Martín 567, Encarnación'),
+            ('Alimentos Norte S.A.', '80045678-4', '021 567 890', 'ventas@alimentosnorte.com.py', 'Av. Perú 789, Concepción'),
+            ('Mayorista Py S.R.L.', '80056789-5', '021 678 901', 'pedidos@mayoristapy.com.py', 'Av. Brasília 456, Pedro Juan Caballero')
+        ]
+        for nome, ruc, telefone, email, endereco in provedores:
+            cursor.execute('''
+                INSERT INTO proveedores (empresa_id, nome, ruc, telefone, email, endereco)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (empresa_id, nome, ruc, telefone, email, endereco))
+        
+        # 5. Insert 20 products
+        produtos = [
+            ('ARR-001', 'Arroz Premium 1kg', 'General', '', 10000, 12500, 45),
+            ('ACE-002', 'Aceite Girasol 900ml', 'General', '', 15000, 18500, 28),
+            ('AZU-003', 'Azúcar Refinado 1kg', 'General', '', 7000, 8500, 62),
+            ('COC-004', 'Coca-Cola 2L', 'Bebidas', 'Gaseosas', 8000, 10500, 36),
+            ('SPR-005', 'Sprite 1.5L', 'Bebidas', 'Gaseosas', 7500, 9800, 42),
+            ('CER-006', 'Cerveza Pilsen 1L', 'Bebidas', 'Alcohólicas', 12000, 15800, 24),
+            ('LEH-007', 'Leche Entera 1L', 'Lácteos', '', 6000, 8500, 58),
+            ('YOU-008', 'Yogur Natural 1kg', 'Lácteos', '', 8500, 11500, 32),
+            ('QUE-009', 'Queso Paraguay 500g', 'Lácteos', '', 22000, 28500, 18),
+            ('JAB-010', 'Jabón en Polvo 3kg', 'Limpeza', '', 25000, 32500, 22),
+            ('DET-011', 'Detergente Líquido 1L', 'Limpeza', '', 12000, 16500, 40),
+            ('PAP-012', 'Papel Higiénico 4un', 'Limpeza', '', 15000, 19500, 55),
+            ('ATA-013', 'Atún en Lata 200g', 'Enlatados', '', 7500, 9800, 30),
+            ('MAI-014', 'Maíz en Lata 400g', 'Enlatados', '', 6500, 8200, 38),
+            ('PAN-015', 'Pan Francês un', 'Panadería', '', 1500, 2500, 120),
+            ('RES-016', 'Carne Res 1kg', 'Carnes', '', 35000, 45500, 15),
+            ('POL-017', 'Pollo Entero 1.5kg', 'Carnes', '', 22000, 29500, 20),
+            ('JAM-018', 'Jamón Cocido 200g', 'Carnes', '', 12500, 16800, 25),
+            ('GAL-019', 'Galletas María 500g', 'Panadería', '', 4500, 6500, 48),
+            ('CAF-020', 'Café Molido 500g', 'Bebidas', '', 18000, 23500, 16)
+        ]
+        for cod, desc, cat, subcat, custo, venda, qtd in produtos:
+            cursor.execute('''
+                INSERT INTO produtos (empresa_id, codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, '')
+            ''', (empresa_id, cod, desc, cat, subcat, custo, venda, qtd))
+        
+        # 6. Generate 25 sales in the last 30 days
+        metodos_pago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Efectivo', 'Tarjeta']
+        clientes = [
+            ('Consumidor Final', '80012345-1'),
+            ('Juan Pérez', '1234567-8'),
+            ('María González', '2345678-9'),
+            ('Carlos López', '3456789-0'),
+            ('Ana Martínez', '4567890-1'),
+            ('Luis Rodríguez', '5678901-2'),
+            ('Supermercado Central', '80098765-4'),
+            ('Restaurante El Buen Sabor', '80087654-3')
+        ]
+        
+        hoje = datetime.now()
+        for i in range(25):
+            dias_atras = random.randint(0, 30)
+            horas_atras = random.randint(0, 23)
+            minutos_atras = random.randint(0, 59)
+            data_venda = hoje - timedelta(days=dias_atras, hours=horas_atras, minutes=minutos_atras)
+            
+            nome_cliente, ruc_cliente = random.choice(clientes)
+            num_itens = random.randint(1, 4)
+            itens_selecionados = random.sample(produtos[:15], num_itens)
+            
+            itens_json = []
+            valor_total = 0
+            
+            for prod in itens_selecionados:
+                codigo, descricao, categoria, subcat, custo, venda, estoque = prod
+                quantidade = random.randint(1, 3)
+                subtotal = venda * quantidade
+                valor_total += subtotal
+                
+                itens_json.append({
+                    'codigo': codigo,
+                    'descricao': descricao,
+                    'cantidad': quantidade,
+                    'precio_unitario': venda,
+                    'subtotal': subtotal
+                })
+            
+            cdc = f'9999999-9-{data_venda.strftime("%Y%m%d")}-{i:06d}'
+            metodo = random.choice(metodos_pago)
+            
+            cursor.execute('''
+                INSERT INTO notas (empresa_id, ruc_emissor, nome_cliente, valor_total, cdc, itens, data_emissao, metodo_pago, caixa_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 0)
+            ''', (
+                empresa_id,
+                '9999999-9',
+                nome_cliente,
+                valor_total,
+                cdc,
+                json.dumps(itens_json),
+                data_venda,
+                metodo
+            ))
+        
+        # 7. Ensure open cash session
+        cursor.execute("SELECT id FROM caixa_sessoes WHERE empresa_id = %s AND status = 'ABERTO'", (empresa_id,))
+        if not cursor.fetchone():
+            cursor.execute('''
+                INSERT INTO caixa_sessoes (empresa_id, data_abertura, valor_abertura, status)
+                VALUES (%s, CURRENT_TIMESTAMP, 500000, 'ABERTO')
+            ''', (empresa_id,))
+        
+        conexao.commit()
+        
+        return {
+            "status": "Success",
+            "message": "Showroom built",
+            "enterprise_id": empresa_id,
+            "deleted": {
+                "notas": notas_deleted,
+                "produtos": produtos_deleted,
+                "categorias": categorias_deleted,
+                "provedores": provedores_deleted
+            },
+            "created": {
+                "categorias": len(categorias),
+                "provedores": len(provedores),
+                "produtos": len(produtos),
+                "vendas": 25
+            }
+        }
+        
+    except Exception as e:
+        # Return exact error
+        error_msg = str(e)
+        print(f"[RESET DEMO ERROR] {error_msg}")
+        if conexao:
+            conexao.rollback()
+        return {
+            "status": "Error",
+            "message": error_msg
+        }
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao:
+            conexao.close()
