@@ -900,14 +900,16 @@ def obter_nota_por_cdc(empresa_id, cdc):
     return None
 
 def injetar_dados_demo():
-    """Cria o usuário de teste público (RUC 9999999-9) e produtos de demo"""
+    """Cria o usuário de teste público (RUC 9999999-9) com dados completos de demonstração"""
     conexao = None
     cursor = None
     try:
+        import random
+        from datetime import datetime, date, timedelta
+        
         conexao = get_conexao()
         cursor = conexao.cursor()
         
-        from datetime import date, timedelta
         vencimento = date.today() + timedelta(days=365)
         
         # Verificar se empresa demo já existe
@@ -928,33 +930,153 @@ def injetar_dados_demo():
             empresa_id = cursor.fetchone()[0]
             print(f"[DEMO] Empresa demo criada (ID: {empresa_id}).")
         
-        # Garantir categoria General para a empresa demo
-        cursor.execute('''
-            INSERT INTO categorias (empresa_id, nome)
-            VALUES (%s, %s)
-            ON CONFLICT (empresa_id, nome) DO NOTHING
-        ''', (empresa_id, 'General'))
+        # ========== CATEGORIAS ==========
+        categorias = ['General', 'Bebidas', 'Lácteos', 'Limpeza', 'Enlatados', 'Panadería', 'Carnes']
+        for cat in categorias:
+            cursor.execute('''
+                INSERT INTO categorias (empresa_id, nome)
+                VALUES (%s, %s)
+                ON CONFLICT (empresa_id, nome) DO NOTHING
+            ''', (empresa_id, cat))
         
-        # Injetar 3 produtos de teste com ON CONFLICT
-        produtos_demo = [
-            ('ARR-001', 'Arroz Premium 1kg', 'General', '', 10000, 12500, 45, ''),
-            ('ACE-002', 'Aceite Girasol 900ml', 'General', '', 15000, 18500, 28, ''),
-            ('AZU-003', 'Azúcar Refinado 1kg', 'General', '', 7000, 8500, 62, '')
+        # ========== PROVEDORES ==========
+        provedores = [
+            ('Distribuidora Central S.A.', '80012345-1', '021 234 567', 'ventas@distcentral.com.py', 'Av. Eusebio Ayala km 4.5, Asunción'),
+            ('Importadora del Este S.R.L.', '80023456-2', '021 345 678', 'contacto@importeste.com.py', 'Av. España 1234, Ciudad del Este'),
+            ('Proveedores del Sur S.A.', '80034567-3', '021 456 789', 'info@proveedorsur.com.py', 'Av. San Martín 567, Encarnación'),
+            ('Alimentos Norte S.A.', '80045678-4', '021 567 890', 'ventas@alimentosnorte.com.py', 'Av. Perú 789, Concepción'),
+            ('Mayorista Py S.R.L.', '80056789-5', '021 678 901', 'pedidos@mayoristapy.com.py', 'Av. Brasília 456, Pedro Juan Caballero')
         ]
         
-        for cod, desc, cat, subcat, custo, venda, qtd, prov in produtos_demo:
+        for nome, ruc, telefone, email, endereco in provedores:
+            cursor.execute('''
+                INSERT INTO proveedores (empresa_id, nome, ruc, telefone, email, endereco)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (empresa_id, ruc) DO NOTHING
+            ''', (empresa_id, nome, ruc, telefone, email, endereco))
+        
+        # ========== PRODUTOS ==========
+        produtos = [
+            # Código, Descrição, Categoria, Subcategoria, Custo, Venda, Estoque
+            ('ARR-001', 'Arroz Premium 1kg', 'General', '', 10000, 12500, 45),
+            ('ACE-002', 'Aceite Girasol 900ml', 'General', '', 15000, 18500, 28),
+            ('AZU-003', 'Azúcar Refinado 1kg', 'General', '', 7000, 8500, 62),
+            ('COC-004', 'Coca-Cola 2L', 'Bebidas', 'Gaseosas', 8000, 10500, 36),
+            ('SPR-005', 'Sprite 1.5L', 'Bebidas', 'Gaseosas', 7500, 9800, 42),
+            ('CER-006', 'Cerveza Pilsen 1L', 'Bebidas', 'Alcohólicas', 12000, 15800, 24),
+            ('LEH-007', 'Leche Entera 1L', 'Lácteos', '', 6000, 8500, 58),
+            ('YOU-008', 'Yogur Natural 1kg', 'Lácteos', '', 8500, 11500, 32),
+            ('QUE-009', 'Queso Paraguay 500g', 'Lácteos', '', 22000, 28500, 18),
+            ('JAB-010', 'Jabón en Polvo 3kg', 'Limpeza', '', 25000, 32500, 22),
+            ('DET-011', 'Detergente Líquido 1L', 'Limpeza', '', 12000, 16500, 40),
+            ('PAP-012', 'Papel Higiénico 4un', 'Limpeza', '', 15000, 19500, 55),
+            ('ATA-013', 'Atún en Lata 200g', 'Enlatados', '', 7500, 9800, 30),
+            ('MAI-014', 'Maíz en Lata 400g', 'Enlatados', '', 6500, 8200, 38),
+            ('PAN-015', 'Pan Francês un', 'Panadería', '', 1500, 2500, 120),
+            ('RES-016', 'Carne Res 1kg', 'Carnes', '', 35000, 45500, 15),
+            ('POL-017', 'Pollo Entero 1.5kg', 'Carnes', '', 22000, 29500, 20),
+            ('JAM-018', 'Jamón Cocido 200g', 'Carnes', '', 12500, 16800, 25),
+            ('GAL-019', 'Galletas María 500g', 'Panadería', '', 4500, 6500, 48),
+            ('CAF-020', 'Café Molido 500g', 'Bebidas', '', 18000, 23500, 16)
+        ]
+        
+        for cod, desc, cat, subcat, custo, venda, qtd in produtos:
             cursor.execute('''
                 INSERT INTO produtos (empresa_id, codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, '')
                 ON CONFLICT (empresa_id, codigo_barras) DO NOTHING
-            ''', (empresa_id, cod, desc, cat, subcat, custo, venda, qtd, prov))
+            ''', (empresa_id, cod, desc, cat, subcat, custo, venda, qtd))
+        
+        # ========== VENDAS (ÚLTIMOS 30 DIAS) ==========
+        metodos_pago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Efectivo', 'Tarjeta']
+        clientes = [
+            ('Consumidor Final', '80012345-1'),
+            ('Juan Pérez', '1234567-8'),
+            ('María González', '2345678-9'),
+            ('Carlos López', '3456789-0'),
+            ('Ana Martínez', '4567890-1'),
+            ('Luis Rodríguez', '5678901-2'),
+            ('Supermercado Central', '80098765-4'),
+            ('Restaurante El Buen Sabor', '80087654-3')
+        ]
+        
+        # Gerar 25 vendas nos últimos 30 dias
+        hoje = datetime.now()
+        for i in range(25):
+            # Data aleatória nos últimos 30 dias
+            dias_atras = random.randint(0, 30)
+            horas_atras = random.randint(0, 23)
+            minutos_atras = random.randint(0, 59)
+            data_venda = hoje - timedelta(days=dias_atras, hours=horas_atras, minutes=minutos_atras)
+            
+            # Selecionar cliente aleatório
+            nome_cliente, ruc_cliente = random.choice(clientes)
+            
+            # Selecionar 1 a 4 produtos aleatórios para esta venda
+            num_itens = random.randint(1, 4)
+            itens_selecionados = random.sample(produtos[:15], num_itens)  # Usar apenas os primeiros 15 para variar
+            
+            itens_json = []
+            valor_total = 0
+            
+            for prod in itens_selecionados:
+                codigo, descricao, categoria, subcat, custo, venda, estoque = prod
+                quantidade = random.randint(1, 3)
+                subtotal = venda * quantidade
+                valor_total += subtotal
+                
+                itens_json.append({
+                    'codigo': codigo,
+                    'descricao': descricao,
+                    'cantidad': quantidade,
+                    'precio_unitario': venda,
+                    'subtotal': subtotal
+                })
+            
+            # CDC fictício (único)
+            cdc = f'9999999-9-{data_venda.strftime("%Y%m%d")}-{i:06d}'
+            
+            # Método de pago aleatório
+            metodo = random.choice(metodos_pago)
+            
+            cursor.execute('''
+                INSERT INTO notas (empresa_id, ruc_emissor, nome_cliente, valor_total, cdc, itens, data_emissao, metodo_pago, caixa_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 0)
+            ''', (
+                empresa_id,
+                '9999999-9',
+                nome_cliente,
+                valor_total,
+                cdc,
+                json.dumps(itens_json),
+                data_venda,
+                metodo
+            ))
+        
+        # ========== CAIXA ABERTO (PARA DEMO) ==========
+        # Verificar se já existe uma sessão de caixa aberta
+        cursor.execute('''
+            SELECT id FROM caixa_sessoes 
+            WHERE empresa_id = %s AND status = 'ABERTO'
+        ''', (empresa_id,))
+        if not cursor.fetchone():
+            cursor.execute('''
+                INSERT INTO caixa_sessoes (empresa_id, data_abertura, valor_abertura, status)
+                VALUES (%s, CURRENT_TIMESTAMP, 500000, 'ABERTO')
+            ''', (empresa_id,))
         
         conexao.commit()
-        print(f"[DEMO] Dados de demo verificados/injetados com sucesso. Empresa ID: {empresa_id}")
+        print(f"[DEMO] Dados de demo completos injetados com sucesso. Empresa ID: {empresa_id}")
+        print(f"[DEMO] - {len(categorias)} categorias")
+        print(f"[DEMO] - {len(provedores)} provedores")
+        print(f"[DEMO] - {len(produtos)} produtos")
+        print(f"[DEMO] - 25 vendas históricas")
         return empresa_id
         
     except Exception as e:
         print(f"[DEMO ERRO] {e}")
+        import traceback
+        traceback.print_exc()
         if conexao:
             conexao.rollback()
         # Não propaga o erro para não crashar o servidor
