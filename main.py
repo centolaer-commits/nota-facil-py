@@ -746,24 +746,42 @@ def get_logo_icon():
 @app.get("/demo")
 async def pagina_demo():
     """Login automático para demo e entrega do sistema completo"""
-    # Autenticar usuário demo programaticamente
-    resultado = banco_dados.autenticar_usuario('9999999-9', 'demo123')
-    if not resultado["sucesso"]:
-        # Fallback: criar dados demo se não existirem (segurança)
-        banco_dados.injetar_dados_demo()
+    try:
+        # Autenticar usuário demo programaticamente
         resultado = banco_dados.autenticar_usuario('9999999-9', 'demo123')
-    
-    empresa_id = resultado["empresa_id"]
-    rol = resultado["rol"]
-    plano = resultado["plano"]
-    plano_primeira = plano.split(' ')[0]
-    
-    # Ler o frontend.html original
-    with open("frontend.html", "r", encoding="utf-8") as f:
-        html_content = f.read()
-    
-    # Script de autologin a ser injetado antes do fechamento do </body>
-    script_autologin = f"""
+        
+        # Se falhar, tentar criar dados demo
+        if not resultado.get("sucesso"):
+            print("[DEMO] Autenticação falhou, injetando dados demo...")
+            banco_dados.injetar_dados_demo()
+            resultado = banco_dados.autenticar_usuario('9999999-9', 'demo123')
+        
+        # Verificar se a autenticação foi bem-sucedida
+        if not resultado.get("sucesso"):
+            raise HTTPException(
+                status_code=500,
+                detail="Não foi possível criar ou autenticar o usuário demo. Tente novamente mais tarde."
+            )
+        
+        # Extrair dados com verificação de chaves
+        empresa_id = resultado.get("empresa_id")
+        rol = resultado.get("rol")
+        plano = resultado.get("plano")
+        
+        if empresa_id is None or rol is None or plano is None:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Dados de autenticação incompletos: {resultado}"
+            )
+        
+        plano_primeira = str(plano).split(' ')[0]
+        
+        # Ler o frontend.html original
+        with open("frontend.html", "r", encoding="utf-8") as f:
+            html_content = f.read()
+        
+        # Script de autologin a ser injetado antes do fechamento do </body>
+        script_autologin = f"""
     <script>
         // Injeção automática de credenciais demo (execução imediata)
         empresaAtualId = {empresa_id};
@@ -804,8 +822,17 @@ async def pagina_demo():
     </script>
     </body>
     """
+        
+        # Substituir o fechamento </body> pelo script + </body>
+        html_content = html_content.replace('</body>', script_autologin)
+        
+        return HTMLResponse(content=html_content, media_type="text/html")
     
-    # Substituir o fechamento </body> pelo script + </body>
-    html_content = html_content.replace('</body>', script_autologin)
-    
-    return HTMLResponse(content=html_content, media_type="text/html")        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[DEMO ERRO CRÍTICO] {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro interno na preparação da demo: {str(e)}"
+        )        
