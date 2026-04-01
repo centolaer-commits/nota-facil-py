@@ -34,9 +34,45 @@ function iniciarRadarPix(pagamentoId) {
 const getSaaSHeaders = (extraHeaders = {}) => { return { 'Content-Type': 'application/json', 'X-Empresa-ID': empresaAtualId ? empresaAtualId.toString() : "1", ...extraHeaders }; };
     
 document.addEventListener("DOMContentLoaded", () => {
-    const d = new Date().toISOString().split('T')[0];
-    ['filtro-data-inicio-cierre','filtro-data-fim-cierre','entrada-data','filtro-data-fim-var'].forEach(id => {if(document.getElementById(id)) document.getElementById(id).value = d;});
-    if(document.getElementById('filtro-data-inicio-var')) { let p = new Date(); p.setDate(1); document.getElementById('filtro-data-inicio-var').value = p.toISOString().split('T')[0]; }
+    const hoje = new Date();
+    const hojeStr = hoje.toISOString().split('T')[0];
+    const hojeMenos30 = new Date();
+    hojeMenos30.setDate(hoje.getDate() - 30);
+    const hojeMenos30Str = hojeMenos30.toISOString().split('T')[0];
+    
+    // Preenche datas padrão (últimos 30 dias)
+    const camposData = {
+        'filtro-data-inicio-cierre': hojeMenos30Str,
+        'filtro-data-fim-cierre': hojeStr,
+        'filtro-data-inicio-var': hojeMenos30Str,
+        'filtro-data-fim-var': hojeStr,
+        'entrada-data': hojeStr,
+        'filtro-data-inicio-stocktake': hojeMenos30Str,
+        'filtro-data-fim-stocktake': hojeStr
+    };
+    
+    for (const [id, valor] of Object.entries(camposData)) {
+        const el = document.getElementById(id);
+        if (el) el.value = valor;
+    }
+    
+    // Carrega automaticamente os relatórios se a tela já estiver visível (ex.: ao recarregar página)
+    if (document.getElementById('tela-cierre') && !document.getElementById('tela-cierre').classList.contains('hidden')) {
+        carregarCierreCaja();
+    }
+    if (document.getElementById('tela-variancia') && !document.getElementById('tela-variancia').classList.contains('hidden')) {
+        carregarRelatorioVariancia();
+    }
+    if (document.getElementById('tela-stocktake') && !document.getElementById('tela-stocktake').classList.contains('hidden')) {
+        carregarStockTake();
+    }
+    
+    // Event listener para botão Filtrar da Varianza (caso o onclick não funcione)
+    const btnFiltrarVariancia = document.querySelector('button[onclick*="carregarRelatorioVariancia"]');
+    if (btnFiltrarVariancia) {
+        btnFiltrarVariancia.addEventListener('click', carregarRelatorioVariancia);
+    }
+    
     const toggleStock = document.getElementById('auto-mover-stock');
     if(toggleStock) { toggleStock.addEventListener('change', function() { document.getElementById('auto-stock-status').innerText = this.checked ? "SÍ, añadir al stock" : "NO, es solo un gasto"; document.getElementById('auto-stock-status').className = this.checked ? "text-sm font-bold text-orange-400" : "text-sm font-bold text-gray-500"; }); }
 });
