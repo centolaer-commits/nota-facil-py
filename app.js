@@ -571,6 +571,76 @@ function atualizarInterfaceRemision() {
     // Placeholder
 }
 
+// ==================== CATÁLOGO PDV ====================
+function abrirCatalogoPDV() {
+    document.getElementById('modal-catalogo-pdv').classList.remove('hidden');
+    document.getElementById('modal-catalogo-pdv').classList.add('flex');
+    carregarCatalogoPDV();
+}
+
+function fecharCatalogoPDV() {
+    document.getElementById('modal-catalogo-pdv').classList.add('hidden');
+    document.getElementById('modal-catalogo-pdv').classList.remove('flex');
+}
+
+async function carregarCatalogoPDV() {
+    try {
+        // Si ya tenemos los productos globales, usarlos
+        if (productosGlobais && productosGlobais.length > 0) {
+            renderizarCatalogoPDV(productosGlobais);
+            return;
+        }
+        // Si no, cargar desde el servidor
+        const res = await fetch('/listar-produtos', {headers: getSaaSHeaders()});
+        const d = await res.json();
+        productosGlobais = d;
+        renderizarCatalogoPDV(d);
+    } catch(e) {
+        console.error(e);
+        document.getElementById('tabela-catalogo-pdv').innerHTML = '<tr><td colspan="4" class="p-6 text-center text-red-400">Error al cargar productos</td></tr>';
+    }
+}
+
+function renderizarCatalogoPDV(lista) {
+    const tbody = document.getElementById('tabela-catalogo-pdv');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">No hay productos registrados</td></tr>';
+        return;
+    }
+    lista.forEach(p => {
+        const precio = p.preco_venda || p.preco || 0;
+        const stock = p.quantidade || 0;
+        tbody.innerHTML += `<tr class="border-b border-slate-200 hover:bg-slate-50">
+            <td class="p-3 text-slate-800 font-bold">${p.descricao}</td>
+            <td class="p-3 text-right font-bold text-green-600">Gs. ${precio.toLocaleString('es-PY')}</td>
+            <td class="p-3 text-center font-bold ${stock > 0 ? 'text-blue-600' : 'text-red-600'}">${stock}</td>
+            <td class="p-3 text-center">
+                <button onclick="seleccionarProductoCatalogo('${p.codigo_barras}')" class="bg-brand-accent hover:bg-brand-accentHover text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition">Agregar</button>
+            </td>
+        </tr>`;
+    });
+}
+
+function filtrarCatalogoPDV() {
+    const term = document.getElementById('catalogo-busca').value.toLowerCase();
+    const lista = productosGlobais || [];
+    const filtrada = lista.filter(p => 
+        p.descricao.toLowerCase().includes(term) || 
+        (p.codigo_barras && p.codigo_barras.toLowerCase().includes(term))
+    );
+    renderizarCatalogoPDV(filtrada);
+}
+
+function seleccionarProductoCatalogo(codigo) {
+    const producto = productosGlobais.find(p => p.codigo_barras === codigo);
+    if (!producto) return;
+    // Usar la misma lógica que el POS
+    seleccionarProductoPOS(producto);
+    fecharCatalogoPDV();
+}
+
 async function carregarProveedores() { try { const res=await fetch('/listar-proveedores', {headers:getSaaSHeaders()}); const d=await res.json(); const tb=document.getElementById('tabela-proveedores'); if(tb) { tb.innerHTML=''; d.forEach(p=>{ tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${p.nome}</td><td class="p-4 text-gray-400">${p.telefone||''}</td><td class="p-4">${p.endereco||''}</td><td class="p-4"><button onclick="abrirModalEditarProveedor(${p.id},'${p.nome}','${p.ruc}','${p.telefone}','${p.email}','${p.endereco}')" class="text-blue-400 mr-2">✏️</button><button onclick="deletarProveedor(${p.id})" class="text-red-400">🗑️</button></td></tr>`; }); } const sp=document.getElementById('novo-prov'); if(sp) { sp.innerHTML='<option value="">Ninguno</option>'; d.forEach(p=>{ sp.innerHTML+=`<option value="${p.nome}">${p.nome}</option>`; }); } const sep=document.getElementById('entrada-prov'); if(sep) { sep.innerHTML='<option value="">Seleccione</option>'; d.forEach(p=>{ sep.innerHTML+=`<option value="${p.id}">${p.nome}</option>`; }); } } catch(e){} }
 function abrirModalEditarProveedor(id, n, r, t, e, end) { document.getElementById('prov-id').value=id; document.getElementById('prov-nome').value=n; document.getElementById('prov-ruc').value=r!=='null'?r:''; document.getElementById('prov-tel').value=t!=='null'?t:''; document.getElementById('prov-email').value=e!=='null'?e:''; document.getElementById('prov-endereco').value=end!=='null'?end:''; document.getElementById('form-novo-proveedor').classList.remove('hidden'); }
 async function salvarProveedor() { const id=document.getElementById('prov-id').value; const pay={nome:document.getElementById('prov-nome').value, ruc:document.getElementById('prov-ruc').value, telefone:document.getElementById('prov-tel').value, email:document.getElementById('prov-email').value, endereco:document.getElementById('prov-endereco').value}; const url=id?`/editar-proveedor/${id}`:'/cadastrar-proveedor'; const m=id?'PUT':'POST'; try { await fetch(url,{method:m,headers:getSaaSHeaders(),body:JSON.stringify(pay)}); document.getElementById('form-novo-proveedor').classList.add('hidden'); carregarProveedores(); } catch(e){} } async function deletarProveedor(id) { if(confirm("Del?")) { await fetch(`/deletar-proveedor/${id}`,{method:'DELETE',headers:getSaaSHeaders()}); carregarProveedores(); } }
