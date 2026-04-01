@@ -137,8 +137,16 @@
               <h3 class="text-xl font-bold text-slate-800">Catálogo de Productos</h3>
               <button type="button" onclick="fecharCatalogoPDV()" class="text-slate-400 hover:text-slate-600 font-bold text-2xl transition">&times;</button>
           </div>
-          <div class="mb-4">
+          <div class="mb-4 space-y-3">
               <input type="text" id="catalogo-busca" placeholder="Buscar por nombre o código..." class="w-full border border-slate-300 p-3 rounded-xl bg-white text-slate-800 outline-none focus:border-brand-accent" oninput="filtrarCatalogoPDV()">
+              <div class="grid grid-cols-2 gap-3">
+                  <select id="catalogo-categoria" class="border border-slate-300 p-3 rounded-xl bg-white text-slate-800 outline-none focus:border-brand-accent" onchange="filtrarCatalogoPDV()">
+                      <option value="">Todas las Categorías</option>
+                  </select>
+                  <select id="catalogo-proveedor" class="border border-slate-300 p-3 rounded-xl bg-white text-slate-800 outline-none focus:border-brand-accent" onchange="filtrarCatalogoPDV()">
+                      <option value="">Todos los Proveedores</option>
+                  </select>
+              </div>
           </div>
           <div class="overflow-y-auto scrollbar-thin rounded-lg border border-slate-200">
               <table class="w-full text-left bg-white text-sm">
