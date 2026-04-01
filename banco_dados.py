@@ -1054,12 +1054,13 @@ def injetar_dados_demo():
         ]
         
         # Gerar 25 vendas nos Ãºltimos 30 dias
+        # As primeiras 5 vendas sÃ£o de hoje para aparecer no dashboard
         hoje = datetime.now()
         total_vendas = 0
         for i in range(25):
             # Data aleatÃ³ria nos Ãºltimos 30 dias
             if i < 5:
-                dias_atras = 0
+                dias_atras = 0  # Hoje - para dashboard
             else:
                 dias_atras = random.randint(1, 30)
             horas_atras = random.randint(0, 23)
