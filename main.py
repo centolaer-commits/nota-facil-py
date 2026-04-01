@@ -249,7 +249,8 @@ def validar_admin(dados: ValidacaoAdmin, x_empresa_id: int = Header(...)):
 @app.get("/")
 async def root():
     """Rota raiz - serve o sistema principal"""
-    return FileResponse("frontend.html", media_type="text/html")
+    # return FileResponse("frontend.html", media_type="text/html")
+    return {"status": "BACKEND_ATUALIZADO", "mensagem": "O servidor Python aceitou o novo codigo."}
 
 @app.get("/super-admin/empresas")
 def listar_todas_empresas():
