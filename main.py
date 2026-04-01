@@ -1113,7 +1113,7 @@ def reset_demo():
         
         # Inject 3 stock take audits for demo (spread over last 30 days)
         for _ in range(3):
-            data_auditoria = hoje - timedelta(days=random.randint(1, 30))
+            data_auditoria = (hoje - timedelta(days=random.randint(1, 30))).date()
             cursor.execute('''
                 INSERT INTO auditorias (empresa_id, data, impacto_financeiro, total_itens)
                 VALUES (%s, %s, %s, %s)
