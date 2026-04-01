@@ -513,35 +513,66 @@ def salvar_auditoria_estoque(empresa_id, itens_auditados):
         conexao.close()
 
 def obter_relatorio_variancia(empresa_id, data_inicio, data_fim):
-    conexao = get_conexao()
+    conexao = conectar()
     cursor = conexao.cursor()
     
-    query = """
-        SELECT 
-            ai.codigo_barras, 
-            ai.descricao, 
-            SUM(ai.diferenca) as total_diferenca, 
-            SUM(ai.diferenca * ai.custo_unitario) as impacto_total
+    cursor.execute('''
+        SELECT a.data AS fecha,
+               ai.codigo_barras AS codigo,
+               ai.descricao AS descricao,
+               COALESCE(SUM(ai.diferenca), 0) AS total_unidades,
+               COALESCE(SUM(ai.diferenca * ai.custo_unitario), 0) AS impacto_financeiro
         FROM auditorias a
         JOIN auditorias_itens ai ON a.id = ai.auditoria_id
-        WHERE a.empresa_id = %s 
-        AND DATE(a.data) >= %s AND DATE(a.data) <= %s
-        GROUP BY ai.codigo_barras, ai.descricao
-        ORDER BY impacto_total ASC
-    """
-    cursor.execute(query, (empresa_id, data_inicio, data_fim))
-    linhas = cursor.fetchall()
+        WHERE a.empresa_id = %s AND DATE(a.data) BETWEEN %s AND %s
+        GROUP BY ai.codigo_barras, ai.descricao, a.data
+        ORDER BY a.data DESC
+    ''', (empresa_id, data_inicio, data_fim))
+    
+    dados = cursor.fetchall()
     conexao.close()
     
-    return [
-        {
-            "codigo_barras": l[0],
-            "descricao": l[1],
-            "total_diferenca": l[2],
-            "impacto_total": l[3]
-        }
-        for l in linhas
-    ]
+    resultado = []
+    for fecha, codigo, descricao, total_unidades, impacto_financeiro in dados:
+        resultado.append({
+            "fecha": str(fecha)[:10],           # YYYY-MM-DD
+            "codigo": codigo,                   # Código de barras
+            "tipo": "Auditoria",                # Fixo para todas as linhas
+            "descricao": descricao,             # Nome do produto
+            "total_unidades": total_unidades,   # Soma das diferenças (pode ser negativo)
+            "impacto_financeiro": impacto_financeiro  # Impacto em guaranies
+        })
+    
+    return resultado
+
+def listar_auditorias(empresa_id, data_inicio, data_fim):
+    conexao = conectar()
+    cursor = conexao.cursor()
+    
+    cursor.execute('''
+        SELECT id,
+               data,
+               COALESCE(impacto_financeiro, 0) AS impacto_financeiro,
+               COALESCE(total_itens, 0) AS total_itens
+        FROM auditorias
+        WHERE empresa_id = %s AND DATE(data) BETWEEN %s AND %s
+        ORDER BY data DESC
+    ''', (empresa_id, data_inicio, data_fim))
+    
+    dados = cursor.fetchall()
+    conexao.close()
+    
+    resultado = []
+    for id, data, impacto_financeiro, total_itens in dados:
+        resultado.append({
+            "id": id,
+            "data": str(data),                  # Data completa (YYYY-MM-DD)
+            "impacto_financeiro": impacto_financeiro,  # Impacto total da auditoria
+            "total_itens": total_itens          # Número de itens auditados
+        })
+    
+    return resultado
+
 
 def registrar_merma(empresa_id, codigo_barras, quantidade, motivo):
     conexao = get_conexao()
