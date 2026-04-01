@@ -506,7 +506,7 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
             mensagem_retorno = "Factura generada (Demo)"
         return {
             "demo_mode": True,
-            "mensaje": "¡Venta procesada con éxito! Esta es una versión demo: tu venta se reflejará en los reportes, pero no se generarán documentos fiscales en la SET.",
+            "mensaje": "Versión Demo: Venta simulada con éxito. No enviada a la SET.",
             "cdc": cdc_real,
             "link_qrcode": link_qrcode,
             "link_pdf": link_pdf
