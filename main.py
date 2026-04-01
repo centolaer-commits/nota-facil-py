@@ -1111,48 +1111,39 @@ def reset_demo():
                 VALUES (%s, %s, 'SANGRIA', %s, %s, %s)
             ''', (empresa_id, caixa_id, valor_sangria, motivo, hoje - timedelta(days=random.randint(0, 30))))
         
-        # Inject stock shrinkage (mermas) for the demo
-        motivos_merma = ["Producto dañado", "Vencido", "Robo"]
-        produtos_para_merma = random.sample(produtos[:10], 3)
-        for prod in produtos_para_merma:
-            codigo, descricao, categoria, subcat, custo, venda, estoque = prod
-            quantidade_merma = random.randint(1, 2)
-            motivo = random.choice(motivos_merma)
+        # Inject 3 stock take audits for demo (spread over last 30 days)
+        for _ in range(3):
+            data_auditoria = hoje - timedelta(days=random.randint(1, 30))
             cursor.execute('''
-                INSERT INTO mermas (empresa_id, codigo_barras, descricao, quantidade, custo_unitario, motivo)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            ''', (empresa_id, codigo, descricao, quantidade_merma, custo, motivo))
-        
-        # Inject a stock take audit for demo
-        data_auditoria = hoje - timedelta(days=random.randint(2, 3))
-        cursor.execute('''
-            INSERT INTO auditorias (empresa_id, data, impacto_financeiro, total_itens)
-            VALUES (%s, %s, %s, %s)
-            RETURNING id
-        ''', (empresa_id, data_auditoria, 0, 0))
-        auditoria_id = cursor.fetchone()[0]
-        
-        produtos_auditoria = random.sample(produtos[:8], 4)
-        impacto_total = 0
-        total_itens = 0
-        for prod in produtos_auditoria:
-            codigo, descricao, categoria, subcat, custo, venda, estoque = prod
-            qtd_sistema = estoque
-            qtd_fisica = qtd_sistema + random.choice([-1, 1, 0]) * random.randint(1, 2)
-            diferenca = qtd_fisica - qtd_sistema
-            custo_unitario = custo
-            impacto = diferenca * custo_unitario
-            impacto_total += impacto
-            total_itens += 1
+                INSERT INTO auditorias (empresa_id, data, impacto_financeiro, total_itens)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
+            ''', (empresa_id, data_auditoria, 0, 0))
+            auditoria_id = cursor.fetchone()[0]
+            
+            # Pick 3-5 random products for this audit
+            produtos_auditoria = random.sample(produtos[:12], random.randint(3, 5))
+            impacto_total = 0
+            total_itens = 0
+            for prod in produtos_auditoria:
+                codigo, descricao, categoria, subcat, custo, venda, estoque = prod
+                # Ensure there is a variance (non-zero difference)
+                diferenca = random.choice([-2, -1, 1, 2])
+                qtd_sistema = estoque
+                qtd_fisica = qtd_sistema + diferenca
+                custo_unitario = custo
+                impacto = diferenca * custo_unitario
+                impacto_total += impacto
+                total_itens += 1
+                cursor.execute('''
+                    INSERT INTO auditorias_itens (auditoria_id, codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ''', (auditoria_id, codigo, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario))
+            
+            # Update audit total
             cursor.execute('''
-                INSERT INTO auditorias_itens (auditoria_id, codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ''', (auditoria_id, codigo, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario))
-        
-        # Update audit total
-        cursor.execute('''
-            UPDATE auditorias SET impacto_financeiro = %s, total_itens = %s WHERE id = %s
-        ''', (impacto_total, total_itens, auditoria_id))
+                UPDATE auditorias SET impacto_financeiro = %s, total_itens = %s WHERE id = %s
+            ''', (impacto_total, total_itens, auditoria_id))
         
         conexao.commit()
         
