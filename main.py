@@ -249,8 +249,7 @@ def validar_admin(dados: ValidacaoAdmin, x_empresa_id: int = Header(...)):
 @app.get("/")
 async def root():
     """Rota raiz - serve o sistema principal"""
-    # return FileResponse("frontend.html", media_type="text/html")
-    return {"status": "BACKEND_ATUALIZADO", "mensagem": "O servidor Python aceitou o novo codigo."}
+    return FileResponse("frontend.html", media_type="text/html")
 
 @app.get("/super-admin/empresas")
 def listar_todas_empresas():
@@ -507,7 +506,7 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
             mensagem_retorno = "Factura generada (Demo)"
         return {
             "demo_mode": True,
-            "mensaje": "Versión Demo: Venta simulada con éxito. No enviada a la SET.",
+            "mensaje": "Venta procesada con éxito (Modo Demo). No enviada a la SET.",
             "cdc": cdc_real,
             "link_qrcode": link_qrcode,
             "link_pdf": link_pdf
