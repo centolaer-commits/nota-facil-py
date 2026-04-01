@@ -573,6 +573,28 @@ def listar_auditorias(empresa_id, data_inicio, data_fim):
     
     return resultado
 
+def obter_detalhes_auditoria(empresa_id, auditoria_id):
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute('''
+        SELECT codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario
+        FROM auditorias_itens
+        WHERE auditoria_id = %s AND EXISTS (SELECT 1 FROM auditorias WHERE id = %s AND empresa_id = %s)
+        ORDER BY id
+    ''', (auditoria_id, auditoria_id, empresa_id))
+    linhas = cursor.fetchall()
+    conexao.close()
+    resultado = []
+    for codigo, descricao, qtd_sistema, qtd_fisica, diferenca, custo in linhas:
+        resultado.append({
+            "codigo": codigo,
+            "descricao": descricao,
+            "qtd_sistema": qtd_sistema,
+            "qtd_fisica": qtd_fisica,
+            "diferenca": diferenca,
+            "impacto": diferenca * custo
+        })
+    return resultado
 
 def registrar_merma(empresa_id, codigo_barras, quantidade, motivo):
     conexao = get_conexao()

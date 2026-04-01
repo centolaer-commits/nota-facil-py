@@ -283,7 +283,7 @@ function mudarTela(telaId, elementoBotao) {
     if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); } 
     
     if(['inventario','pos','entrada','operaciones','remision','autofactura'].includes(telaId)) carregarEstoque();
-    if(telaId === 'proveedores') carregarProveedores(); if(telaId === 'stocktake') carregarStockTake(); if(telaId === 'variancia') carregarRelatorioVariancia();
+    if(telaId === 'proveedores') carregarProveedores(); if(telaId === 'stocktake') carregarStockTake(); if(telaId === 'stocktakereport') carregarStockTakeReport(); if(telaId === 'variancia') carregarRelatorioVariancia();
     if(telaId === 'operaciones') { document.getElementById('nc-cdc').value=''; document.getElementById('nc-cliente').value=''; ncProductosCaixa=[]; atualizarInterfaceNC(); document.getElementById('merma-cod').value=''; carregarMermas(); }
     if(telaId === 'remision') { carregarRemisiones(); remProductosCaixa=[]; atualizarInterfaceRemision(); }
     if(telaId === 'autofactura') { carregarAutofacturas(); autoProductosCaixa=[]; atualizarInterfaceAuto(); }
@@ -475,7 +475,88 @@ async function alterarAmbienteSifen() { await fetch('/alternar-ambiente',{method
 async function fazerUploadCertificado() { const file=document.getElementById('arquivo-cert').files[0]; if(file){ const f=new FormData(); f.append('arquivo',file); await fetch('/upload-certificado',{method:'POST',headers:{'X-Empresa-ID':empresaAtualId.toString()},body:f}); showToast("✅ Subido"); } }
 async function carregarStockTake() { await carregarEstoque(); renderTabelaStockTake(productosGlobais); } function filtrarListaStockTake() { const t=document.getElementById('busca-st').value.toLowerCase(); renderTabelaStockTake(productosGlobais.filter(p=>p.descricao.toLowerCase().includes(t)||p.codigo_barras.toLowerCase().includes(t))); } function renderTabelaStockTake(l) { const tb=document.getElementById('tabela-stocktake'); tb.innerHTML=''; l.forEach(p=>{ let val=document.getElementById(`st-input-${p.codigo_barras}`)?.value||''; tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${p.descricao}</td><td class="p-4 text-center font-bold text-brand-accent">${p.quantidade}</td><td class="p-4 text-center"><input type="number" id="st-input-${p.codigo_barras}" value="${val}" class="w-24 p-2 bg-slate-800 text-center text-white border border-slate-600 rounded" oninput="atualizarDiffST('${p.codigo_barras}',${p.quantidade})"></td><td class="p-4 text-center"><span id="st-diff-${p.codigo_barras}">-</span></td></tr>`; if(val!=='') atualizarDiffST(p.codigo_barras,p.quantidade); }); } function atualizarDiffST(c,q) { let val=document.getElementById(`st-input-${c}`).value; let sp=document.getElementById(`st-diff-${c}`); if(val==='') sp.innerText='-'; else { let d=parseInt(val)-q; sp.innerText=d>0?`+${d}`:d; sp.className=d>0?'text-green-400 font-bold':(d<0?'text-red-400 font-bold':'text-gray-400 font-bold'); } } async function salvarStockTake() { let pay=[]; productosGlobais.forEach(p=>{ let v=document.getElementById(`st-input-${p.codigo_barras}`); if(v&&v.value!=='') if(parseInt(v.value)!==p.quantidade) pay.push({codigo_barras:p.codigo_barras,qtd_fisica:parseInt(v.value)}); }); if(pay.length>0) { await fetch('/salvar-auditoria',{method:'POST',headers:getSaaSHeaders(),body:JSON.stringify({itens:pay})}); showToast("✅ Audit OK"); carregarStockTake(); } }
 
-async function carregarRelatorioVariancia() { const i=document.getElementById('filtro-data-inicio-var').value; const f=document.getElementById('filtro-data-fim-var').value; try { const res=await fetch(`/relatorio-variancia?inicio=${i}&fim=${f}`, {headers:getSaaSHeaders()}); const d=await res.json(); const tb=document.getElementById('tabela-variancia'); tb.innerHTML=''; let imp=0; let un=0; if(d.length===0){ tb.innerHTML='<tr><td colspan="3" class="text-center p-6 text-gray-500">Nada</td></tr>'; document.getElementById('var-impacto-total').innerText=0; document.getElementById('var-unidades-total').innerText=0; return; } d.forEach(x=>{ imp+=x.impacto_total; un+=Math.abs(x.total_diferenca); let c = x.total_diferenca>0?'text-green-400':'text-red-400'; tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${x.descricao}</td><td class="p-4 text-center font-bold ${c}">${x.total_diferenca}</td><td class="p-4 text-right font-bold ${c}">${x.impacto_total.toLocaleString('es-PY')}</td></tr>`; }); document.getElementById('var-unidades-total').innerText=un; document.getElementById('var-impacto-total').innerText=`Gs. ${imp.toLocaleString('es-PY')}`; document.getElementById('var-impacto-total').className=`text-3xl font-bold ${imp>0?'text-green-400':'text-red-400'}`; } catch(e){} }
+async function carregarRelatorioVariancia() { 
+    const i=document.getElementById('filtro-data-inicio-var').value; 
+    const f=document.getElementById('filtro-data-fim-var').value; 
+    try { 
+        const res=await fetch(`/relatorio-variancia?inicio=${i}&fim=${f}`, {headers:getSaaSHeaders()}); 
+        const d=await res.json(); 
+        const tb=document.getElementById('tabela-variancia'); 
+        tb.innerHTML=''; 
+        let imp=0; 
+        let un=0; 
+        if(d.length===0){ 
+            tb.innerHTML='<tr><td colspan="6" class="text-center p-6 text-gray-500">Nada</td></tr>'; 
+            document.getElementById('var-impacto-total').innerText=0; 
+            document.getElementById('var-unidades-total').innerText=0; 
+            return; 
+        } 
+        d.forEach(x=>{ 
+            imp+=x.impacto_financeiro; 
+            un+=x.total_unidades; 
+            let c = x.impacto_financeiro>0?'text-green-400':'text-red-400'; 
+            tb.innerHTML+=`<tr class="border-b border-slate-700">
+                <td class="p-3 text-gray-400 text-xs">${x.fecha}</td>
+                <td class="p-3 text-white font-bold">${x.codigo}</td>
+                <td class="p-3 text-gray-400">${x.tipo}</td>
+                <td class="p-3 text-white">${x.descricao}</td>
+                <td class="p-3 text-center font-bold ${c}">${x.total_unidades}</td>
+                <td class="p-3 text-right font-bold ${c}">Gs. ${x.impacto_financeiro.toLocaleString('es-PY')}</td>
+            </tr>`; 
+        }); 
+        document.getElementById('var-unidades-total').innerText=un; 
+        document.getElementById('var-impacto-total').innerText=`Gs. ${imp.toLocaleString('es-PY')}`; 
+        document.getElementById('var-impacto-total').className=`text-3xl font-bold ${imp>0?'text-green-400':'text-red-400'}`; 
+    } catch(e){} 
+}
+
+async function carregarStockTakeReport() {
+    try {
+        const res = await fetch(`/listar-auditorias`, {headers: getSaaSHeaders()});
+        const d = await res.json();
+        const tb = document.getElementById('tabela-stocktakereport');
+        if (!tb) return;
+        tb.innerHTML = '';
+        if (d.length === 0) {
+            tb.innerHTML = '<tr><td colspan="4" class="text-center p-6 text-gray-500">No hay auditorías registradas</td></tr>';
+            return;
+        }
+        d.forEach(a => {
+            const data = a.data.split(' ')[0]; // YYYY-MM-DD
+            const impacto = a.impacto_financeiro;
+            const items = a.total_itens;
+            const color = impacto > 0 ? 'text-red-400' : (impacto < 0 ? 'text-green-400' : 'text-gray-400');
+            tb.innerHTML += `<tr class="border-b border-slate-700">
+                <td class="p-4 text-gray-400">${data}</td>
+                <td class="p-4 text-center font-bold text-white">${items}</td>
+                <td class="p-4 text-right font-bold ${color}">Gs. ${Math.abs(impacto).toLocaleString('es-PY')}</td>
+                <td class="p-4 text-center"><button onclick="verDetalhesAuditoria(${a.id})" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-white text-sm font-bold">🔍</button></td>
+            </tr>`;
+        });
+    } catch(e) { console.error(e); }
+}
+
+async function verDetalhesAuditoria(auditoriaId) {
+    try {
+        const res = await fetch(`/detalhes-auditoria/${auditoriaId}`, {headers: getSaaSHeaders()});
+        const itens = await res.json();
+        const tb = document.getElementById('tabela-audit-detalhes');
+        if (!tb) return;
+        tb.innerHTML = '';
+        itens.forEach(i => {
+            const cor = i.diferenca > 0 ? 'text-green-400' : (i.diferenca < 0 ? 'text-red-400' : 'text-gray-400');
+            tb.innerHTML += `<tr class="border-b border-slate-700">
+                <td class="p-3 text-white">${i.descricao}</td>
+                <td class="p-3 text-center font-bold text-white">${i.qtd_sistema}</td>
+                <td class="p-3 text-center font-bold ${cor}">${i.qtd_fisica}</td>
+                <td class="p-3 text-center font-bold ${cor}">${i.diferenca > 0 ? '+' : ''}${i.diferenca}</td>
+                <td class="p-3 text-right font-bold ${cor}">Gs. ${i.impacto.toLocaleString('es-PY')}</td>
+            </tr>`;
+        });
+        document.getElementById('modal-audit-details').classList.remove('hidden');
+        document.getElementById('modal-audit-details').classList.add('flex');
+    } catch(e) { console.error(e); }
+}
 
 async function carregarProveedores() { try { const res=await fetch('/listar-proveedores', {headers:getSaaSHeaders()}); const d=await res.json(); const tb=document.getElementById('tabela-proveedores'); if(tb) { tb.innerHTML=''; d.forEach(p=>{ tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${p.nome}</td><td class="p-4 text-gray-400">${p.telefone||''}</td><td class="p-4">${p.endereco||''}</td><td class="p-4"><button onclick="abrirModalEditarProveedor(${p.id},'${p.nome}','${p.ruc}','${p.telefone}','${p.email}','${p.endereco}')" class="text-blue-400 mr-2">✏️</button><button onclick="deletarProveedor(${p.id})" class="text-red-400">🗑️</button></td></tr>`; }); } const sp=document.getElementById('novo-prov'); if(sp) { sp.innerHTML='<option value="">Ninguno</option>'; d.forEach(p=>{ sp.innerHTML+=`<option value="${p.nome}">${p.nome}</option>`; }); } const sep=document.getElementById('entrada-prov'); if(sep) { sep.innerHTML='<option value="">Seleccione</option>'; d.forEach(p=>{ sep.innerHTML+=`<option value="${p.id}">${p.nome}</option>`; }); } } catch(e){} }
 function abrirModalEditarProveedor(id, n, r, t, e, end) { document.getElementById('prov-id').value=id; document.getElementById('prov-nome').value=n; document.getElementById('prov-ruc').value=r!=='null'?r:''; document.getElementById('prov-tel').value=t!=='null'?t:''; document.getElementById('prov-email').value=e!=='null'?e:''; document.getElementById('prov-endereco').value=end!=='null'?end:''; document.getElementById('form-novo-proveedor').classList.remove('hidden'); }

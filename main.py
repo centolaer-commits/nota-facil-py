@@ -482,6 +482,21 @@ def api_salvar_auditoria(dados: DadosAuditoria, x_empresa_id: int = Header(...))
 def api_relatorio_variancia(inicio: str, fim: str, x_empresa_id: int = Header(...)):
     return banco_dados.obter_relatorio_variancia(x_empresa_id, inicio, fim)
 
+@app.get("/listar-auditorias")
+def api_listar_auditorias(inicio: str = Query(None), fim: str = Query(None), x_empresa_id: int = Header(...)):
+    # Se não fornecer datas, usa intervalo padrão dos últimos 30 dias
+    import datetime
+    hoje = datetime.date.today()
+    if fim is None:
+        fim = hoje.strftime('%Y-%m-%d')
+    if inicio is None:
+        inicio = (hoje - datetime.timedelta(days=30)).strftime('%Y-%m-%d')
+    return banco_dados.listar_auditorias(x_empresa_id, inicio, fim)
+
+@app.get("/detalhes-auditoria/{auditoria_id}")
+def api_detalhes_auditoria(auditoria_id: int, x_empresa_id: int = Header(...)):
+    return banco_dados.obter_detalhes_auditoria(x_empresa_id, auditoria_id)
+
 @app.post("/emitir-nota")
 def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
     caixa_atual = banco_dados.status_caixa_atual(x_empresa_id)
