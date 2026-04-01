@@ -1070,10 +1070,12 @@ def reset_demo():
                 valor_total += subtotal
                 
                 itens_json.append({
+                    'codigo_barras': codigo,
                     'codigo': codigo,
                     'descricao': descricao,
-                    'cantidad': quantidade,
-                    'precio_unitario': venda,
+                    'quantidade': quantidade,
+                    'preco_unitario': venda,
+                    'preco_custo': custo,
                     'subtotal': subtotal
                 })
             
@@ -1096,6 +1098,30 @@ def reset_demo():
             ))
         
 
+        
+        conexao.commit()
+        
+        # Inject cash withdrawals (sangrias) for the demo
+        motivos_sangria = ["Pago a proveedor", "Gastos operativos", "Retiro de efectivo"]
+        for _ in range(3):
+            valor_sangria = random.randint(150000, 300000)
+            motivo = random.choice(motivos_sangria)
+            cursor.execute('''
+                INSERT INTO caixa_movimentacoes (empresa_id, caixa_id, tipo, valor, motivo, data)
+                VALUES (%s, %s, 'SANGRIA', %s, %s, %s)
+            ''', (empresa_id, caixa_id, valor_sangria, motivo, hoje - timedelta(days=random.randint(0, 30))))
+        
+        # Inject stock shrinkage (mermas) for the demo
+        motivos_merma = ["Producto dañado", "Vencido", "Robo"]
+        produtos_para_merma = random.sample(produtos[:10], 3)
+        for prod in produtos_para_merma:
+            codigo, descricao, categoria, subcat, custo, venda, estoque = prod
+            quantidade_merma = random.randint(1, 2)
+            motivo = random.choice(motivos_merma)
+            cursor.execute('''
+                INSERT INTO mermas (empresa_id, codigo_barras, descricao, quantidade, custo_unitario, motivo)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (empresa_id, codigo, descricao, quantidade_merma, custo, motivo))
         
         conexao.commit()
         
