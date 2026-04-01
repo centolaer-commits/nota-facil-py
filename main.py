@@ -1123,6 +1123,37 @@ def reset_demo():
                 VALUES (%s, %s, %s, %s, %s, %s)
             ''', (empresa_id, codigo, descricao, quantidade_merma, custo, motivo))
         
+        # Inject a stock take audit for demo
+        data_auditoria = hoje - timedelta(days=random.randint(2, 3))
+        cursor.execute('''
+            INSERT INTO auditorias (empresa_id, data, impacto_financeiro, total_itens)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id
+        ''', (empresa_id, data_auditoria, 0, 0))
+        auditoria_id = cursor.fetchone()[0]
+        
+        produtos_auditoria = random.sample(produtos[:8], 4)
+        impacto_total = 0
+        total_itens = 0
+        for prod in produtos_auditoria:
+            codigo, descricao, categoria, subcat, custo, venda, estoque = prod
+            qtd_sistema = estoque
+            qtd_fisica = qtd_sistema + random.choice([-1, 1, 0]) * random.randint(1, 2)
+            diferenca = qtd_fisica - qtd_sistema
+            custo_unitario = custo
+            impacto = diferenca * custo_unitario
+            impacto_total += impacto
+            total_itens += 1
+            cursor.execute('''
+                INSERT INTO auditorias_itens (auditoria_id, codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ''', (auditoria_id, codigo, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario))
+        
+        # Update audit total
+        cursor.execute('''
+            UPDATE auditorias SET impacto_financeiro = %s, total_itens = %s WHERE id = %s
+        ''', (impacto_total, total_itens, auditoria_id))
+        
         conexao.commit()
         
         return {

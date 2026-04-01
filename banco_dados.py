@@ -781,9 +781,55 @@ def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
             item["estoque_restante"] = "-"
 
     lista_detalhada.sort(key=lambda x: x["receita_total"], reverse=True)
+    
+    # Construir lista de transações para tabela de cierre
+    transacoes = []
+    # Adicionar notas (vendas)
+    cursor.execute("SELECT data_emissao, nome_cliente, valor_total, metodo_pago FROM notas WHERE empresa_id = %s AND DATE(data_emissao) >= %s AND DATE(data_emissao) <= %s ORDER BY data_emissao DESC", (empresa_id, data_inicio, data_fim))
+    notas = cursor.fetchall()
+    for data_emissao, nome_cliente, valor_total, metodo_pago in notas:
+        transacoes.append({
+            "fecha_hora": str(data_emissao)[:16],  # YYYY-MM-DD HH:MM
+            "tipo": "VENTA",
+            "monto": valor_total,
+            "detalle": f"{nome_cliente} ({metodo_pago})"
+        })
+    
+    # Adicionar sangrias
+    cursor.execute("SELECT data, motivo, valor FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'SANGRIA' AND DATE(data) >= %s AND DATE(data) <= %s ORDER BY data DESC", (empresa_id, data_inicio, data_fim))
+    sangrias = cursor.fetchall()
+    for data, motivo, valor in sangrias:
+        transacoes.append({
+            "fecha_hora": str(data)[:16],
+            "tipo": "SANGRIA",
+            "monto": valor,
+            "detalle": motivo
+        })
+    
+    # Adicionar autofacturas
+    cursor.execute("SELECT data, motivo, valor FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'AUTOFACTURA' AND DATE(data) >= %s AND DATE(data) <= %s ORDER BY data DESC", (empresa_id, data_inicio, data_fim))
+    autofacturas = cursor.fetchall()
+    for data, motivo, valor in autofacturas:
+        transacoes.append({
+            "fecha_hora": str(data)[:16],
+            "tipo": "AUTOFACTURA",
+            "monto": valor,
+            "detalle": motivo
+        })
+    
+    # Ordenar transações por data decrescente
+    transacoes.sort(key=lambda x: x["fecha_hora"], reverse=True)
+    
     conexao.close()
     
-    return {"vendas_hoje": total_vendas_periodo, "lucro_bruto": lucro_bruto_periodo, "notas_emitidas": total_notas_periodo, "total_sangrias": total_sangrias_geral, "detalhes_itens": lista_detalhada}
+    return {
+        "vendas_hoje": total_vendas_periodo, 
+        "lucro_bruto": lucro_bruto_periodo, 
+        "notas_emitidas": total_notas_periodo, 
+        "total_sangrias": total_sangrias_geral, 
+        "detalhes_itens": lista_detalhada,
+        "transacoes": transacoes
+    }
 
 def cadastrar_proveedor(empresa_id, nome, ruc, telefone="", email="", endereco=""):
     conexao = get_conexao()

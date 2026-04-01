@@ -336,7 +336,23 @@ async function carregarEstoque() { try { const res = await fetch('/listar-produt
 function calcularLucro() { const c = parseFloat(document.getElementById('novo-custo').value)||0; const v = parseFloat(document.getElementById('novo-preco').value)||0; if(v>0 && c>=0) { document.getElementById('info-lucro').innerText = `GP: ${((v-c)/v*100).toFixed(1)}%`; document.getElementById('info-lucro').className="text-green-400 text-xs"; } }
 async function cadastrarProduto() { const d = { codigo_barras: document.getElementById('novo-cod').value, descricao: document.getElementById('novo-desc').value, categoria: document.getElementById('novo-cat').value, subcategoria: "-", preco_custo: parseFloat(document.getElementById('novo-custo').value)||0, preco_venda: parseFloat(document.getElementById('novo-preco').value)||0, quantidade: parseInt(document.getElementById('novo-qtd').value)||0, codigo_proveedor: document.getElementById('novo-prov')?.value||"" }; try { await fetch('/cadastrar-produto', {method:'POST',headers:getSaaSHeaders(),body:JSON.stringify(d)}); carregarEstoque(); toggleFormProducto(); } catch(e){} }
 async function deletarProduto(cod) { if(confirm("Eliminar?")) { await fetch(`/deletar-produto/${cod}`, {method:'DELETE',headers:getSaaSHeaders()}); carregarEstoque(); } }
-async function carregarCierreCaja() { const i=document.getElementById('filtro-data-inicio-cierre').value; const f=document.getElementById('filtro-data-fim-cierre').value; try { const res = await fetch(`/cierre-caja?inicio=${i}&fim=${f}`, {headers:getSaaSHeaders()}); const d = await res.json(); document.getElementById('cierre-vendas').innerText = d.vendas_hoje.toLocaleString('es-PY'); document.getElementById('cierre-gp').innerText = d.lucro_bruto.toLocaleString('es-PY'); document.getElementById('cierre-sangrias').innerText = d.total_sangrias.toLocaleString('es-PY'); document.getElementById('cierre-notas').innerText = d.notas_emitidas; const tb=document.getElementById('tabela-cierre-itens'); tb.innerHTML=''; d.detalhes_itens.forEach(it=>{ tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-3 text-white">${it.descricao}</td><td class="p-3 text-center">${it.vendidos}</td><td class="p-3 text-right">Gs. ${it.preco_venda.toLocaleString('es-PY')}</td><td class="p-3 text-right">Gs. ${it.receita_total.toLocaleString('es-PY')}</td><td class="p-3 text-right text-green-400">Gs. ${it.lucro_total.toLocaleString('es-PY')}</td><td class="p-3 text-center">${it.margem}%</td></tr>`; }); } catch(e){} }
+async function carregarCierreCaja() {
+    const i = document.getElementById('filtro-data-inicio-cierre').value;
+    const f = document.getElementById('filtro-data-fim-cierre').value;
+    try {
+        const res = await fetch(`/cierre-caja?inicio=${i}&fim=${f}`, { headers: getSaaSHeaders() });
+        const d = await res.json();
+        document.getElementById('cierre-vendas').innerText = d.vendas_hoje.toLocaleString('es-PY');
+        document.getElementById('cierre-gp').innerText = d.lucro_bruto.toLocaleString('es-PY');
+        document.getElementById('cierre-sangrias').innerText = d.total_sangrias.toLocaleString('es-PY');
+        document.getElementById('cierre-notas').innerText = d.notas_emitidas;
+        const tb = document.getElementById('tabela-cierre-itens');
+        tb.innerHTML = '';
+        d.transacoes.forEach(it => {
+            tb.innerHTML += `<tr class="border-b border-slate-700"><td class="p-3 text-white">${it.fecha_hora}</td><td class="p-3 text-center">${it.tipo}</td><td class="p-3 text-right">Gs. ${it.monto.toLocaleString('es-PY')}</td><td class="p-3">${it.detalle}</td></tr>`;
+        });
+    } catch(e) {}
+}
 
 async function carregarHistorico(busca="") { 
     const i=document.getElementById('filtro-data-inicio-hist')?.value||''; 
