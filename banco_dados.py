@@ -1053,6 +1053,25 @@ def injetar_dados_demo():
             ('Restaurante El Buen Sabor', '80087654-3')
         ]
         
+        # ========== CAIXA ABERTO (PARA DEMO) ==========
+        # Verificar se jÃ¡ existe uma sessÃ£o de caixa aberta
+        cursor.execute('''
+            SELECT id FROM caixa_sessoes 
+            WHERE empresa_id = %s AND status = 'ABERTO'
+        ''', (empresa_id,))
+        caixa_row = cursor.fetchone()
+        if not caixa_row:
+            cursor.execute('''
+                INSERT INTO caixa_sessoes (empresa_id, data_abertura, valor_abertura, status)
+                VALUES (%s, CURRENT_TIMESTAMP, 500000, 'ABERTO')
+                RETURNING id
+            ''', (empresa_id,))
+            caixa_id = cursor.fetchone()[0]
+            print(f"[DEMO] SessÃ£o de caixa aberta criada (ID: {caixa_id}).")
+        else:
+            caixa_id = caixa_row[0]
+            print(f"[DEMO] SessÃ£o de caixa aberta jÃ¡ existe (ID: {caixa_id}).")
+        
         # Gerar 25 vendas nos Ãºltimos 30 dias
         # As primeiras 5 vendas sÃ£o de hoje para aparecer no dashboard
         hoje = datetime.now()
@@ -1099,7 +1118,7 @@ def injetar_dados_demo():
             
             cursor.execute('''
                 INSERT INTO notas (empresa_id, ruc_emissor, nome_cliente, valor_total, cdc, itens, data_emissao, metodo_pago, caixa_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 0)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (
                 empresa_id,
                 '9999999-9',
@@ -1108,24 +1127,11 @@ def injetar_dados_demo():
                 cdc,
                 json.dumps(itens_json),
                 data_venda,
-                metodo
+                metodo,
+                caixa_id
             ))
             total_vendas += cursor.rowcount
         print(f"[DEMO] {total_vendas}/25 vendas histÃ³ricas criadas.")
-        
-        # ========== CAIXA ABERTO (PARA DEMO) ==========
-        # Verificar se jÃ¡ existe uma sessÃ£o de caixa aberta
-        cursor.execute('''
-            SELECT id FROM caixa_sessoes 
-            WHERE empresa_id = %s AND status = 'ABERTO'
-        ''', (empresa_id,))
-        if not cursor.fetchone():
-            cursor.execute('''
-                INSERT INTO caixa_sessoes (empresa_id, data_abertura, valor_abertura, status)
-                VALUES (%s, CURRENT_TIMESTAMP, 500000, 'ABERTO')
-            ''', (empresa_id,))
-            print(f"[DEMO] SessÃ£o de caixa aberta criada.")
-        
         conexao.commit()
         print(f"[DEMO] âœ… Dados de demo completos injetados com sucesso. Empresa ID: {empresa_id}")
         print(f"[DEMO]   - {total_categorias}/{len(categorias)} categorias")
