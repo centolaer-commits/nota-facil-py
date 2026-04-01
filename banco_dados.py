@@ -513,7 +513,7 @@ def salvar_auditoria_estoque(empresa_id, itens_auditados):
         conexao.close()
 
 def obter_relatorio_variancia(empresa_id, data_inicio, data_fim):
-    conexao = conectar()
+    conexao = get_conexao()
     cursor = conexao.cursor()
     
     cursor.execute('''
