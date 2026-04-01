@@ -546,7 +546,7 @@ def obter_relatorio_variancia(empresa_id, data_inicio, data_fim):
     return resultado
 
 def listar_auditorias(empresa_id, data_inicio, data_fim):
-    conexao = conectar()
+    conexao = get_conexao()
     cursor = conexao.cursor()
     
     cursor.execute('''
@@ -574,7 +574,7 @@ def listar_auditorias(empresa_id, data_inicio, data_fim):
     return resultado
 
 def obter_detalhes_auditoria(empresa_id, auditoria_id):
-    conexao = conectar()
+    conexao = get_conexao()
     cursor = conexao.cursor()
     cursor.execute('''
         SELECT codigo_barras, descricao, qtd_sistema, qtd_fisica, diferenca, custo_unitario

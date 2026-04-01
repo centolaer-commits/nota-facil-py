@@ -512,7 +512,11 @@ async function carregarRelatorioVariancia() {
 
 async function carregarStockTakeReport() {
     try {
-        const res = await fetch(`/listar-auditorias`, {headers: getSaaSHeaders()});
+        // Usar intervalo padrão dos últimos 30 dias
+        const hoje = new Date();
+        const fim = hoje.toISOString().split('T')[0];
+        const inicio = new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const res = await fetch(`/listar-auditorias?inicio=${inicio}&fim=${fim}`, {headers: getSaaSHeaders()});
         const d = await res.json();
         const tb = document.getElementById('tabela-stocktakereport');
         if (!tb) return;
@@ -556,6 +560,15 @@ async function verDetalhesAuditoria(auditoriaId) {
         document.getElementById('modal-audit-details').classList.remove('hidden');
         document.getElementById('modal-audit-details').classList.add('flex');
     } catch(e) { console.error(e); }
+}
+
+async function carregarRemisiones() {
+    // Función temporal para evitar error de referencia
+    console.log('carregarRemisiones placeholder');
+}
+
+function atualizarInterfaceRemision() {
+    // Placeholder
 }
 
 async function carregarProveedores() { try { const res=await fetch('/listar-proveedores', {headers:getSaaSHeaders()}); const d=await res.json(); const tb=document.getElementById('tabela-proveedores'); if(tb) { tb.innerHTML=''; d.forEach(p=>{ tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${p.nome}</td><td class="p-4 text-gray-400">${p.telefone||''}</td><td class="p-4">${p.endereco||''}</td><td class="p-4"><button onclick="abrirModalEditarProveedor(${p.id},'${p.nome}','${p.ruc}','${p.telefone}','${p.email}','${p.endereco}')" class="text-blue-400 mr-2">✏️</button><button onclick="deletarProveedor(${p.id})" class="text-red-400">🗑️</button></td></tr>`; }); } const sp=document.getElementById('novo-prov'); if(sp) { sp.innerHTML='<option value="">Ninguno</option>'; d.forEach(p=>{ sp.innerHTML+=`<option value="${p.nome}">${p.nome}</option>`; }); } const sep=document.getElementById('entrada-prov'); if(sep) { sep.innerHTML='<option value="">Seleccione</option>'; d.forEach(p=>{ sep.innerHTML+=`<option value="${p.id}">${p.nome}</option>`; }); } } catch(e){} }
