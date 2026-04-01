@@ -1,4 +1,4 @@
-import os
+﻿import os
 import json
 import psycopg2
 from datetime import date, timedelta
@@ -278,7 +278,7 @@ def autenticar_usuario(ruc, senha):
     emp_id, s_admin, s_caixa, status_ass, plano = empresa
     
     if status_ass == 'Cancelado': 
-        return {"sucesso": False, "mensagem": "Su suscripción está cancelada."}
+        return {"sucesso": False, "mensagem": "Su suscripciÃ³n estÃ¡ cancelada."}
 
     if senha == s_admin: 
         return {"sucesso": True, "empresa_id": emp_id, "rol": "admin", "plano": plano}
@@ -289,7 +289,7 @@ def autenticar_usuario(ruc, senha):
         return {"sucesso": True, "empresa_id": emp_id, "rol": "cajero", "plano": plano}
         
     else: 
-        return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
+        return {"sucesso": False, "mensagem": "ContraseÃ±a incorrecta"}
 
 def obter_metricas_saas():
     conexao = get_conexao()
@@ -351,7 +351,7 @@ def abrir_caixa(empresa_id, valor_inicial):
     cursor.execute("INSERT INTO caixa_sessoes (empresa_id, valor_abertura, status) VALUES (%s, %s, 'ABERTO')", (empresa_id, valor_inicial))
     conexao.commit()
     conexao.close()
-    return True, "Caja abierta con éxito."
+    return True, "Caja abierta con Ã©xito."
 
 def fechar_caixa(empresa_id, valor_fechamento):
     atual = status_caixa_atual(empresa_id)
@@ -361,7 +361,7 @@ def fechar_caixa(empresa_id, valor_fechamento):
     cursor.execute("UPDATE caixa_sessoes SET status = 'FECHADO', data_fechamento = CURRENT_TIMESTAMP, valor_fechamento = %s WHERE id = %s AND empresa_id = %s", (valor_fechamento, atual["caixa_id"], empresa_id))
     conexao.commit()
     conexao.close()
-    return True, "Caja cerrada con éxito."
+    return True, "Caja cerrada con Ã©xito."
 
 def registrar_sangria(empresa_id, valor, motivo):
     atual = status_caixa_atual(empresa_id)
@@ -504,7 +504,7 @@ def salvar_auditoria_estoque(empresa_id, itens_auditados):
 
         cursor.execute("UPDATE auditorias SET impacto_financeiro = %s, total_itens = %s WHERE id = %s", (impacto_total, total_itens, auditoria_id))
         conexao.commit()
-        return True, "Auditoría completada. Inventario actualizado."
+        return True, "AuditorÃ­a completada. Inventario actualizado."
     except Exception as e:
         conexao.rollback()
         return False, str(e)
@@ -619,7 +619,7 @@ def salvar_autofactura(empresa_id, nome_vendedor, cedula, endereco, cdc, itens, 
             cursor.execute("INSERT INTO caixa_movimentacoes (empresa_id, caixa_id, tipo, valor, motivo) VALUES (%s, %s, 'AUTOFACTURA', %s, %s)", (empresa_id, caixa_atual["caixa_id"], valor_total, f"Autofactura a {nome_vendedor}"))
 
         conexao.commit()
-        return True, "Autofactura generada con éxito."
+        return True, "Autofactura generada con Ã©xito."
     except Exception as e:
         conexao.rollback()
         return False, str(e)
@@ -799,7 +799,7 @@ def cadastrar_proveedor(empresa_id, nome, ruc, telefone="", email="", endereco="
             endereco = EXCLUDED.endereco
         ''', (empresa_id, nome, ruc, telefone, email, endereco))
         conexao.commit()
-        return True, "Proveedor guardado con éxito."
+        return True, "Proveedor guardado con Ã©xito."
     except Exception as e:
         conexao.rollback()
         return False, f"Error al guardar: {str(e)}"
@@ -817,7 +817,7 @@ def editar_proveedor(empresa_id, proveedor_id, nome, ruc, telefone, email, ender
             WHERE id = %s AND empresa_id = %s
         ''', (nome, ruc, telefone, email, endereco, proveedor_id, empresa_id))
         conexao.commit()
-        return True, "Proveedor actualizado con éxito."
+        return True, "Proveedor actualizado con Ã©xito."
     except Exception as e:
         conexao.rollback()
         return False, f"Error al actualizar: {str(e)}"
@@ -900,7 +900,7 @@ def obter_nota_por_cdc(empresa_id, cdc):
     return None
 
 def injetar_dados_demo():
-    """Cria o usuário de teste público (RUC 9999999-9) com dados completos de demonstração"""
+    """Cria o usuÃ¡rio de teste pÃºblico (RUC 9999999-9) com dados completos de demonstraÃ§Ã£o"""
     conexao = None
     cursor = None
     try:
@@ -912,26 +912,26 @@ def injetar_dados_demo():
         
         vencimento = date.today() + timedelta(days=365)
         
-        # Verificar se empresa demo já existe
+        # Verificar se empresa demo jÃ¡ existe
         cursor.execute("SELECT id FROM empresas WHERE ruc = %s", ('9999999-9',))
         existing = cursor.fetchone()
         
         if existing:
             empresa_id = existing[0]
-            print(f"[DEMO] Empresa demo já existe (ID: {empresa_id}).")
+            print(f"[DEMO] Empresa demo jÃ¡ existe (ID: {empresa_id}).")
         else:
             # Inserir empresa demo
             cursor.execute('''
                 INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
-            ''', ('Usuário Público Demo', '9999999-9', 'demo123', 'demo123', 'Demo', 'Activo', vencimento, 0))
+            ''', ('UsuÃ¡rio PÃºblico Demo', '9999999-9', 'demo123', 'demo123', 'Demo', 'Activo', vencimento, 0))
             
             empresa_id = cursor.fetchone()[0]
             print(f"[DEMO] Empresa demo criada (ID: {empresa_id}).")
         
         # ========== LIMPEZA SELETIVA ==========
-        print(f"[DEMO] LIMPEZA FORÇADA: Deletando vendas e produtos existentes para empresa ID {empresa_id}...")
+        print(f"[DEMO] LIMPEZA FORÃ‡ADA: Deletando vendas e produtos existentes para empresa ID {empresa_id}...")
         
         # 1. Notas (vendas)
         cursor.execute("DELETE FROM notas WHERE empresa_id = %s", (empresa_id,))
@@ -964,21 +964,21 @@ def injetar_dados_demo():
         
         try:
             cursor.execute("DELETE FROM notas_credito WHERE empresa_id = %s", (empresa_id,))
-            print(f"[DEMO]   - Notas crédito removidas: {cursor.rowcount}")
+            print(f"[DEMO]   - Notas crÃ©dito removidas: {cursor.rowcount}")
         except:
             pass
         
         try:
             cursor.execute("DELETE FROM notas_remision WHERE empresa_id = %s", (empresa_id,))
-            print(f"[DEMO]   - Notas remisión removidas: {cursor.rowcount}")
+            print(f"[DEMO]   - Notas remisiÃ³n removidas: {cursor.rowcount}")
         except:
             pass
         
-        # NÃO deletar categorias e provedores (podem ter constraints únicas)
-        print(f"[DEMO] LIMPEZA FORÇADA CONCLUÍDA. Categorias e provedores mantidos.")
+        # NÃƒO deletar categorias e provedores (podem ter constraints Ãºnicas)
+        print(f"[DEMO] LIMPEZA FORÃ‡ADA CONCLUÃDA. Categorias e provedores mantidos.")
         
         # ========== CATEGORIAS ==========
-        categorias = ['General', 'Bebidas', 'Lácteos', 'Limpeza', 'Enlatados', 'Panadería', 'Carnes']
+        categorias = ['General', 'Bebidas', 'LÃ¡cteos', 'Limpeza', 'Enlatados', 'PanaderÃ­a', 'Carnes']
         total_categorias = 0
         for cat in categorias:
             cursor.execute('''
@@ -990,11 +990,11 @@ def injetar_dados_demo():
         
         # ========== PROVEDORES ==========
         provedores = [
-            ('Distribuidora Central S.A.', '80012345-1', '021 234 567', 'ventas@distcentral.com.py', 'Av. Eusebio Ayala km 4.5, Asunción'),
-            ('Importadora del Este S.R.L.', '80023456-2', '021 345 678', 'contacto@importeste.com.py', 'Av. España 1234, Ciudad del Este'),
-            ('Proveedores del Sur S.A.', '80034567-3', '021 456 789', 'info@proveedorsur.com.py', 'Av. San Martín 567, Encarnación'),
-            ('Alimentos Norte S.A.', '80045678-4', '021 567 890', 'ventas@alimentosnorte.com.py', 'Av. Perú 789, Concepción'),
-            ('Mayorista Py S.R.L.', '80056789-5', '021 678 901', 'pedidos@mayoristapy.com.py', 'Av. Brasília 456, Pedro Juan Caballero')
+            ('Distribuidora Central S.A.', '80012345-1', '021 234 567', 'ventas@distcentral.com.py', 'Av. Eusebio Ayala km 4.5, AsunciÃ³n'),
+            ('Importadora del Este S.R.L.', '80023456-2', '021 345 678', 'contacto@importeste.com.py', 'Av. EspaÃ±a 1234, Ciudad del Este'),
+            ('Proveedores del Sur S.A.', '80034567-3', '021 456 789', 'info@proveedorsur.com.py', 'Av. San MartÃ­n 567, EncarnaciÃ³n'),
+            ('Alimentos Norte S.A.', '80045678-4', '021 567 890', 'ventas@alimentosnorte.com.py', 'Av. PerÃº 789, ConcepciÃ³n'),
+            ('Mayorista Py S.R.L.', '80056789-5', '021 678 901', 'pedidos@mayoristapy.com.py', 'Av. BrasÃ­lia 456, Pedro Juan Caballero')
         ]
         
         total_provedores = 0
@@ -1008,27 +1008,27 @@ def injetar_dados_demo():
         
         # ========== PRODUTOS ==========
         produtos = [
-            # Código, Descrição, Categoria, Subcategoria, Custo, Venda, Estoque
+            # CÃ³digo, DescriÃ§Ã£o, Categoria, Subcategoria, Custo, Venda, Estoque
             ('ARR-001', 'Arroz Premium 1kg', 'General', '', 10000, 12500, 45),
             ('ACE-002', 'Aceite Girasol 900ml', 'General', '', 15000, 18500, 28),
-            ('AZU-003', 'Azúcar Refinado 1kg', 'General', '', 7000, 8500, 62),
+            ('AZU-003', 'AzÃºcar Refinado 1kg', 'General', '', 7000, 8500, 62),
             ('COC-004', 'Coca-Cola 2L', 'Bebidas', 'Gaseosas', 8000, 10500, 36),
             ('SPR-005', 'Sprite 1.5L', 'Bebidas', 'Gaseosas', 7500, 9800, 42),
-            ('CER-006', 'Cerveza Pilsen 1L', 'Bebidas', 'Alcohólicas', 12000, 15800, 24),
-            ('LEH-007', 'Leche Entera 1L', 'Lácteos', '', 6000, 8500, 58),
-            ('YOU-008', 'Yogur Natural 1kg', 'Lácteos', '', 8500, 11500, 32),
-            ('QUE-009', 'Queso Paraguay 500g', 'Lácteos', '', 22000, 28500, 18),
-            ('JAB-010', 'Jabón en Polvo 3kg', 'Limpeza', '', 25000, 32500, 22),
-            ('DET-011', 'Detergente Líquido 1L', 'Limpeza', '', 12000, 16500, 40),
-            ('PAP-012', 'Papel Higiénico 4un', 'Limpeza', '', 15000, 19500, 55),
-            ('ATA-013', 'Atún en Lata 200g', 'Enlatados', '', 7500, 9800, 30),
-            ('MAI-014', 'Maíz en Lata 400g', 'Enlatados', '', 6500, 8200, 38),
-            ('PAN-015', 'Pan Francês un', 'Panadería', '', 1500, 2500, 120),
+            ('CER-006', 'Cerveza Pilsen 1L', 'Bebidas', 'AlcohÃ³licas', 12000, 15800, 24),
+            ('LEH-007', 'Leche Entera 1L', 'LÃ¡cteos', '', 6000, 8500, 58),
+            ('YOU-008', 'Yogur Natural 1kg', 'LÃ¡cteos', '', 8500, 11500, 32),
+            ('QUE-009', 'Queso Paraguay 500g', 'LÃ¡cteos', '', 22000, 28500, 18),
+            ('JAB-010', 'JabÃ³n en Polvo 3kg', 'Limpeza', '', 25000, 32500, 22),
+            ('DET-011', 'Detergente LÃ­quido 1L', 'Limpeza', '', 12000, 16500, 40),
+            ('PAP-012', 'Papel HigiÃ©nico 4un', 'Limpeza', '', 15000, 19500, 55),
+            ('ATA-013', 'AtÃºn en Lata 200g', 'Enlatados', '', 7500, 9800, 30),
+            ('MAI-014', 'MaÃ­z en Lata 400g', 'Enlatados', '', 6500, 8200, 38),
+            ('PAN-015', 'Pan FrancÃªs un', 'PanaderÃ­a', '', 1500, 2500, 120),
             ('RES-016', 'Carne Res 1kg', 'Carnes', '', 35000, 45500, 15),
             ('POL-017', 'Pollo Entero 1.5kg', 'Carnes', '', 22000, 29500, 20),
-            ('JAM-018', 'Jamón Cocido 200g', 'Carnes', '', 12500, 16800, 25),
-            ('GAL-019', 'Galletas María 500g', 'Panadería', '', 4500, 6500, 48),
-            ('CAF-020', 'Café Molido 500g', 'Bebidas', '', 18000, 23500, 16)
+            ('JAM-018', 'JamÃ³n Cocido 200g', 'Carnes', '', 12500, 16800, 25),
+            ('GAL-019', 'Galletas MarÃ­a 500g', 'PanaderÃ­a', '', 4500, 6500, 48),
+            ('CAF-020', 'CafÃ© Molido 500g', 'Bebidas', '', 18000, 23500, 16)
         ]
         
         total_produtos = 0
@@ -1040,33 +1040,33 @@ def injetar_dados_demo():
             total_produtos += cursor.rowcount
         print(f"[DEMO] {total_produtos}/{len(produtos)} produtos criados.")
         
-        # ========== VENDAS (ÚLTIMOS 30 DIAS) ==========
+        # ========== VENDAS (ÃšLTIMOS 30 DIAS) ==========
         metodos_pago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Efectivo', 'Tarjeta']
         clientes = [
             ('Consumidor Final', '80012345-1'),
-            ('Juan Pérez', '1234567-8'),
-            ('María González', '2345678-9'),
-            ('Carlos López', '3456789-0'),
-            ('Ana Martínez', '4567890-1'),
-            ('Luis Rodríguez', '5678901-2'),
+            ('Juan PÃ©rez', '1234567-8'),
+            ('MarÃ­a GonzÃ¡lez', '2345678-9'),
+            ('Carlos LÃ³pez', '3456789-0'),
+            ('Ana MartÃ­nez', '4567890-1'),
+            ('Luis RodrÃ­guez', '5678901-2'),
             ('Supermercado Central', '80098765-4'),
             ('Restaurante El Buen Sabor', '80087654-3')
         ]
         
-        # Gerar 25 vendas nos últimos 30 dias
+        # Gerar 25 vendas nos Ãºltimos 30 dias
         hoje = datetime.now()
         total_vendas = 0
         for i in range(25):
-            # Data aleatória nos últimos 30 dias
+            # Data aleatÃ³ria nos Ãºltimos 30 dias
             dias_atras = random.randint(0, 30)
             horas_atras = random.randint(0, 23)
             minutos_atras = random.randint(0, 59)
             data_venda = hoje - timedelta(days=dias_atras, hours=horas_atras, minutes=minutos_atras)
             
-            # Selecionar cliente aleatório
+            # Selecionar cliente aleatÃ³rio
             nome_cliente, ruc_cliente = random.choice(clientes)
             
-            # Selecionar 1 a 4 produtos aleatórios para esta venda
+            # Selecionar 1 a 4 produtos aleatÃ³rios para esta venda
             num_itens = random.randint(1, 4)
             itens_selecionados = random.sample(produtos[:15], num_itens)  # Usar apenas os primeiros 15 para variar
             
@@ -1087,10 +1087,10 @@ def injetar_dados_demo():
                     'subtotal': subtotal
                 })
             
-            # CDC fictício (único)
+            # CDC fictÃ­cio (Ãºnico)
             cdc = f'9999999-9-{data_venda.strftime("%Y%m%d")}-{i:06d}'
             
-            # Método de pago aleatório
+            # MÃ©todo de pago aleatÃ³rio
             metodo = random.choice(metodos_pago)
             
             cursor.execute('''
@@ -1107,10 +1107,10 @@ def injetar_dados_demo():
                 metodo
             ))
             total_vendas += cursor.rowcount
-        print(f"[DEMO] {total_vendas}/25 vendas históricas criadas.")
+        print(f"[DEMO] {total_vendas}/25 vendas histÃ³ricas criadas.")
         
         # ========== CAIXA ABERTO (PARA DEMO) ==========
-        # Verificar se já existe uma sessão de caixa aberta
+        # Verificar se jÃ¡ existe uma sessÃ£o de caixa aberta
         cursor.execute('''
             SELECT id FROM caixa_sessoes 
             WHERE empresa_id = %s AND status = 'ABERTO'
@@ -1120,14 +1120,14 @@ def injetar_dados_demo():
                 INSERT INTO caixa_sessoes (empresa_id, data_abertura, valor_abertura, status)
                 VALUES (%s, CURRENT_TIMESTAMP, 500000, 'ABERTO')
             ''', (empresa_id,))
-            print(f"[DEMO] Sessão de caixa aberta criada.")
+            print(f"[DEMO] SessÃ£o de caixa aberta criada.")
         
         conexao.commit()
-        print(f"[DEMO] ✅ Dados de demo completos injetados com sucesso. Empresa ID: {empresa_id}")
+        print(f"[DEMO] âœ… Dados de demo completos injetados com sucesso. Empresa ID: {empresa_id}")
         print(f"[DEMO]   - {total_categorias}/{len(categorias)} categorias")
         print(f"[DEMO]   - {total_provedores}/{len(provedores)} provedores")
         print(f"[DEMO]   - {total_produtos}/{len(produtos)} produtos")
-        print(f"[DEMO]   - {total_vendas}/25 vendas históricas")
+        print(f"[DEMO]   - {total_vendas}/25 vendas histÃ³ricas")
         return empresa_id
         
     except Exception as e:
@@ -1136,7 +1136,7 @@ def injetar_dados_demo():
         traceback.print_exc()
         if conexao:
             conexao.rollback()
-        # Não propaga o erro para não crashar o servidor
+        # NÃ£o propaga o erro para nÃ£o crashar o servidor
         return None
     finally:
         if cursor:
