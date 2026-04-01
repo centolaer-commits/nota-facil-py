@@ -1019,6 +1019,20 @@ def reset_demo():
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, '')
             ''', (empresa_id, cod, desc, cat, subcat, custo, venda, qtd))
         
+        # 5.5 Ensure open cash session and get its ID
+        cursor.execute("SELECT id FROM caixa_sessoes WHERE empresa_id = %s AND status = 'ABERTO'", (empresa_id,))
+        caixa_row = cursor.fetchone()
+        if not caixa_row:
+            cursor.execute('''
+                INSERT INTO caixa_sessoes (empresa_id, data_abertura, valor_abertura, status)
+                VALUES (%s, CURRENT_TIMESTAMP, 500000, 'ABERTO')
+                RETURNING id
+            ''', (empresa_id,))
+            caixa_id = cursor.fetchone()[0]
+        else:
+            caixa_id = caixa_row[0]
+        print(f"[RESET DEMO] Using cash session ID: {caixa_id}")
+        
         # 6. Generate 25 sales in the last 30 days
         metodos_pago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Efectivo', 'Tarjeta']
         clientes = [
@@ -1034,7 +1048,10 @@ def reset_demo():
         
         hoje = datetime.now()
         for i in range(25):
-            dias_atras = random.randint(0, 30)
+            if i < 5:
+                dias_atras = 0  # Today - for dashboard
+            else:
+                dias_atras = random.randint(1, 30)
             horas_atras = random.randint(0, 23)
             minutos_atras = random.randint(0, 59)
             data_venda = hoje - timedelta(days=dias_atras, hours=horas_atras, minutes=minutos_atras)
@@ -1065,7 +1082,7 @@ def reset_demo():
             
             cursor.execute('''
                 INSERT INTO notas (empresa_id, ruc_emissor, nome_cliente, valor_total, cdc, itens, data_emissao, metodo_pago, caixa_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 0)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (
                 empresa_id,
                 '9999999-9',
@@ -1074,16 +1091,11 @@ def reset_demo():
                 cdc,
                 json.dumps(itens_json),
                 data_venda,
-                metodo
+                metodo,
+                caixa_id
             ))
         
-        # 7. Ensure open cash session
-        cursor.execute("SELECT id FROM caixa_sessoes WHERE empresa_id = %s AND status = 'ABERTO'", (empresa_id,))
-        if not cursor.fetchone():
-            cursor.execute('''
-                INSERT INTO caixa_sessoes (empresa_id, data_abertura, valor_abertura, status)
-                VALUES (%s, CURRENT_TIMESTAMP, 500000, 'ABERTO')
-            ''', (empresa_id,))
+
         
         conexao.commit()
         
