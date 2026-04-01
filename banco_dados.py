@@ -1058,7 +1058,10 @@ def injetar_dados_demo():
         total_vendas = 0
         for i in range(25):
             # Data aleatÃ³ria nos Ãºltimos 30 dias
-            dias_atras = random.randint(0, 30)
+            if i < 5:
+                dias_atras = 0
+            else:
+                dias_atras = random.randint(1, 30)
             horas_atras = random.randint(0, 23)
             minutos_atras = random.randint(0, 59)
             data_venda = hoje - timedelta(days=dias_atras, hours=horas_atras, minutes=minutos_atras)

@@ -490,6 +490,27 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
 
     config = banco_dados.obter_configuracao(x_empresa_id)
     if not config: raise HTTPException(status_code=400, detail="Configuración no encontrada.")
+
+    # Modo demo para RUC 9999999-9
+    if dados.ruc_emissor == '9999999-9':
+        # Gerar CDC fake para registro local
+        import random
+        cdc_real = f"DEMO-{random.randint(100000, 999999)}"
+        link_pdf = ""
+        link_qrcode = ""
+        if dados.cdc_referencia:
+            banco_dados.salvar_nota_credito(x_empresa_id, dados.cdc_referencia, cdc_real, dados.nome_cliente, dados.valor_total, dados.itens, link_pdf)
+            mensagem_retorno = "Nota de Crédito generada (Demo)"
+        else:
+            banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
+            mensagem_retorno = "Factura generada (Demo)"
+        return {
+            "demo_mode": True,
+            "mensaje": "¡Venta procesada con éxito! Esta es una versión demo: tu venta se reflejará en los reportes, pero no se generarán documentos fiscales en la SET.",
+            "cdc": cdc_real,
+            "link_qrcode": link_qrcode,
+            "link_pdf": link_pdf
+        }
         
     ambiente = config.get("ambiente_sifen", "testes")
     xml_bruto, cdc_real = construir_xml_sifen(dados, config)

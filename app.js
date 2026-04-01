@@ -294,6 +294,14 @@ async function confirmarVenta() {
         const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payload) }); 
         if (!res.ok) throw new Error(); 
         const dados = await res.json(); 
+        if (dados.demo_mode) {
+            // Modo demo: mostrar alerta, limpar carrinho, fechar checkout
+            fecharCheckout();
+            alert(dados.mensaje); // ou usar SweetAlert se disponível
+            productosCaixa = [];
+            atualizarInterfaceCaixa();
+            return;
+        }
         fecharCheckout(); 
         document.getElementById('resultado').classList.remove('hidden');
         pixJaFoiConfirmado = false; 
@@ -321,7 +329,7 @@ let isScanning = false; function filtrarPOS() { const input = document.getElemen
 function seleccionarProductoPOS(prod) { document.getElementById('pos-dropdown').classList.add('hidden'); document.getElementById('scanner-barras').value = ''; const idx = productosCaixa.findIndex(p => p.codigo_barras === prod.codigo_barras); if (idx !== -1) productosCaixa[idx].quantidade += 1; else productosCaixa.push({ codigo_barras: prod.codigo_barras, descricao: prod.descricao, quantidade: 1, preco_unitario: parseFloat(prod.preco_venda) }); atualizarInterfaceCaixa(); }
 async function verificarScanner(e) { if(e && e.key === 'Enter') { if(e.preventDefault) e.preventDefault(); if(isScanning) return; isScanning = true; const codigo = document.getElementById('scanner-barras').value.trim(); document.getElementById('scanner-barras').value = ''; document.getElementById('pos-dropdown').classList.add('hidden'); try { const idx = productosCaixa.findIndex(p => p.codigo_barras === codigo); if (idx !== -1) { productosCaixa[idx].quantidade += 1; atualizarInterfaceCaixa(); } else { const pGlobal = productosGlobais.find(p=>p.codigo_barras === codigo); if(pGlobal) seleccionarProductoPOS(pGlobal); else { const res = await fetch('/buscar-produto/'+codigo, {headers:getSaaSHeaders()}); if(res.ok) { const p = await res.json(); productosCaixa.push({codigo_barras:codigo, descricao:p.descricao, quantidade:1, preco_unitario:parseFloat(p.preco)}); atualizarInterfaceCaixa(); } } } } catch(err){} finally{ setTimeout(()=>isScanning=false, 300); } } }
 function pedirDescuento() { const desc = prompt("Descuento (%):"); if(desc) { descuentoPorcentaje = parseFloat(desc) || 0; atualizarInterfaceCaixa(); } } function alterarQuantidade(idx, delta) { productosCaixa[idx].quantidade += delta; if(productosCaixa[idx].quantidade <= 0) productosCaixa.splice(idx,1); atualizarInterfaceCaixa(); }
-function atualizarInterfaceCaixa() { const tbody = document.getElementById('lista-produtos'); tbody.innerHTML = ''; let sub = 0; productosCaixa.forEach((p, i) => { const st = p.quantidade * p.preco_unitario; sub += st; tbody.innerHTML += `<div class="bg-slate-700/50 p-3 rounded-lg flex justify-between items-center mb-2"><div><span class="text-white block">${p.descricao}</span></div><div class="flex items-center gap-2"><button onclick="alterarQuantidade(${i},-1)" class="text-brand-accent px-2 font-bold">-</button><span class="text-white">${p.quantidade}</span><button onclick="alterarQuantidade(${i},1)" class="text-brand-accent px-2 font-bold">+</button><span class="text-brand-accent w-24 text-right">Gs. ${st.toLocaleString('es-PY')}</span></div></div>`; }); const descV = sub*(descuentoPorcentaje/100); totalDaVendaAtual = sub - descV; document.getElementById('subtotal-tela').innerText = sub.toLocaleString('es-PY'); document.getElementById('descuento-tela').innerText = descV.toLocaleString('es-PY'); document.getElementById('valor-total-tela').innerText = totalDaVendaAtual.toLocaleString('es-PY'); }
+function atualizarInterfaceCaixa() { const tbody = document.getElementById('lista-produtos'); tbody.innerHTML = ''; let sub = 0; productosCaixa.forEach((p, i) => { const st = p.quantidade * p.preco_unitario; sub += st; tbody.innerHTML += `<div class="bg-slate-700/50 p-3 rounded-lg flex justify-between items-center mb-2"><div><span class="text-gray-800 block">${p.descricao}</span></div><div class="flex items-center gap-2"><button onclick="alterarQuantidade(${i},-1)" class="text-brand-accent px-2 font-bold">-</button><span class="text-gray-800">${p.quantidade}</span><button onclick="alterarQuantidade(${i},1)" class="text-brand-accent px-2 font-bold">+</button><span class="text-brand-accent w-24 text-right">Gs. ${st.toLocaleString('es-PY')}</span></div></div>`; }); const descV = sub*(descuentoPorcentaje/100); totalDaVendaAtual = sub - descV; document.getElementById('subtotal-tela').innerText = sub.toLocaleString('es-PY'); document.getElementById('descuento-tela').innerText = descV.toLocaleString('es-PY'); document.getElementById('valor-total-tela').innerText = totalDaVendaAtual.toLocaleString('es-PY'); }
 
 function toggleFormProducto() { document.getElementById('form-novo-produto').classList.toggle('hidden'); } function filtrarEstoque() { const termo=document.getElementById('busca-inventario').value.toLowerCase(); const cat=document.getElementById('filtro-cat-inventario').value; const res=productosGlobais.filter(p=>(p.descricao.toLowerCase().includes(termo)||p.codigo_barras.toLowerCase().includes(termo))&&(cat===""||p.categoria===cat)); const tbody=document.getElementById('tabela-estoque'); tbody.innerHTML=''; res.forEach(p=>{ tbody.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${p.descricao}<br><span class="text-xs text-gray-400 font-mono">${p.codigo_barras}</span></td><td class="p-4">${p.categoria}</td><td class="p-4">${p.codigo_proveedor||'-'}</td><td class="p-4 text-right text-white">Gs. ${p.preco_venda.toLocaleString('es-PY')}</td><td class="p-4 text-center font-bold text-brand-accent">${p.quantidade}</td><td class="p-4"><button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-400">🗑️</button></td></tr>`; }); }
 async function carregarEstoque() { try { const res = await fetch('/listar-produtos', {headers:getSaaSHeaders()}); productosGlobais = await res.json(); filtrarEstoque(); if(document.getElementById('tela-stocktake') && !document.getElementById('tela-stocktake').classList.contains('hidden')) renderTabelaStockTake(productosGlobais); } catch(e){} }
@@ -433,8 +441,39 @@ async function carregarMermas() { try { const res = await fetch('/listar-mermas'
 function filtrarNC() { const input = document.getElementById('nc-scanner').value.toLowerCase(); const dropdown = document.getElementById('nc-dropdown'); dropdown.innerHTML = ''; if (input.length < 2) { dropdown.classList.add('hidden'); return; } const resultados = productosGlobais.filter(p => p.descricao.toLowerCase().includes(input) || p.codigo_barras.toLowerCase().includes(input)).slice(0, 10); if (resultados.length > 0) { dropdown.classList.remove('hidden'); resultados.forEach(p => { const div = document.createElement('div'); div.className = 'p-4 hover:bg-slate-700/50 cursor-pointer border-b border-slate-700 flex justify-between text-white'; div.innerHTML = `<span>${p.descricao}</span><span class="text-purple-400 font-bold">Gs. ${p.preco_venda.toLocaleString('es-PY')}</span>`; div.onclick = () => seleccionarProdutoNC(p); dropdown.appendChild(div); }); } else { dropdown.classList.add('hidden'); } }
 function seleccionarProdutoNC(prod) { document.getElementById('nc-dropdown').classList.add('hidden'); document.getElementById('nc-scanner').value = ''; const idx = ncProductosCaixa.findIndex(p => p.codigo_barras === prod.codigo_barras); if (idx !== -1) ncProductosCaixa[idx].quantidade += 1; else ncProductosCaixa.push({ codigo_barras: prod.codigo_barras, descricao: prod.descricao, quantidade: 1, preco_unitario: Number(prod.preco_venda) }); atualizarInterfaceNC(); }
 function verificarScannerNC(e) { if(e && e.key === 'Enter') { e.preventDefault(); const codigo = document.getElementById('nc-scanner').value.trim(); document.getElementById('nc-scanner').value = ''; document.getElementById('nc-dropdown').classList.add('hidden'); const pGlobal = productosGlobais.find(p=>p.codigo_barras === codigo); if(pGlobal) seleccionarProdutoNC(pGlobal); } }
-function atualizarInterfaceNC() { const tbody = document.getElementById('nc-lista-produtos'); tbody.innerHTML = ''; let sub = 0; ncProductosCaixa.forEach((p, i) => { const st = p.quantidade * p.preco_unitario; sub += st; tbody.innerHTML += `<div class="bg-slate-700/50 p-3 rounded-lg flex justify-between items-center mb-2"><div><span class="text-white block">${p.descricao}</span></div><div class="flex items-center gap-3"><span class="text-white font-bold">${p.quantidade} unid.</span><span class="font-bold text-purple-400 w-24 text-right">Gs. ${st.toLocaleString('es-PY')}</span><button onclick="ncProductosCaixa.splice(${i}, 1); atualizarInterfaceNC();" class="text-red-400 font-bold bg-red-900/20 px-2 rounded">✕</button></div></div>`; }); totalNCTela = sub; document.getElementById('nc-valor-total-tela').innerText = sub.toLocaleString('es-PY'); }
-async function emitirNotaCredito() { const cdcRef = document.getElementById('nc-cdc').value.trim(); const cl = document.getElementById('nc-cliente').value.trim(); if(ncProductosCaixa.length === 0 || !cdcRef || !cl) return showToast("Complete todo.", "warning"); const btn = document.getElementById('btn-emitir-nc'); btn.disabled = true; const payload = { ruc_emissor: document.getElementById('ruc').value, nome_cliente: cl, valor_total: totalNCTela, itens: ncProductosCaixa, cdc_referencia: cdcRef, metodo_pago: "Devolucion" }; try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payload) }); const dados = await res.json(); document.getElementById('nc-resultado').classList.remove('hidden'); document.getElementById('btn-nc-pdf').href = dados.link_pdf; btn.classList.add('hidden'); ncProductosCaixa = []; atualizarInterfaceNC(); carregarEstoque(); } catch(e) {} finally { btn.disabled = false; } }
+function atualizarInterfaceNC() { const tbody = document.getElementById('nc-lista-produtos'); tbody.innerHTML = ''; let sub = 0; ncProductosCaixa.forEach((p, i) => { const st = p.quantidade * p.preco_unitario; sub += st; tbody.innerHTML += `<div class="bg-slate-700/50 p-3 rounded-lg flex justify-between items-center mb-2"><div><span class="text-gray-800 block">${p.descricao}</span></div><div class="flex items-center gap-3"><span class="text-gray-800 font-bold">${p.quantidade} unid.</span><span class="font-bold text-purple-400 w-24 text-right">Gs. ${st.toLocaleString('es-PY')}</span><button onclick="ncProductosCaixa.splice(${i}, 1); atualizarInterfaceNC();" class="text-red-400 font-bold bg-red-900/20 px-2 rounded">✕</button></div></div>`; }); totalNCTela = sub; document.getElementById('nc-valor-total-tela').innerText = sub.toLocaleString('es-PY'); }
+async function emitirNotaCredito() { 
+    const cdcRef = document.getElementById('nc-cdc').value.trim(); 
+    const cl = document.getElementById('nc-cliente').value.trim(); 
+    if(ncProductosCaixa.length === 0 || !cdcRef || !cl) return showToast("Complete todo.", "warning"); 
+    const btn = document.getElementById('btn-emitir-nc'); 
+    btn.disabled = true; 
+    const payload = { 
+        ruc_emissor: document.getElementById('ruc').value, 
+        nome_cliente: cl, 
+        valor_total: totalNCTela, 
+        itens: ncProductosCaixa, 
+        cdc_referencia: cdcRef, 
+        metodo_pago: "Devolucion" 
+    }; 
+    try { 
+        const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payload) }); 
+        const dados = await res.json(); 
+        if (dados.demo_mode) {
+            alert(dados.mensaje);
+            ncProductosCaixa = [];
+            atualizarInterfaceNC();
+            carregarEstoque();
+            return;
+        }
+        document.getElementById('nc-resultado').classList.remove('hidden'); 
+        document.getElementById('btn-nc-pdf').href = dados.link_pdf; 
+        btn.classList.add('hidden'); 
+        ncProductosCaixa = []; 
+        atualizarInterfaceNC(); 
+        carregarEstoque(); 
+    } catch(e) {} finally { btn.disabled = false; } 
+}
 function novaNC() { document.getElementById('nc-resultado').classList.add('hidden'); document.getElementById('btn-emitir-nc').classList.remove('hidden'); document.getElementById('nc-cdc').value = ''; document.getElementById('nc-cliente').value = ''; document.getElementById('nc-scanner').focus(); }
 function abrirModalTutorialMP() { document.getElementById('modal-tutorial-mp').classList.remove('hidden'); document.getElementById('modal-tutorial-mp').classList.add('flex'); }
 function fecharModalTutorialMP() { document.getElementById('modal-tutorial-mp').classList.add('hidden'); document.getElementById('modal-tutorial-mp').classList.remove('flex'); }
