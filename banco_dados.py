@@ -1103,10 +1103,12 @@ def injetar_dados_demo():
                 valor_total += subtotal
                 
                 itens_json.append({
+                    'codigo_barras': codigo,
                     'codigo': codigo,
                     'descricao': descricao,
-                    'cantidad': quantidade,
-                    'precio_unitario': venda,
+                    'quantidade': quantidade,
+                    'preco_unitario': venda,
+                    'preco_custo': custo,
                     'subtotal': subtotal
                 })
             
