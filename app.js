@@ -1,4 +1,4 @@
-let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let productosGlobais = []; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; 
+let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let productosGlobais = []; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; let contextoCatalogo = ''; 
 
 // VARIÁVEIS PARA O PIX
 let radarPix = null;
@@ -573,6 +573,14 @@ function atualizarInterfaceRemision() {
 
 // ==================== CATÁLOGO PDV ====================
 function abrirCatalogoPDV() {
+    contextoCatalogo = 'pdv';
+    document.getElementById('modal-catalogo-pdv').classList.remove('hidden');
+    document.getElementById('modal-catalogo-pdv').classList.add('flex');
+    carregarCatalogoPDV();
+}
+
+function abrirCatalogoEntrada() {
+    contextoCatalogo = 'entrada';
     document.getElementById('modal-catalogo-pdv').classList.remove('hidden');
     document.getElementById('modal-catalogo-pdv').classList.add('flex');
     carregarCatalogoPDV();
@@ -675,11 +683,29 @@ function filtrarCatalogoPDV() {
     renderizarCatalogoPDV(filtrada);
 }
 
+function seleccionarProductoEntrada(producto) {
+    const q = prompt(`Cant de ${producto.descricao}:`);
+    if (!q) return;
+    const cost = prompt(`Costo:`, producto.preco_custo);
+    if (!cost) return;
+    itensEntrada.push({
+        codigo_barras: producto.codigo_barras,
+        descricao: producto.descricao,
+        quantidade: parseInt(q),
+        custo_unitario: parseFloat(cost)
+    });
+    atualizarInterfaceEntrada();
+}
+
 function seleccionarProductoCatalogo(codigo) {
     const producto = productosGlobais.find(p => p.codigo_barras === codigo);
     if (!producto) return;
-    // Usar la misma lógica que el POS
-    seleccionarProductoPOS(producto);
+    if (contextoCatalogo === 'entrada') {
+        seleccionarProductoEntrada(producto);
+    } else {
+        // Por defecto PDV
+        seleccionarProductoPOS(producto);
+    }
     fecharCatalogoPDV();
 }
 
