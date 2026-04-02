@@ -236,6 +236,13 @@ def gerar_pix_dinamico(
 def fazer_login(dados: DadosLogin):
     resultado = banco_dados.autenticar_usuario(dados.ruc, dados.senha)
     if resultado["sucesso"]:
+        # Se for a conta demo (RUC 9999999-9), garantir que os dados demo existam
+        if dados.ruc == "9999999-9":
+            # Executar a geração de dados demo em background (sem bloquear a resposta)
+            import threading
+            def gerar_dados_demo():
+                banco_dados.injetar_dados_demo()
+            threading.Thread(target=gerar_dados_demo).start()
         return resultado
     raise HTTPException(status_code=401, detail=resultado["mensagem"])
 
@@ -856,6 +863,9 @@ async def pagina_demo():
                 status_code=500,
                 detail="Não foi possível criar ou autenticar o usuário demo. Tente novamente mais tarde."
             )
+        
+        # 4.1 Garantir que os dados demo estejam presentes (produtos, vendas, etc.)
+        banco_dados.injetar_dados_demo()
         
         # 5. Extrair dados com verificação de chaves
         empresa_id = resultado.get("empresa_id")
