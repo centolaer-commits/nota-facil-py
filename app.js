@@ -368,7 +368,27 @@ function pedirDescuento() { const desc = prompt("Descuento (%):"); if(desc) { de
 function atualizarInterfaceCaixa() { const tbody = document.getElementById('lista-produtos'); tbody.innerHTML = ''; let sub = 0; productosCaixa.forEach((p, i) => { const st = p.quantidade * p.preco_unitario; sub += st; tbody.innerHTML += `<div class="bg-slate-700/50 p-3 rounded-lg flex justify-between items-center mb-2"><div><span class="text-black block" style="color: #000 !important;">${p.descricao}</span></div><div class="flex items-center gap-2"><button onclick="alterarQuantidade(${i},-1)" class="text-brand-accent px-2 font-bold">-</button><span class="text-black" style="color: #000 !important;">${p.quantidade}</span><button onclick="alterarQuantidade(${i},1)" class="text-brand-accent px-2 font-bold">+</button><span class="text-brand-accent w-24 text-right">Gs. ${st.toLocaleString('es-PY')}</span></div></div>`; }); const descV = sub*(descuentoPorcentaje/100); totalDaVendaAtual = sub - descV; document.getElementById('subtotal-tela').innerText = sub.toLocaleString('es-PY'); document.getElementById('descuento-tela').innerText = descV.toLocaleString('es-PY'); document.getElementById('valor-total-tela').innerText = totalDaVendaAtual.toLocaleString('es-PY'); }
 
 function toggleFormProducto() { document.getElementById('form-novo-produto').classList.toggle('hidden'); if (document.getElementById('form-novo-produto').classList.contains('hidden')) cancelarEdicaoProduto(); } function filtrarEstoque() { const termo=document.getElementById('busca-inventario').value.toLowerCase(); const cat=document.getElementById('filtro-cat-inventario').value; const res=productosGlobais.filter(p=>(p.descricao.toLowerCase().includes(termo)||p.codigo_barras.toLowerCase().includes(termo))&&(cat===""||p.categoria===cat)); const tbody=document.getElementById('tabela-estoque'); tbody.innerHTML=''; res.forEach(p=>{ tbody.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${p.descricao}<br><span class="text-xs text-gray-400 font-mono">${p.codigo_barras}</span></td><td class="p-4">${p.categoria}</td><td class="p-4">${p.codigo_proveedor||'-'}</td><td class="p-4 text-right text-white">Gs. ${p.preco_venda.toLocaleString('es-PY')}</td><td class="p-4 text-center font-bold text-brand-accent">${p.quantidade}</td><td class="p-4"><button onclick="abrirEditarProduto('${p.codigo_barras}')" class="text-blue-400 mr-2">✏️</button><button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-400">🗑️</button></td></tr>`; }); }
-async function carregarEstoque() { try { const res = await fetch('/listar-produtos', {headers:getSaaSHeaders()}); const lista = await res.json(); productosGlobais = lista.sort((a, b) => a.descricao.localeCompare(b.descricao)); filtrarEstoque(); if(document.getElementById('tela-stocktake') && !document.getElementById('tela-stocktake').classList.contains('hidden')) renderTabelaStockTake(productosGlobais); } catch(e){} }
+function preencherFiltroCategorias() {
+    const select = document.getElementById('filtro-cat-inventario');
+    if (!select) return;
+    const catAtual = select.value;
+    select.innerHTML = '';
+    const opTodas = document.createElement('option');
+    opTodas.value = '';
+    opTodas.textContent = 'Todas las Categorías';
+    select.appendChild(opTodas);
+    const categorias = [...new Set(productosGlobais.map(p => p.categoria).filter(c => c && c.trim() !== ''))].sort();
+    categorias.forEach(cat => {
+        const op = document.createElement('option');
+        op.value = cat;
+        op.textContent = cat;
+        select.appendChild(op);
+    });
+    if (catAtual && categorias.includes(catAtual)) {
+        select.value = catAtual;
+    }
+}
+async function carregarEstoque() { try { const res = await fetch('/listar-produtos', {headers:getSaaSHeaders()}); const lista = await res.json(); productosGlobais = lista.sort((a, b) => a.descricao.localeCompare(b.descricao)); preencherFiltroCategorias(); filtrarEstoque(); if(document.getElementById('tela-stocktake') && !document.getElementById('tela-stocktake').classList.contains('hidden')) renderTabelaStockTake(productosGlobais); } catch(e){} }
 function calcularLucro() { const c = parseFloat(document.getElementById('novo-custo').value)||0; const v = parseFloat(document.getElementById('novo-preco').value)||0; if(v>0 && c>=0) { document.getElementById('info-lucro').innerText = `GP: ${((v-c)/v*100).toFixed(1)}%`; document.getElementById('info-lucro').className="text-green-400 text-xs"; } }
 async function cadastrarProduto() { 
     const codigoOriginal = document.getElementById('produto-original-cod').value;
