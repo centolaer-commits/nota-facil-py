@@ -358,7 +358,7 @@ function novaVenda() { document.getElementById('resultado').classList.add('hidde
 async function sincronizarFila() { if (filaContingencia.length === 0 || !navigator.onLine) return; let pendentes = [...filaContingencia]; filaContingencia = []; let sucesso = 0; for (let n of pendentes) { try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(n) }); if (res.ok) sucesso++; else filaContingencia.push(n); } catch(e) { filaContingencia.push(n); } } localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); atualizarStatusConexao(); if(sucesso>0) showToast(`✅ ${sucesso} sincronizadas.`); }
 
 function abrirCamera(idCampo) { campoDestinoScanner = idCampo; document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-modal').classList.add('flex'); if (!html5QrCode) html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, ()=>{}); } 
-function onScanSucesso(codigo) { fecharCamera(); document.getElementById(campoDestinoScanner).value = codigo; if (campoDestinoScanner === 'scanner-barras') verificarScanner({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'entrada-scanner') buscarProdutoEntrada({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'nc-scanner') verificarScannerNC({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'merma-cod') buscarParaMerma({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'rem-scanner') verificarScannerRemision({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'auto-scanner') verificarScannerAuto({key:'Enter',preventDefault:()=>{}}); } 
+function onScanSucesso(codigo) { fecharCamera(); document.getElementById(campoDestinoScanner).value = codigo; if (campoDestinoScanner === 'scanner-barras') verificarScanner({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'entrada-scanner') agregarProductoEntrada(codigo); else if (campoDestinoScanner === 'nc-scanner') verificarScannerNC({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'merma-cod') buscarParaMerma({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'rem-scanner') verificarScannerRemision({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'auto-scanner') verificarScannerAuto({key:'Enter',preventDefault:()=>{}}); } 
 function fecharCamera() { document.getElementById('camera-modal').classList.add('hidden'); if(html5QrCode) html5QrCode.stop().then(()=>html5QrCode.clear()); }
 
 let isScanning = false; function filtrarPOS() { const input = document.getElementById('scanner-barras').value.toLowerCase(); const dropdown = document.getElementById('pos-dropdown'); dropdown.innerHTML = ''; if (input.length < 2) { dropdown.classList.add('hidden'); return; } const resultados = productosGlobais.filter(p => p.descricao.toLowerCase().includes(input) || p.codigo_barras.toLowerCase().includes(input)).slice(0, 10); if (resultados.length > 0) { dropdown.classList.remove('hidden'); resultados.forEach(p => { const div = document.createElement('div'); div.className = 'p-4 hover:bg-slate-700/50 cursor-pointer border-b border-slate-700 flex justify-between text-white'; div.innerHTML = `<span>${p.descricao}</span><span class="text-brand-accent">Gs. ${p.preco_venda.toLocaleString('es-PY')}</span>`; div.onclick = () => seleccionarProductoPOS(p); dropdown.appendChild(div); }); } else { dropdown.classList.add('hidden'); } }
@@ -571,16 +571,9 @@ function atualizarInterfaceRemision() {
     // Placeholder
 }
 
-// ==================== CATÁLOGO PDV ====================
-function abrirCatalogoPDV() {
-    contextoCatalogo = 'pdv';
-    document.getElementById('modal-catalogo-pdv').classList.remove('hidden');
-    document.getElementById('modal-catalogo-pdv').classList.add('flex');
-    carregarCatalogoPDV();
-}
-
-function abrirCatalogoEntrada() {
-    contextoCatalogo = 'entrada';
+// ==================== CATÁLOGO ====================
+function abrirCatalogo(origem) {
+    contextoCatalogo = origem;
     document.getElementById('modal-catalogo-pdv').classList.remove('hidden');
     document.getElementById('modal-catalogo-pdv').classList.add('flex');
     carregarCatalogoPDV();
@@ -697,6 +690,23 @@ function seleccionarProductoEntrada(producto) {
     atualizarInterfaceEntrada();
 }
 
+function agregarProductoEntrada(codigo) {
+    const p = productosGlobais.find(x => x.codigo_barras === codigo);
+    if (!p) return;
+    const q = prompt(`Cant de ${p.descricao}:`);
+    if (!q) return;
+    const cost = prompt(`Costo:`, p.preco_custo);
+    if (!cost) return;
+    itensEntrada.push({
+        codigo_barras: codigo,
+        descricao: p.descricao,
+        quantidade: parseInt(q),
+        custo_unitario: parseFloat(cost)
+    });
+    atualizarInterfaceEntrada();
+    document.getElementById('entrada-scanner').value = '';
+}
+
 function seleccionarProductoCatalogo(codigo) {
     const producto = productosGlobais.find(p => p.codigo_barras === codigo);
     if (!producto) return;
@@ -713,7 +723,13 @@ async function carregarProveedores() { try { const res=await fetch('/listar-prov
 function abrirModalEditarProveedor(id, n, r, t, e, end) { document.getElementById('prov-id').value=id; document.getElementById('prov-nome').value=n; document.getElementById('prov-ruc').value=r!=='null'?r:''; document.getElementById('prov-tel').value=t!=='null'?t:''; document.getElementById('prov-email').value=e!=='null'?e:''; document.getElementById('prov-endereco').value=end!=='null'?end:''; document.getElementById('form-novo-proveedor').classList.remove('hidden'); }
 async function salvarProveedor() { const id=document.getElementById('prov-id').value; const pay={nome:document.getElementById('prov-nome').value, ruc:document.getElementById('prov-ruc').value, telefone:document.getElementById('prov-tel').value, email:document.getElementById('prov-email').value, endereco:document.getElementById('prov-endereco').value}; const url=id?`/editar-proveedor/${id}`:'/cadastrar-proveedor'; const m=id?'PUT':'POST'; try { await fetch(url,{method:m,headers:getSaaSHeaders(),body:JSON.stringify(pay)}); document.getElementById('form-novo-proveedor').classList.add('hidden'); carregarProveedores(); } catch(e){} } async function deletarProveedor(id) { if(confirm("Del?")) { await fetch(`/deletar-proveedor/${id}`,{method:'DELETE',headers:getSaaSHeaders()}); carregarProveedores(); } }
 
-function buscarProdutoEntrada(e) { if(e.key==='Enter') { e.preventDefault(); const c=document.getElementById('entrada-scanner').value; const p=productosGlobais.find(x=>x.codigo_barras===c); if(p){ const q=prompt(`Cant de ${p.descricao}:`); if(!q) return; const cost=prompt(`Costo:`, p.preco_custo); if(!cost) return; itensEntrada.push({codigo_barras:c, descricao:p.descricao, quantidade:parseInt(q), custo_unitario:parseFloat(cost)}); atualizarInterfaceEntrada(); document.getElementById('entrada-scanner').value=''; } } }
+function buscarProdutoEntrada(e) {
+    if(e.key === 'Enter') {
+        e.preventDefault();
+        const codigo = document.getElementById('entrada-scanner').value;
+        agregarProductoEntrada(codigo);
+    }
+}
 function atualizarInterfaceEntrada() { const tb=document.getElementById('tabela-entrada-itens'); tb.innerHTML=''; let t=0; itensEntrada.forEach((i,idx)=>{ const st=i.quantidade*i.custo_unitario; t+=st; tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-3 text-white">${i.descricao}</td><td class="p-3 text-center text-white">${i.quantidade}</td><td class="p-3 text-right">Gs. ${i.custo_unitario.toLocaleString('es-PY')}</td><td class="p-3 text-right font-bold text-blue-400">Gs. ${st.toLocaleString('es-PY')}</td><td class="p-3 text-center"><button onclick="itensEntrada.splice(${idx},1);atualizarInterfaceEntrada();" class="text-red-400">✕</button></td></tr>`; }); document.getElementById('entrada-total-tela').innerText=t.toLocaleString('es-PY'); }
 async function salvarEntradaFactura() { if(itensEntrada.length===0) return; const p=document.getElementById('entrada-prov').value; const n=document.getElementById('entrada-nro').value; const d=document.getElementById('entrada-data').value; if(!p||!n) return showToast("Falta info", "error"); try { await fetch('/salvar-entrada',{method:'POST',headers:getSaaSHeaders(),body:JSON.stringify({proveedor_id:parseInt(p), numero_factura:n, data_emissao:d, itens:itensEntrada})}); showToast("✅ Factura Guardada"); itensEntrada=[]; atualizarInterfaceEntrada(); document.getElementById('entrada-nro').value=''; carregarEstoque(); } catch(e){} }
 
