@@ -268,6 +268,24 @@ def autenticar_usuario(ruc, senha):
     print(f"[DEBUG] Tentativa de login: RUC='{ruc}', senha='{senha}'", file=sys.stderr)
     if ruc == "NUBE" and senha == "nube2026":
         print(f"[DEBUG] Credenciais de superadmin aceitas", file=sys.stderr)
+        # Garantir que a empresa NUBE exista no banco (para compatibilidade)
+        try:
+            conexao = get_conexao()
+            cursor = conexao.cursor()
+            cursor.execute("SELECT id FROM empresas WHERE ruc = %s", ('NUBE',))
+            if not cursor.fetchone():
+                from datetime import date, timedelta
+                vencimento = date.today() + timedelta(days=365)
+                cursor.execute("""
+                    INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, ('NubePY Admin', 'NUBE', 'nube2026', 'caja123', 'VIP', 'Activo', vencimento, 0))
+                conexao.commit()
+                print("[DEBUG] Empresa NUBE criada no banco", file=sys.stderr)
+            cursor.close()
+            conexao.close()
+        except Exception as e:
+            print(f"[DEBUG] Erro ao criar empresa NUBE: {e}", file=sys.stderr)
         return {"sucesso": True, "empresa_id": 0, "rol": "superadmin", "plano": "VIP"}
 
     conexao = get_conexao()
