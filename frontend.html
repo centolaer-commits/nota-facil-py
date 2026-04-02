@@ -279,7 +279,7 @@
     </div>
   </div>
 
-  <div id="mobile-header" class="flex md:hidden bg-white text-slate-800 p-4 justify-between items-center z-20 w-full hidden border-b border-slate-200 shadow-sm"><img src="/logo_main.svg" alt="NubePY" class="h-8"><button type="button" onclick="toggleSidebar()" class="text-3xl text-brand-accent">☰</button></div>
+  <div id="mobile-header" class="flex md:hidden bg-white text-slate-800 p-4 justify-between items-center z-20 w-full hidden border-b border-slate-200 shadow-sm"><img src="/logo_main.svg" alt="NubePY" class="h-20"><button type="button" onclick="toggleSidebar()" class="text-3xl text-brand-accent">☰</button></div>
 
   <div id="app-screen" class="hidden flex-1 h-full overflow-hidden relative w-full bg-slate-50">
     <div id="sidebar" class="absolute md:relative inset-y-0 left-0 w-64 bg-white border-r border-slate-200 shadow-lg md:shadow-none flex flex-col justify-between z-30 transform -translate-x-full md:translate-x-0 transition duration-300 h-full text-slate-600">
@@ -291,6 +291,7 @@
         
         <nav class="mt-4 flex flex-col p-3 space-y-1 font-medium">
           <button type="button" onclick="mudarTela('pos', this)" class="nav-btn menu-ativo p-3 rounded-xl text-left hover:bg-slate-50 flex items-center transition">🛒 Punto de Venta</button>
+         <button id="nav-btn-dashboard" onclick="mudarTela('dashboard', this)" class="nav-btn p-3 rounded-xl text-left flex items-center mt-2 hover:bg-slate-50 transition">📊 Dashboard</button>
           
           <div id="nav-group-inventario" class="mt-2">
             <button type="button" onclick="toggleAcordeao('menu-inv', 'seta-inv')" class="w-full p-3 rounded-xl text-left hover:bg-slate-50 flex justify-between items-center transition">📦 Inventario <span id="seta-inv" class="text-xs text-slate-400">▼</span></button>
@@ -304,7 +305,7 @@
             </div>
           </div>
           
-          <button id="nav-btn-dashboard" onclick="mudarTela('dashboard', this)" class="nav-btn p-3 rounded-xl text-left flex items-center mt-2 hover:bg-slate-50 transition">📊 Dashboard</button>
+
           
           <div id="nav-group-reportes" class="mt-2">
             <button type="button" onclick="toggleAcordeao('menu-rep', 'seta-rep')" class="w-full p-3 rounded-xl text-left hover:bg-slate-50 flex justify-between items-center transition">📈 Reportes / Ventas <span id="seta-rep" class="text-xs text-slate-400">▼</span></button>
