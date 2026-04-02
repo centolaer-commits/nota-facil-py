@@ -264,7 +264,10 @@ if DATABASE_URL:
     inicializar_banco()
 
 def autenticar_usuario(ruc, senha):
+    import sys
+    print(f"[DEBUG] Tentativa de login: RUC='{ruc}', senha='{senha}'", file=sys.stderr)
     if ruc == "NUBE" and senha == "nube2026":
+        print(f"[DEBUG] Credenciais de superadmin aceitas", file=sys.stderr)
         return {"sucesso": True, "empresa_id": 0, "rol": "superadmin", "plano": "VIP"}
 
     conexao = get_conexao()
@@ -273,7 +276,9 @@ def autenticar_usuario(ruc, senha):
     empresa = cursor.fetchone()
     conexao.close()
 
-    if not empresa: return {"sucesso": False, "mensagem": "Empresa (RUC) no encontrada"}
+    if not empresa:
+        print(f"[DEBUG] Empresa com RUC '{ruc}' não encontrada no banco", file=sys.stderr)
+        return {"sucesso": False, "mensagem": "Empresa (RUC) no encontrada"}
 
     emp_id, s_admin, s_caixa, status_ass, plano = empresa
     
