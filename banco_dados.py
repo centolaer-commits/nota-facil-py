@@ -776,7 +776,7 @@ def listar_todas_notas(empresa_id, busca="", data_inicio=None, data_fim=None):
     return [{"id": l[0], "nome_cliente": l[1], "valor_total": l[2], "cdc": l[3], "link_pdf": l[4], "data_emissao": l[5], "metodo_pago": l[6]} for l in linhas]
 
 def gerar_vendas_mock_hoje(empresa_id):
-    """Gera algumas vendas fictícias para hoje, apenas para a demo."""
+    """Gera vendas fictícias para hoje, apenas para a demo."""
     conexao = get_conexao()
     cursor = conexao.cursor()
     # Verificar se a empresa é demo (RUC 9999999-9)
@@ -785,33 +785,62 @@ def gerar_vendas_mock_hoje(empresa_id):
     if not row or row[0] != '9999999-9':
         conexao.close()
         return False
-    # Buscar produtos existentes da empresa
-    cursor.execute('SELECT codigo_barras, descricao, preco_venda FROM produtos WHERE empresa_id = %s LIMIT 5', (empresa_id,))
+    # Buscar produtos existentes da empresa (todos)
+    cursor.execute('SELECT codigo_barras, descricao, preco_venda FROM produtos WHERE empresa_id = %s', (empresa_id,))
     produtos = cursor.fetchall()
     if not produtos:
         conexao.close()
         return False
-    # Gerar 3 vendas
     import random
     from datetime import datetime, timedelta
+    metodos = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA']
+    clientes = ['Juan Pérez', 'María Gómez', 'Carlos López', 'Ana Martínez', 'Pedro Rodríguez',
+                'Laura Silva', 'Roberto Fernández', 'Claudia Rojas', 'Miguel Ángel', 'Sofía Castro']
+    # Gerar entre 5 e 15 vendas para hoje
+    num_vendas = random.randint(5, 15)
     hoje = datetime.now().date()
-    for i in range(3):
-        # Escolher um produto aleatório (simplificado)
-        prod = random.choice(produtos)
-        codigo = prod[0]
-        descricao = prod[1]
-        preco = prod[2]
-        quantidade = random.randint(1, 5)
-        valor_total = preco * quantidade
-        itens = [{"codigo_barras": codigo, "descricao": descricao, "preco_unitario": preco, "quantidade": quantidade}]
-        metodo_pago = random.choice(['EFECTIVO', 'TARJETA'])
-        data_emissao = hoje - timedelta(hours=random.randint(0, 12), minutes=random.randint(0, 59))
+    for i in range(num_vendas):
+        # Horário aleatório ao longo do dia
+        horas = random.randint(8, 20)
+        minutos = random.randint(0, 59)
+        data_emissao = datetime(hoje.year, hoje.month, hoje.day, horas, minutos)
+        
+        cliente = random.choice(clientes)
+        metodo = random.choice(metodos)
+        itens = []
+        total = 0
+        # 1 a 3 itens por venda
+        for _ in range(random.randint(1, 3)):
+            prod = random.choice(produtos)
+            codigo = prod[0]
+            descricao = prod[1]
+            preco = prod[2]
+            quantidade = random.randint(1, 6)
+            # Calcular IVA (10%)
+            iva_unitario = round(preco * 0.1, 0)
+            itens.append({
+                "codigo_barras": codigo,
+                "descricao": descricao,
+                "preco_unitario": preco,
+                "quantidade": quantidade,
+                "iva_unitario": int(iva_unitario),
+                "subtotal": preco * quantidade,
+                "iva_total": int(iva_unitario * quantidade)
+            })
+            total += preco * quantidade
+        
+        # CDC fictício
+        cdc = f"1234567890{random.randint(10000, 99999)}"
+        link_pdf = f"https://demo.nubepy.com/nota/{cdc}.pdf"
+        
         cursor.execute('''
             INSERT INTO notas (empresa_id, nome_cliente, ruc_cliente, valor_total, itens, metodo_pago, data_emissao, ambiente, cdc, link_pdf)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (empresa_id, 'Cliente Demo', '123456-0', valor_total, json.dumps(itens), metodo_pago, data_emissao, 'testes', '', ''))
+        ''', (empresa_id, cliente, '123456-0', total, json.dumps(itens), metodo, data_emissao, 'testes', cdc, link_pdf))
     conexao.commit()
+    cursor.close()
     conexao.close()
+    print(f"[DEBUG] Geradas {num_vendas} vendas mock para hoje (empresa_id={empresa_id})")
     return True
 
 def verificar_e_semear_demo(empresa_id):
