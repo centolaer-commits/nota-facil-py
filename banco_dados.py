@@ -814,22 +814,40 @@ def gerar_vendas_mock_hoje(empresa_id):
     conexao.close()
     return True
 
+def verificar_e_semear_demo(empresa_id):
+    """Verifica se a empresa demo tem dados básicos; se não, semeia automaticamente."""
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute('SELECT ruc FROM empresas WHERE id = %s', (empresa_id,))
+    row = cursor.fetchone()
+    if not row or row[0] != '9999999-9':
+        conexao.close()
+        return False  # Não é a empresa demo
+    # Verificar se existem produtos
+    cursor.execute('SELECT COUNT(*) FROM produtos WHERE empresa_id = %s', (empresa_id,))
+    qtde_produtos = cursor.fetchone()[0]
+    if qtde_produtos == 0:
+        conexao.close()
+        # Chamar a função de reset demo (que preenche produtos, fornecedores, categorias, vendas)
+        injetar_dados_demo()
+        return True  # Dados semeados
+    # Verificar se há vendas hoje
+    cursor.execute('SELECT COUNT(*) FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE', (empresa_id,))
+    qtde_vendas_hoje = cursor.fetchone()[0]
+    conexao.close()
+    if qtde_vendas_hoje == 0:
+        gerar_vendas_mock_hoje(empresa_id)
+    return True
+
 def obter_dados_dashboard(empresa_id):
+    # Auto‑seed para demo (self‑healing)
+    verificar_e_semear_demo(empresa_id)
+    
     conexao = get_conexao()
     cursor = conexao.cursor()
     cursor.execute('SELECT valor_total, itens FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE', (empresa_id,))
     notas = cursor.fetchall()
     conexao.close()
-    
-    # Se não houver vendas hoje e for a empresa demo, gerar vendas mock
-    if len(notas) == 0:
-        gerar_vendas_mock_hoje(empresa_id)
-        # Reconsultar após inserção
-        conexao = get_conexao()
-        cursor = conexao.cursor()
-        cursor.execute('SELECT valor_total, itens FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE', (empresa_id,))
-        notas = cursor.fetchall()
-        conexao.close()
     
     total_vendas = 0
     total_notas = len(notas)
