@@ -443,9 +443,10 @@
         <div class="border border-slate-200 p-5 rounded-2xl bg-white shadow-sm mb-6">
             <label class="text-sm font-bold text-slate-700 block mb-3">Escanear productos para el traslado</label>
             <div class="relative w-full mb-4">
-                <div class="flex items-center bg-slate-50 rounded-xl border-2 border-yellow-300 focus-within:border-yellow-500 transition-all overflow-hidden">
-                    <span class="text-xl pl-3 py-3 shrink-0 text-yellow-500">🔎</span>
-                    <input type="text" id="rem-scanner" placeholder="Escanear producto..." autocomplete="off" class="w-full flex-1 bg-transparent p-3 font-bold focus:outline-none text-slate-800 min-w-0 truncate">
+                <div class="flex items-stretch bg-white rounded-xl border-2 border-yellow-300 focus-within:border-yellow-500 transition-all overflow-hidden">
+                    <button type="button" onclick="abrirCatalogo('remision')" class="flex-shrink-0 text-xl p-3 text-green-500 flex items-center cursor-pointer hover:bg-slate-200/50 rounded-l-md transition-colors">🔎</button>
+                    <input type="text" id="rem-scanner" placeholder="Escanear producto..." autocomplete="off" class="flex-1 min-w-0 bg-transparent font-bold p-3 text-slate-800 outline-none" oninput="filtrarRemision()" onkeypress="verificarScannerRemision(event)">
+                    <button onclick="abrirCamera('rem-scanner')" class="flex-shrink-0 bg-yellow-500 hover:bg-yellow-600 text-white px-4 sm:px-5 font-bold transition">📷</button>
                 </div>
                 <div id="rem-dropdown" class="absolute z-50 w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 hidden max-h-60 overflow-y-auto"></div>
             </div>
