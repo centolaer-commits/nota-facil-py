@@ -576,7 +576,7 @@ async function carregarRelatorioVariancia() {
         let un=0; 
         if(d.length===0){ 
             tb.innerHTML='<tr><td colspan="6" class="text-center p-6 text-gray-500">Nada</td></tr>'; 
-            document.getElementById('var-impacto-total').innerText=0; 
+            document.getElementById('var-impacto-total').innerText='Gs. 0'; 
             document.getElementById('var-unidades-total').innerText=0; 
             return; 
         } 
