@@ -468,7 +468,8 @@ async function carregarCierreCaja() {
         const res = await fetch(`/cierre-caja?inicio=${i}&fim=${f}`, { headers: getSaaSHeaders() });
         const d = await res.json();
         document.getElementById('cierre-vendas').innerText = 'Gs. ' + d.vendas_hoje.toLocaleString('es-PY');
-        document.getElementById('cierre-gp').innerText = 'Gs. ' + d.lucro_bruto.toLocaleString('es-PY');
+        const porcentagemStr = (d.vendas_hoje > 0 ? (d.lucro_bruto / d.vendas_hoje * 100) : 0).toFixed(1).replace('.', ',');
+        document.getElementById('cierre-gp').innerHTML = 'Gs. ' + d.lucro_bruto.toLocaleString('es-PY') + ' <span class="text-green-500 text-sm font-normal">(' + porcentagemStr + '%)</span>';
         document.getElementById('cierre-sangrias').innerText = 'Gs. ' + d.total_sangrias.toLocaleString('es-PY');
         document.getElementById('cierre-notas').innerText = d.notas_emitidas;
         const tb = document.getElementById('tabela-cierre-itens');
