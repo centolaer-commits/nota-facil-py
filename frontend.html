@@ -522,9 +522,10 @@
             </div>
             
             <div class="relative w-full mb-4">
-                <div class="flex items-center bg-slate-50 rounded-xl border-2 border-orange-300 focus-within:border-orange-500 transition-all overflow-hidden">
-                    <span class="text-xl pl-3 py-3 shrink-0 text-orange-500">🔎</span>
-                    <input type="text" id="auto-scanner" placeholder="Escanear producto para añadir a la autofactura..." autocomplete="off" class="w-full flex-1 bg-transparent p-3 font-bold focus:outline-none text-slate-800 min-w-0 truncate">
+                <div class="flex items-stretch bg-white rounded-xl border-2 border-orange-300 focus-within:border-orange-500 transition-all overflow-hidden">
+                    <button type="button" onclick="abrirCatalogo('autofactura')" class="flex-shrink-0 text-xl p-3 text-green-500 flex items-center cursor-pointer hover:bg-slate-200/50 rounded-l-md transition-colors">🔎</button>
+                    <input type="text" id="auto-scanner" placeholder="Escanear producto para añadir a la autofactura..." autocomplete="off" class="flex-1 min-w-0 bg-transparent font-bold p-3 text-slate-800 outline-none" oninput="filtrarAuto()" onkeypress="verificarScannerAuto(event)">
+                    <button onclick="abrirCamera('auto-scanner')" class="flex-shrink-0 bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-5 font-bold transition">📷</button>
                 </div>
                 <div id="auto-dropdown" class="absolute z-50 w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 hidden max-h-60 overflow-y-auto"></div>
             </div>

@@ -823,6 +823,8 @@ function seleccionarProductoCatalogo(codigo) {
         seleccionarProductoEntrada(producto);
     } else if (contextoCatalogo === 'remision') {
         seleccionarProdutoRemision(producto);
+    } else if (contextoCatalogo === 'autofactura') {
+        seleccionarProdutoAuto(producto);
     } else {
         // Por defecto PDV
         seleccionarProductoPOS(producto);
