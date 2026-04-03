@@ -297,11 +297,12 @@
             <button type="button" onclick="toggleAcordeao('menu-inv', 'seta-inv')" class="w-full p-3 rounded-xl text-left hover:bg-slate-50 flex justify-between items-center transition">📦 Inventario <span id="seta-inv" class="text-xs text-slate-400">▼</span></button>
             <div id="menu-inv" class="hidden flex-col pl-4 mt-1 space-y-1 border-l-2 border-slate-100 ml-2">
               <button onclick="mudarTela('inventario', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Productos</button>
+              <button onclick="mudarTela('categorias', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Categorías</button>
               <button id="btn-nav-proveedores" onclick="mudarTela('proveedores', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Proveedores</button>
               <button id="btn-nav-entrada" onclick="mudarTela('entrada', this)" class="nav-btn p-2 text-sm text-left text-blue-600 font-bold">Entrada (Compras)</button>
-              <button id="btn-nav-remision" onclick="mudarTela('remision', this)" class="nav-btn p-2 text-sm text-left text-yellow-600 font-bold">Nota de Remisión</button>
-              <button onclick="mudarTela('categorias', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Categorías</button>
               <button id="btn-nav-stocktake" onclick="mudarTela('stocktake', this)" class="nav-btn p-2 text-sm text-left text-brand-accent font-bold">Auditoría (Stock)</button>
+              <button id="btn-nav-remision" onclick="mudarTela('remision', this)" class="nav-btn p-2 text-sm text-left text-yellow-600 font-bold">Nota de Remisión</button>
+              <button id="btn-nav-autofactura" onclick="mudarTela('autofactura', this)" class="nav-btn p-2 text-sm text-left text-orange-600 font-bold">Emitir Autofactura</button>
             </div>
           </div>
           
@@ -311,7 +312,6 @@
             <button type="button" onclick="toggleAcordeao('menu-rep', 'seta-rep')" class="w-full p-3 rounded-xl text-left hover:bg-slate-50 flex justify-between items-center transition">📈 Reportes / Ventas <span id="seta-rep" class="text-xs text-slate-400">▼</span></button>
             <div id="menu-rep" class="hidden flex-col pl-4 mt-1 space-y-1 border-l-2 border-slate-100 ml-2">
               <button onclick="mudarTela('cierre', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Ventas y Cierre</button>
-              <button id="btn-nav-autofactura" onclick="mudarTela('autofactura', this)" class="nav-btn p-2 text-sm text-left text-orange-600 font-bold">Emitir Autofactura</button>
               <button onclick="mudarTela('reportes', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Historial SIFEN</button>
               <button id="btn-nav-variancia" onclick="mudarTela('variancia', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Varianza de Stock</button>
               <button id="btn-nav-stocktakereport" onclick="mudarTela('stocktakereport', this)" class="nav-btn p-2 text-sm text-left hover:text-brand-accent">Reportes Stock Take</button>
