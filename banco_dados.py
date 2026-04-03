@@ -775,12 +775,61 @@ def listar_todas_notas(empresa_id, busca="", data_inicio=None, data_fim=None):
     conexao.close()
     return [{"id": l[0], "nome_cliente": l[1], "valor_total": l[2], "cdc": l[3], "link_pdf": l[4], "data_emissao": l[5], "metodo_pago": l[6]} for l in linhas]
 
+def gerar_vendas_mock_hoje(empresa_id):
+    """Gera algumas vendas fictícias para hoje, apenas para a demo."""
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    # Verificar se a empresa é demo (RUC 9999999-9)
+    cursor.execute('SELECT ruc FROM empresas WHERE id = %s', (empresa_id,))
+    row = cursor.fetchone()
+    if not row or row[0] != '9999999-9':
+        conexao.close()
+        return False
+    # Buscar produtos existentes da empresa
+    cursor.execute('SELECT codigo_barras, descricao, preco_venda FROM produtos WHERE empresa_id = %s LIMIT 5', (empresa_id,))
+    produtos = cursor.fetchall()
+    if not produtos:
+        conexao.close()
+        return False
+    # Gerar 3 vendas
+    import random
+    from datetime import datetime, timedelta
+    hoje = datetime.now().date()
+    for i in range(3):
+        # Escolher um produto aleatório (simplificado)
+        prod = random.choice(produtos)
+        codigo = prod[0]
+        descricao = prod[1]
+        preco = prod[2]
+        quantidade = random.randint(1, 5)
+        valor_total = preco * quantidade
+        itens = [{"codigo_barras": codigo, "descricao": descricao, "preco_unitario": preco, "quantidade": quantidade}]
+        metodo_pago = random.choice(['EFECTIVO', 'TARJETA'])
+        data_emissao = hoje - timedelta(hours=random.randint(0, 12), minutes=random.randint(0, 59))
+        cursor.execute('''
+            INSERT INTO notas (empresa_id, nome_cliente, ruc_cliente, valor_total, itens, metodo_pago, data_emissao, ambiente, cdc, link_pdf)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (empresa_id, 'Cliente Demo', '123456-0', valor_total, json.dumps(itens), metodo_pago, data_emissao, 'testes', '', ''))
+    conexao.commit()
+    conexao.close()
+    return True
+
 def obter_dados_dashboard(empresa_id):
     conexao = get_conexao()
     cursor = conexao.cursor()
     cursor.execute('SELECT valor_total, itens FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE', (empresa_id,))
     notas = cursor.fetchall()
     conexao.close()
+    
+    # Se não houver vendas hoje e for a empresa demo, gerar vendas mock
+    if len(notas) == 0:
+        gerar_vendas_mock_hoje(empresa_id)
+        # Reconsultar após inserção
+        conexao = get_conexao()
+        cursor = conexao.cursor()
+        cursor.execute('SELECT valor_total, itens FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE', (empresa_id,))
+        notas = cursor.fetchall()
+        conexao.close()
     
     total_vendas = 0
     total_notas = len(notas)
