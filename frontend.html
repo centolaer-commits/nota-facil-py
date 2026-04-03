@@ -606,29 +606,36 @@
         </div>
 
         <h3 class="text-xl font-bold text-slate-800 mb-4">Guía de Navegación</h3>
-        <div class="mb-6 text-center">
-            <a href="/modelo-ejemplo.pdf" target="_blank" class="inline-block font-bold text-lg shadow-lg shadow-brand-accent/50 bg-brand-accent text-white px-8 py-4 rounded-xl transition-transform hover:scale-105 hover:bg-brand-accentHover">📄 ver modelo de ejemplo</a>
-        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
-                <div class="text-brand-accent text-3xl mb-3">🛒</div>
-                <h4 class="font-bold text-slate-800 mb-2 text-lg">Punto de Venta (Caja)</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Escanea o busca productos. Haz clic en "Ir al Pago" para emitir la Factura. Si necesitas anular una venta o bajar stock por daño, haz clic en el botón superior "Operaciones (NC / Mermas)" usando la clave de administrador.</p>
+                <div class="text-brand-accent text-3xl mb-3">📊</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Dashboard</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Vea totales en tiempo real y los artículos más vendidos.</p>
             </div>
             <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
                 <div class="text-brand-accent text-3xl mb-3">📦</div>
-                <h4 class="font-bold text-slate-800 mb-2 text-lg">Inventario y Compras</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Usa "Productos" para crear ítems. Usa "Entrada (Compras)" para cargar facturas de tus proveedores y sumar stock automáticamente.</p>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Inventario</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Gestione Productos, Categorías, Proveedores y registre Entradas de stock.</p>
             </div>
             <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
                 <div class="text-brand-accent text-3xl mb-3">🚚</div>
                 <h4 class="font-bold text-slate-800 mb-2 text-lg">Nota de Remisión</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Genera el documento legal de transporte para tus choferes. Esta nota no descuenta el stock de tu inventario, solo avala el traslado.</p>
+                <p class="text-sm text-slate-500 leading-relaxed">Genere documentos legales de transporte con escáner de cámara.</p>
             </div>
             <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
-                <div class="text-brand-accent text-3xl mb-3">📈</div>
-                <h4 class="font-bold text-slate-800 mb-2 text-lg">Reportes y Cierre</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">En "Ventas y Cierre" puedes ver tu ganancia real (GP) y cerrar el turno de la caja actual. Usa "Historial SIFEN" para reimprimir tickets o PDFs antiguos.</p>
+                <div class="text-brand-accent text-3xl mb-3">🧾</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Emitir Autofactura</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Registre compras legales de vendedores informales sin RUC.</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                <div class="text-brand-accent text-3xl mb-3">🔍</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Auditoría (Stock)</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Verifique el stock físico contra los números del sistema.</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                <div class="text-brand-accent text-3xl mb-3">📄</div>
+                <h4 class="font-bold text-slate-800 mb-2 text-lg">Historial SIFEN</h4>
+                <p class="text-sm text-slate-500 leading-relaxed">Encuentre todos sus archivos legales XML y KuDE guardados de forma segura.</p>
             </div>
         </div>
 
@@ -661,6 +668,36 @@
                 </summary>
                 <div class="p-5 pt-0 text-sm text-slate-500 border-t border-slate-100 mt-2 leading-relaxed">
                     Ve a <b>Reportes > Emitir Autofactura</b>. Te permite justificar la salida de dinero de tu caja por servicios o compras informales, cumpliendo con las normativas del gobierno.
+                </div>
+            </details>
+
+            <details class="bg-white border border-slate-200 rounded-2xl group cursor-pointer shadow-sm">
+                <summary class="font-bold text-slate-800 p-5 flex justify-between items-center outline-none">
+                    ¿Cómo funciona el pago con PIX?
+                    <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="p-5 pt-0 text-sm text-slate-500 border-t border-slate-100 mt-2 leading-relaxed">
+                    Utiliza Mercado Pago para generar un código QR dinámico en la pantalla del Punto de Venta.
+                </div>
+            </details>
+
+            <details class="bg-white border border-slate-200 rounded-2xl group cursor-pointer shadow-sm">
+                <summary class="font-bold text-slate-800 p-5 flex justify-between items-center outline-none">
+                    ¿Para qué sirve la Autofactura?
+                    <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="p-5 pt-0 text-sm text-slate-500 border-t border-slate-100 mt-2 leading-relaxed">
+                    Para justificar legalmente ante la DNIT los gastos de vendedores sin RUC.
+                </div>
+            </details>
+
+            <details class="bg-white border border-slate-200 rounded-2xl group cursor-pointer shadow-sm">
+                <summary class="font-bold text-slate-800 p-5 flex justify-between items-center outline-none">
+                    ¿Dónde están mis facturas electrónicas?
+                    <span class="text-brand-accent group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="p-5 pt-0 text-sm text-slate-500 border-t border-slate-100 mt-2 leading-relaxed">
+                    En la pestaña Historial SIFEN, almacenadas de forma segura según la ley.
                 </div>
             </details>
         </div>
