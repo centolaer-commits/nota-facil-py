@@ -1199,7 +1199,7 @@ function agregarUsuarioEquipo() {
     if (planoAtivo === 'Pro') {
         const cajerosActuales = usuariosEquipo.filter(u => u.rol === 'cajero').length;
         if (cajerosActuales >= 1) {
-            showToast("Limite do Plano Pro atingido. Melhore para el Plan Premium para añadir usuarios ilimitados.");
+            showToast("Limite del Plan Pro alcanzado. Mejore al Plan Premium para añadir usuarios ilimitados.");
             return;
         }
     }
