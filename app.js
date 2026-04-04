@@ -92,7 +92,7 @@ async function fazerLogin() {
                 carregarEmpresasSaaS(); showToast("¡Bienvenido al Panel Super Admin!"); 
             } else { 
                 document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); 
-                document.getElementById('sidebar-rol-loja').innerText = (rolUsuario === 'admin') ? `Dueño | Plan ${planoAtivo.split(' ')[0]}` : `Cajero | Plan ${planoAtivo.split(' ')[0]}`; 
+                document.getElementById('sidebar-rol-loja').innerText = rolUsuario === 'admin' ? `Dueño | Plan ${planoAtivo.split(' ')[0]}` : rolUsuario === 'manager' ? `Gerente | Plan ${planoAtivo.split(' ')[0]}` : `Cajero | Plan ${planoAtivo.split(' ')[0]}`; 
                 
                 const idsTodos = ['nav-group-inventario','nav-btn-dashboard','nav-group-reportes','btn-nav-stocktake','btn-nav-stocktakereport','btn-nav-proveedores','btn-nav-entrada','btn-nav-remision','btn-nav-autofactura','btn-nav-variancia','nav-btn-config','nav-btn-ayuda','btn-cerrar-turno'];
                 idsTodos.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = ''; });
