@@ -3,7 +3,7 @@ let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let produ
 // Constantes de perfis RBAC
 const PERFIL_OWNER = 'admin';
 const PERFIL_MANAGER = 'manager';
-const PERFIL_CASHIER = 'cajero'; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; let contextoCatalogo = ''; 
+const PERFIL_CASHIER = 'cajero'; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; let contextoCatalogo = ''; let usuariosEquipo = JSON.parse(localStorage.getItem('nube_equipo') || '[]'); 
 
 // VARIÁVEIS PARA O PIX
 let radarPix = null;
@@ -292,7 +292,7 @@ function mudarTela(telaId, elementoBotao) {
     if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); } 
     
     if(['inventario','pos','entrada','operaciones','remision','autofactura'].includes(telaId)) carregarEstoque();
-    if(telaId === 'proveedores' || telaId === 'entrada') carregarProveedores(); if(telaId === 'stocktake') carregarStockTake(); if(telaId === 'stocktakereport') carregarStockTakeReport(); if(telaId === 'variancia') carregarRelatorioVariancia();
+    if(telaId === 'proveedores' || telaId === 'entrada') carregarProveedores(); if(telaId === 'stocktake') carregarStockTake(); if(telaId === 'stocktakereport') carregarStockTakeReport(); if(telaId === 'variancia') carregarRelatorioVariancia(); if(telaId === 'config') iniciarConfig();
     if(telaId === 'operaciones') { document.getElementById('nc-cdc').value=''; document.getElementById('nc-cliente').value=''; ncProductosCaixa=[]; atualizarInterfaceNC(); document.getElementById('merma-cod').value=''; carregarMermas(); }
     if(telaId === 'remision') { carregarRemisiones(); remProductosCaixa=[]; atualizarInterfaceRemision(); }
     if(telaId === 'autofactura') { carregarAutofacturas(); autoProductosCaixa=[]; atualizarInterfaceAuto(); }
@@ -1120,5 +1120,117 @@ async function aprovarPagamentoSaaS(faturaId) {
         }
     } catch(e) {
         showToast("❌ Error de red", "error");
+    }
+}
+
+// ==========================================
+// GESTIÓN DE EQUIPO (por plan)
+// ==========================================
+
+function iniciarConfig() {
+    const seccion = document.getElementById('seccion-equipo');
+    if (!seccion) return;
+    
+    // Visibilidad según plan
+    if (planoAtivo === 'Básico') {
+        seccion.style.display = 'none';
+    } else {
+        seccion.style.display = '';
+    }
+    
+    // Configurar dropdown de roles según plan
+    const selectRol = document.getElementById('equipo-rol');
+    if (!selectRol) return;
+    
+    selectRol.innerHTML = '';
+    if (planoAtivo === 'Pro') {
+        selectRol.innerHTML = '<option value="cajero">Cajero</option>';
+    } else if (planoAtivo === 'Premium') {
+        selectRol.innerHTML = '<option value="cajero">Cajero</option><option value="manager">Gerente</option>';
+    } else {
+        // Para Básico (aunque no visible) u otros planes no definidos
+        selectRol.innerHTML = '<option value="cajero">Cajero</option>';
+    }
+    
+    // Cargar usuarios existentes
+    cargarUsuariosEquipo();
+}
+
+function cargarUsuariosEquipo() {
+    const tbody = document.getElementById('tabela-equipo');
+    if (!tbody) return;
+    
+    if (usuariosEquipo.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">No hay usuarios registrados aún.</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    usuariosEquipo.forEach((u, idx) => {
+        let rolLabel = u.rol === 'cajero' ? 'Cajero' : 'Gerente';
+        let estadoLabel = u.activo ? '<span class="text-green-500">Activo</span>' : '<span class="text-red-500">Inactivo</span>';
+        html += `
+            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                <td class="p-3 text-slate-800 font-bold">${u.nombre}</td>
+                <td class="p-3">${rolLabel}</td>
+                <td class="p-3">${u.email}</td>
+                <td class="p-3">${estadoLabel}</td>
+                <td class="p-3 text-right">
+                    <button onclick="eliminarUsuarioEquipo(${idx})" class="text-red-500 hover:text-red-700 font-bold">🗑️</button>
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+function agregarUsuarioEquipo() {
+    const nombre = document.getElementById('equipo-nombre').value.trim();
+    const rol = document.getElementById('equipo-rol').value;
+    const email = document.getElementById('equipo-email').value.trim();
+    const password = document.getElementById('equipo-password').value.trim();
+    
+    if (!nombre || !rol || !email || !password) {
+        showToast("Complete todos los campos.", "warning");
+        return;
+    }
+    
+    // Restricción de límite para Plan Pro
+    if (planoAtivo === 'Pro') {
+        const cajerosActuales = usuariosEquipo.filter(u => u.rol === 'cajero').length;
+        if (cajerosActuales >= 1) {
+            showToast("Limite do Plano Pro atingido. Melhore para el Plan Premium para añadir usuarios ilimitados.");
+            return;
+        }
+    }
+    
+    // Crear usuario
+    const nuevoUsuario = {
+        nombre,
+        rol,
+        email,
+        password,
+        activo: true
+    };
+    
+    usuariosEquipo.push(nuevoUsuario);
+    localStorage.setItem('nube_equipo', JSON.stringify(usuariosEquipo));
+    
+    // Limpiar campos
+    document.getElementById('equipo-nombre').value = '';
+    document.getElementById('equipo-email').value = '';
+    document.getElementById('equipo-password').value = '';
+    
+    // Actualizar tabla
+    cargarUsuariosEquipo();
+    showToast("Usuario agregado correctamente.");
+}
+
+function eliminarUsuarioEquipo(index) {
+    if (confirm("¿Eliminar este usuario?")) {
+        usuariosEquipo.splice(index, 1);
+        localStorage.setItem('nube_equipo', JSON.stringify(usuariosEquipo));
+        cargarUsuariosEquipo();
+        showToast("Usuario eliminado.");
     }
 }
