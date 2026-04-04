@@ -1,4 +1,9 @@
-let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let productosGlobais = []; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; let contextoCatalogo = ''; 
+let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let productosGlobais = [];
+
+// Constantes de perfis RBAC
+const PERFIL_OWNER = 'admin';
+const PERFIL_MANAGER = 'manager';
+const PERFIL_CASHIER = 'cajero'; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; let contextoCatalogo = ''; 
 
 // VARIÁVEIS PARA O PIX
 let radarPix = null;
@@ -92,7 +97,11 @@ async function fazerLogin() {
                 carregarEmpresasSaaS(); showToast("¡Bienvenido al Panel Super Admin!"); 
             } else { 
                 document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); 
-                document.getElementById('sidebar-rol-loja').innerText = rolUsuario === 'admin' ? `Dueño | Plan ${planoAtivo.split(' ')[0]}` : rolUsuario === 'manager' ? `Gerente | Plan ${planoAtivo.split(' ')[0]}` : `Cajero | Plan ${planoAtivo.split(' ')[0]}`; 
+                // Mapeia rótulo amigável do perfil
+                let etiquetaPerfil = 'Cajero';
+                if (rolUsuario === PERFIL_OWNER) etiquetaPerfil = 'Dueño';
+                else if (rolUsuario === PERFIL_MANAGER) etiquetaPerfil = 'Gerente';
+                document.getElementById('sidebar-rol-loja').innerText = `${etiquetaPerfil} | Plan ${planoAtivo.split(' ')[0]}`; 
                 
                 const idsTodos = ['nav-group-inventario','nav-btn-dashboard','nav-group-reportes','btn-nav-stocktake','btn-nav-stocktakereport','btn-nav-proveedores','btn-nav-entrada','btn-nav-remision','btn-nav-autofactura','btn-nav-variancia','nav-btn-config','nav-btn-ayuda','btn-cerrar-turno'];
                 idsTodos.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = ''; });
