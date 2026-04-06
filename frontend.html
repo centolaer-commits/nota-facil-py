@@ -401,7 +401,9 @@
             }
             
             // Load data if needed
-            if (viewId === 'clientes') {
+            if (viewId === 'dashboard') {
+                carregarEmpresasSaaS(); // Loads metrics (MRR, activos, vencidos)
+            } else if (viewId === 'clientes') {
                 carregarEmpresasSaaS();
             } else if (viewId === 'pagos') {
                 carregarFaturasSaaS();
