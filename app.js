@@ -123,7 +123,10 @@ async function fazerLogin() {
                     idsCajero.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; }); 
                 } 
                 
-                await carregarConfiguracao(); await carregarCategorias(); if(!isInicial) await carregarProveedores(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); showToast(`¡Sesión Iniciada!`); 
+                await carregarConfiguracao(); await carregarCategorias(); if(!isInicial) await carregarProveedores(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); 
+                // Pré-carrega dados do dashboard em segundo plano
+                setTimeout(() => carregarDashboard(), 500);
+                showToast(`¡Sesión Iniciada!`); 
             } 
         } else { const err = await res.json(); erroBox.innerText = err.detail || err.mensagem || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); } 
     } catch(e) { erroBox.innerText = "Error de red."; erroBox.classList.remove('hidden'); } finally { btn.innerText = "Ingresar al Sistema"; btn.disabled = false; } 
@@ -296,7 +299,14 @@ function mudarTela(telaId, elementoBotao) {
     if(telaId === 'operaciones') { document.getElementById('nc-cdc').value=''; document.getElementById('nc-cliente').value=''; ncProductosCaixa=[]; atualizarInterfaceNC(); document.getElementById('merma-cod').value=''; carregarMermas(); }
     if(telaId === 'remision') { carregarRemisiones(); remProductosCaixa=[]; atualizarInterfaceRemision(); }
     if(telaId === 'autofactura') { carregarAutofacturas(); autoProductosCaixa=[]; atualizarInterfaceAuto(); }
-    if(telaId === 'reportes') carregarHistorico(); if(telaId === 'cierre') carregarCierreCaja(); if(telaId === 'config') carregarConfiguracao(); if(telaId === 'categorias') carregarCategorias(); if(telaId === 'dashboard') carregarDashboard(); 
+    if(telaId === 'reportes') carregarHistorico(); 
+    if(telaId === 'cierre') carregarCierreCaja(); 
+    if(telaId === 'config') carregarConfiguracao(); 
+    if(telaId === 'categorias') carregarCategorias(); 
+    if(telaId === 'dashboard') {
+        // Pequeno atraso para garantir que a seção esteja visível antes de renderizar gráfico
+        setTimeout(() => carregarDashboard(), 50);
+    } 
     if(telaId === 'pos') checarStatusCaixa(); 
 }
 
@@ -502,7 +512,51 @@ async function carregarHistorico(busca="") {
 } 
 function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
 
-async function carregarDashboard() { try { const res=await fetch('/dados-dashboard', {headers:getSaaSHeaders()}); const d=await res.json(); document.getElementById('dash-vendas').innerText='Gs. ' + d.total_vendas.toLocaleString('es-PY'); document.getElementById('dash-notas').innerText=d.total_notas; const ctx=document.getElementById('grafico-produtos').getContext('2d'); if(graficoAtual) graficoAtual.destroy(); graficoAtual=new Chart(ctx,{type:'bar',data:{labels:d.top_produtos.map(p=>p.nome),datasets:[{label:'Unidades',data:d.top_produtos.map(p=>p.quantidade),backgroundColor:'#0d9488'}]},options:{responsive:true,maintainAspectRatio:false}}); } catch(e){} }
+async function carregarDashboard() { 
+    try { 
+        const res = await fetch('/dados-dashboard', {headers: getSaaSHeaders()}); 
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const d = await res.json(); 
+        
+        // Atualizar métricas
+        const dashVendas = document.getElementById('dash-vendas');
+        const dashNotas = document.getElementById('dash-notas');
+        if (dashVendas) dashVendas.innerText = 'Gs. ' + d.total_vendas.toLocaleString('es-PY');
+        if (dashNotas) dashNotas.innerText = d.total_notas;
+        
+        // Renderizar gráfico apenas se o canvas estiver disponível
+        const canvas = document.getElementById('grafico-produtos');
+        if (canvas) {
+            // Se o canvas estiver oculto, aguardar até que esteja visível
+            if (canvas.offsetParent === null) {
+                // Canvas não visível, tentar novamente em breve
+                setTimeout(() => carregarDashboard(), 100);
+                return;
+            }
+            const ctx = canvas.getContext('2d');
+            if (graficoAtual) graficoAtual.destroy();
+            graficoAtual = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: d.top_produtos.map(p => p.nome),
+                    datasets: [{
+                        label: 'Unidades',
+                        data: d.top_produtos.map(p => p.quantidade),
+                        backgroundColor: '#0d9488'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+    } catch(e) {
+        console.error('Erro ao carregar dashboard:', e);
+        // Tentar novamente após 2 segundos
+        setTimeout(() => carregarDashboard(), 2000);
+    }
+}
 async function carregarCategorias() { try { const res=await fetch('/listar-categorias', {headers:getSaaSHeaders()}); const d=await res.json(); const sf=document.getElementById('novo-cat'); const sfi=document.getElementById('filtro-cat-inventario'); const sfc=document.getElementById('stocktake-categoria'); const tb=document.getElementById('tabela-categorias'); if(sf) sf.innerHTML=''; if(sfi) sfi.innerHTML='<option value="">Todas</option>'; if(sfc) sfc.innerHTML='<option value="">Todas las categorías</option>'; if(tb) tb.innerHTML=''; d.forEach(c=>{ if(sf) sf.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfi) sfi.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfc) sfc.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(tb) tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${c.nome}</td><td class="p-4 text-center"><button onclick="deletarCategoria(${c.id})" class="text-red-400">🗑️</button></td></tr>`; }); } catch(e){} }
 async function adicionarCategoria() { const n=document.getElementById('nova-cat-nome').value; if(n){ await fetch('/cadastrar-categoria',{method:'POST',headers:getSaaSHeaders(),body:JSON.stringify({nome:n})}); carregarCategorias(); document.getElementById('nova-cat-nome').value=''; } } async function deletarCategoria(id) { if(confirm("Del?")) { await fetch(`/deletar-categoria/${id}`,{method:'DELETE',headers:getSaaSHeaders()}); carregarCategorias(); } }
 async function carregarConfiguracao() { 
