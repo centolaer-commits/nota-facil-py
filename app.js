@@ -94,6 +94,8 @@ async function fazerLogin() {
             document.getElementById('login-screen').classList.add('hidden'); 
             if (rolUsuario === 'superadmin') { 
                 document.getElementById('app-screen').classList.add('hidden'); document.getElementById('superadmin-screen').classList.remove('hidden'); 
+                // Ensure dashboard view is active
+                setTimeout(() => { if (typeof adminMudarView === 'function') adminMudarView('dashboard'); }, 100);
                 carregarEmpresasSaaS(); showToast("¡Bienvenido al Panel Super Admin!"); 
             } else { 
                 document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); 

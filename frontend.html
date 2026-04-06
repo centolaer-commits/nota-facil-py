@@ -214,70 +214,210 @@
   </div>
 
   <div id="superadmin-screen" class="hidden fixed inset-0 bg-slate-50 z-40 overflow-y-auto">
-    <div class="max-w-7xl mx-auto p-8">
-        <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <div class="flex items-center">
-                <img src="/logo_main.svg" alt="NubePY Hub" class="h-12 md:h-14">
-                <span class="text-brand-accent text-xl ml-3 font-bold">| Hub</span>
+    <div class="max-w-7xl mx-auto p-8 flex flex-col lg:flex-row gap-8">
+        <!-- Admin Sidebar -->
+        <div class="lg:w-64 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 h-fit lg:sticky lg:top-8">
+            <div class="flex items-center mb-8 pb-6 border-b border-slate-100">
+                <img src="/logo_main.svg" alt="NubePY Hub" class="h-10 md:h-12">
+                <span class="text-brand-accent text-lg ml-3 font-bold">| Hub</span>
             </div>
-            <button onclick="window.location.reload()" class="bg-red-50 text-red-600 hover:bg-red-100 font-bold px-6 py-3 rounded-xl border border-red-200 transition">Salir</button>
-        </header>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden"><div class="absolute right-0 top-0 h-full w-1 bg-green-500"></div><h3 class="text-slate-500 text-sm font-bold uppercase mb-2">MRR</h3><p class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-slate-800 truncate">Gs. <span id="saas-mrr">0</span></p></div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200"><h3 class="text-slate-500 text-sm font-bold uppercase mb-2">Activos</h3><p class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-brand-accent truncate"><span id="saas-ativos">0</span></p></div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden"><div class="absolute right-0 top-0 h-full w-1 bg-red-500"></div><h3 class="text-slate-500 text-sm font-bold uppercase mb-2">Vencidos</h3><p class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-red-500 truncate"><span id="saas-vencidos">0</span></p></div>
+            
+            <nav class="space-y-2">
+                <button onclick="adminMudarView('dashboard')" class="admin-nav-btn w-full p-3 rounded-xl text-left hover:bg-slate-50 transition flex items-center gap-3 text-slate-800 font-bold bg-slate-50 border border-slate-200">
+                    <span class="text-xl">📊</span>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="adminMudarView('clientes')" class="admin-nav-btn w-full p-3 rounded-xl text-left hover:bg-slate-50 transition flex items-center gap-3 text-slate-600">
+                    <span class="text-xl">🏢</span>
+                    <span>Clientes</span>
+                </button>
+                <button onclick="adminMudarView('pagos')" class="admin-nav-btn w-full p-3 rounded-xl text-left hover:bg-slate-50 transition flex items-center gap-3 text-slate-600">
+                    <span class="text-xl">💰</span>
+                    <span>Pagos</span>
+                </button>
+                <button onclick="adminMudarView('reportes')" class="admin-nav-btn w-full p-3 rounded-xl text-left hover:bg-slate-50 transition flex items-center gap-3 text-slate-600">
+                    <span class="text-xl">📈</span>
+                    <span>Reportes</span>
+                </button>
+            </nav>
+            
+            <div class="mt-8 pt-6 border-t border-slate-100">
+                <button onclick="window.location.reload()" class="w-full bg-red-50 text-red-600 hover:bg-red-100 font-bold px-4 py-3 rounded-xl border border-red-200 transition text-sm">Salir del Hub</button>
+            </div>
         </div>
         
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 class="text-xl font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">➕ Nueva Suscripción</h3>
-                <div class="space-y-4">
-                    <input type="text" id="sa-nome" placeholder="Nombre" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
-                    <input type="text" id="sa-ruc" placeholder="RUC" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
-                    <select id="sa-plano" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800"><option value="Inicial">Inicial</option><option value="Crecimiento">Crecimiento</option><option value="VIP">VIP</option></select>
-                    <input type="number" id="sa-valor" placeholder="Mensualidad" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
-                    <input type="text" id="sa-pass-admin" placeholder="Pass Admin" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-brand-light text-slate-800 font-bold">
-                    <input type="text" id="sa-pass-caja" placeholder="Pass Caja" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-brand-light text-slate-800 font-bold">
-                    <button onclick="criarEmpresaSaaS()" class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl hover:bg-brand-accentHover shadow-md">Crear</button>
+        <!-- Main Content Area -->
+        <div class="flex-1">
+            <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h1 id="admin-view-title" class="text-2xl font-bold text-slate-800">Dashboard del Hub</h1>
+                    <p class="text-sm text-slate-500 mt-1">Supervisión central de todas las suscripciones NubePY</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="carregarEmpresasSaaS()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition border border-slate-200">🔄 Actualizar</button>
+                </div>
+            </header>
+            
+            <!-- Dashboard View -->
+            <div id="admin-dashboard-view" class="admin-view">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                        <div class="absolute right-0 top-0 h-full w-1 bg-green-500"></div>
+                        <h3 class="text-slate-500 text-sm font-bold uppercase mb-2">MRR</h3>
+                        <p class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-slate-800 truncate">Gs. <span id="saas-mrr">0</span></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 class="text-slate-500 text-sm font-bold uppercase mb-2">Activos</h3>
+                        <p class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-brand-accent truncate"><span id="saas-ativos">0</span></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                        <div class="absolute right-0 top-0 h-full w-1 bg-red-500"></div>
+                        <h3 class="text-slate-500 text-sm font-bold uppercase mb-2">Vencidos</h3>
+                        <p class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-red-500 truncate"><span id="saas-vencidos">0</span></p>
+                    </div>
+                </div>
+                
+                <!-- Placeholder for future dashboard charts -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Resumen de Actividad</h3>
+                    <p class="text-slate-500 text-sm">En esta vista podrás ver gráficos de crecimiento, conversión y otros KPIs.</p>
                 </div>
             </div>
             
-            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 text-slate-500 text-xs border-y border-slate-200"><tr><th class="p-4 font-bold uppercase">Empresa</th><th class="p-4 font-bold uppercase">RUC</th><th class="p-4 font-bold uppercase">Plan</th><th class="p-4 font-bold uppercase">Estado</th><th class="p-4 font-bold uppercase">Acción</th></tr></thead>
-                        <tbody id="tabela-saas" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
-                    </table>
+            <!-- Clientes View -->
+            <div id="admin-clientes-view" class="admin-view hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">➕ Nueva Suscripción</h3>
+                        <div class="space-y-4">
+                            <input type="text" id="sa-nome" placeholder="Nombre" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
+                            <input type="text" id="sa-ruc" placeholder="RUC" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
+                            <select id="sa-plano" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800"><option value="Inicial">Inicial</option><option value="Crecimiento">Crecimiento</option><option value="VIP">VIP</option></select>
+                            <input type="number" id="sa-valor" placeholder="Mensualidad" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
+                            <input type="text" id="sa-pass-admin" placeholder="Pass Admin" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-brand-light text-slate-800 font-bold">
+                            <input type="text" id="sa-pass-caja" placeholder="Pass Caja" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-brand-light text-slate-800 font-bold">
+                            <button onclick="criarEmpresaSaaS()" class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl hover:bg-brand-accentHover shadow-md">Crear</button>
+                        </div>
+                    </div>
+                    
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-slate-50 text-slate-500 text-xs border-y border-slate-200">
+                                    <tr>
+                                        <th class="p-4 font-bold uppercase">Empresa</th>
+                                        <th class="p-4 font-bold uppercase">RUC</th>
+                                        <th class="p-4 font-bold uppercase">Plan</th>
+                                        <th class="p-4 font-bold uppercase">Estado</th>
+                                        <th class="p-4 font-bold uppercase">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-saas" class="divide-y divide-slate-100 text-sm text-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-sm mt-8 border border-slate-200">
-            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
-                <div class="flex items-center gap-3">
-                    <img src="/logo_icon.svg" alt="SIPAP" class="h-6">
-                    <h2 class="text-xl font-bold text-slate-800">Control de Mensualidades (SIPAP)</h2>
+            
+            <!-- Pagos View -->
+            <div id="admin-pagos-view" class="admin-view hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
+                        <div class="flex items-center gap-3">
+                            <img src="/logo_icon.svg" alt="SIPAP" class="h-6">
+                            <h2 class="text-xl font-bold text-slate-800">Control de Mensualidades (SIPAP)</h2>
+                        </div>
+                        <button onclick="carregarFaturasSaaS()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition border border-slate-200">🔄 Actualizar</button>
+                    </div>
+                    <div class="overflow-x-auto rounded-lg border border-slate-200">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-sm">
+                                    <th class="p-4 font-bold uppercase text-xs">Cliente</th>
+                                    <th class="p-4 font-bold uppercase text-xs">Valor</th>
+                                    <th class="p-4 font-bold uppercase text-xs">Vencimiento</th>
+                                    <th class="p-4 font-bold uppercase text-xs">Estado</th>
+                                    <th class="p-4 font-bold uppercase text-xs text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-faturas-saas" class="divide-y divide-slate-200 bg-white text-sm text-slate-700">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <button onclick="carregarFaturasSaaS()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition border border-slate-200">🔄 Actualizar</button>
             </div>
-            <div class="overflow-x-auto rounded-lg border border-slate-200">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 text-slate-500 text-sm">
-                            <th class="p-4 font-bold uppercase text-xs">Cliente</th>
-                            <th class="p-4 font-bold uppercase text-xs">Valor</th>
-                            <th class="p-4 font-bold uppercase text-xs">Vencimiento</th>
-                            <th class="p-4 font-bold uppercase text-xs">Estado</th>
-                            <th class="p-4 font-bold uppercase text-xs text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-faturas-saas" class="divide-y divide-slate-200 bg-white text-sm text-slate-700">
-                    </tbody>
-                </table>
+            
+            <!-- Reportes View -->
+            <div id="admin-reportes-view" class="admin-view hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">Reportes Avanzados</h3>
+                    <p class="text-slate-500">Esta sección está en desarrollo. Próximamente tendrás acceso a reportes detallados de conversión, churn, ingresos y más.</p>
+                    <div class="mt-6 p-6 bg-slate-50 rounded-xl border border-slate-200">
+                        <p class="text-sm font-bold text-slate-700">¿Qué reportes te gustaría ver?</p>
+                        <ul class="mt-3 text-sm text-slate-600 space-y-2">
+                            <li>• Tasa de conversión entre planes</li>
+                            <li>• Churn mensual y retención</li>
+                            <li>• Ingresos acumulados por periodo</li>
+                            <li>• Distribución geográfica de clientes</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    
+    <script>
+        function adminMudarView(viewId) {
+            // Update active nav button
+            document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-50', 'border', 'border-slate-200', 'font-bold', 'text-slate-800');
+                btn.classList.add('text-slate-600');
+            });
+            const activeBtn = event.currentTarget;
+            activeBtn.classList.add('bg-slate-50', 'border', 'border-slate-200', 'font-bold', 'text-slate-800');
+            activeBtn.classList.remove('text-slate-600');
+            
+            // Hide all views
+            document.querySelectorAll('.admin-view').forEach(view => {
+                view.classList.add('hidden');
+            });
+            
+            // Show selected view
+            const targetView = document.getElementById('admin-' + viewId + '-view');
+            if (targetView) {
+                targetView.classList.remove('hidden');
+            }
+            
+            // Update header title
+            const titles = {
+                'dashboard': 'Dashboard del Hub',
+                'clientes': 'Gestión de Clientes',
+                'pagos': 'Control de Pagos',
+                'reportes': 'Reportes Avanzados'
+            };
+            const titleEl = document.getElementById('admin-view-title');
+            if (titleEl && titles[viewId]) {
+                titleEl.textContent = titles[viewId];
+            }
+            
+            // Load data if needed
+            if (viewId === 'clientes') {
+                carregarEmpresasSaaS();
+            } else if (viewId === 'pagos') {
+                carregarFaturasSaaS();
+            }
+        }
+        
+        // Set Dashboard as default on first load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize first view
+            const defaultBtn = document.querySelector('.admin-nav-btn');
+            if (defaultBtn) {
+                defaultBtn.classList.add('bg-slate-50', 'border', 'border-slate-200', 'font-bold', 'text-slate-800');
+                defaultBtn.classList.remove('text-slate-600');
+            }
+        });
+    </script>
   </div>
 
   <div id="mobile-header" class="flex md:hidden bg-white text-slate-800 p-4 justify-between items-center z-20 w-full hidden border-b border-slate-200 shadow-sm"><img src="/logo_main.svg" alt="NubePY" class="h-20"><button type="button" onclick="toggleSidebar()" class="text-3xl text-brand-accent">☰</button></div>
