@@ -1186,8 +1186,9 @@ function iniciarConfig() {
     if (!seccion) return;
     
     // Visibilidad según plan
-    if (planoAtivo === 'Básico') {
+    if (planoAtivo.includes('Inicial')) {
         seccion.style.display = 'none';
+        return; // No es necesario configurar el resto para plan Inicial
     } else {
         seccion.style.display = '';
     }
@@ -1197,17 +1198,18 @@ function iniciarConfig() {
     if (!selectRol) return;
     
     selectRol.innerHTML = '';
-    if (planoAtivo === 'Pro') {
+    if (planoAtivo.includes('Crecimiento')) {
         selectRol.innerHTML = '<option value="cajero">Cajero</option>';
-    } else if (planoAtivo === 'Premium') {
+    } else if (planoAtivo.includes('VIP')) {
         selectRol.innerHTML = '<option value="cajero">Cajero</option><option value="manager">Gerente</option>';
     } else {
-        // Para Básico (aunque no visible) u otros planes no definidos
+        // Para otros planes no definidos
         selectRol.innerHTML = '<option value="cajero">Cajero</option>';
     }
     
-    // Cargar usuarios existentes
+    // Cargar usuarios existentes y actualizar estado del botón
     cargarUsuariosEquipo();
+    actualizarEstadoBotonAgregar();
 }
 
 function cargarUsuariosEquipo() {
@@ -1236,6 +1238,7 @@ function cargarUsuariosEquipo() {
         `;
     });
     tbody.innerHTML = html;
+    actualizarEstadoBotonAgregar();
 }
 
 function agregarUsuarioEquipo() {
@@ -1249,11 +1252,11 @@ function agregarUsuarioEquipo() {
         return;
     }
     
-    // Restricción de límite para Plan Pro
-    if (planoAtivo === 'Pro') {
+    // Restricción de límite para Plan Crecimiento (Pro)
+    if (planoAtivo.includes('Crecimiento')) {
         const cajerosActuales = usuariosEquipo.filter(u => u.rol === 'cajero').length;
         if (cajerosActuales >= 1) {
-            showToast("Limite del Plan Pro alcanzado. Mejore al Plan Premium para añadir usuarios ilimitados.");
+            showToast("Limite del Plan Crecimiento alcanzado. Mejore al Plan VIP para añadir usuarios ilimitados.");
             return;
         }
     }
@@ -1286,5 +1289,27 @@ function eliminarUsuarioEquipo(index) {
         localStorage.setItem('nube_equipo', JSON.stringify(usuariosEquipo));
         cargarUsuariosEquipo();
         showToast("Usuario eliminado.");
+    }
+}
+
+function actualizarEstadoBotonAgregar() {
+    const boton = document.querySelector('button[onclick="agregarUsuarioEquipo()"]');
+    if (!boton) return;
+    
+    if (planoAtivo.includes('Crecimiento')) {
+        const cajerosActuales = usuariosEquipo.filter(u => u.rol === 'cajero').length;
+        if (cajerosActuales >= 1) {
+            boton.disabled = true;
+            boton.classList.add('opacity-50', 'cursor-not-allowed');
+            boton.title = "Límite alcanzado. Mejore al Plan VIP para añadir más usuarios.";
+        } else {
+            boton.disabled = false;
+            boton.classList.remove('opacity-50', 'cursor-not-allowed');
+            boton.title = "";
+        }
+    } else if (planoAtivo.includes('VIP')) {
+        boton.disabled = false;
+        boton.classList.remove('opacity-50', 'cursor-not-allowed');
+        boton.title = "";
     }
 }
