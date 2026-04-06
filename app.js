@@ -1183,16 +1183,16 @@ async function aprovarPagamentoSaaS(faturaId) {
 // GESTIÓN DE EQUIPO (por plan)
 // ==========================================
 
-function iniciarConfig() {
-    const seccion = document.getElementById('seccion-equipo');
-    if (!seccion) return;
+function actualizarUIEquipe() {
+    const container = document.getElementById('container-gestao-equipo');
+    if (!container) return;
     
     // Visibilidad según plan
-    if (planoAtivo.includes('Inicial')) {
-        seccion.style.display = 'none';
+    if (planoAtivo.includes('Inicial') || planoAtivo.includes('Básico')) {
+        container.style.display = 'none';
         return; // No es necesario configurar el resto para plan Inicial
     } else {
-        seccion.style.display = '';
+        container.style.display = '';
     }
     
     // Configurar dropdown de roles según plan
@@ -1200,9 +1200,9 @@ function iniciarConfig() {
     if (!selectRol) return;
     
     selectRol.innerHTML = '';
-    if (planoAtivo.includes('Crecimiento')) {
+    if (planoAtivo.includes('Crecimiento') || planoAtivo.includes('Pro')) {
         selectRol.innerHTML = '<option value="cajero">Cajero</option>';
-    } else if (planoAtivo.includes('VIP')) {
+    } else if (planoAtivo.includes('VIP') || planoAtivo.includes('Premium')) {
         selectRol.innerHTML = '<option value="cajero">Cajero</option><option value="manager">Gerente</option>';
     } else {
         // Para otros planes no definidos
@@ -1212,6 +1212,11 @@ function iniciarConfig() {
     // Cargar usuarios existentes y actualizar estado del botón
     cargarUsuariosEquipo();
     actualizarEstadoBotonAgregar();
+}
+
+function iniciarConfig() {
+    // Actualizar UI de gestión de equipo basado en el plan
+    actualizarUIEquipe();
 }
 
 function cargarUsuariosEquipo() {
