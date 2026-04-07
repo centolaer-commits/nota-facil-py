@@ -232,6 +232,19 @@ def gerar_pix_dinamico(
         raise HTTPException(status_code=500, detail=f"Fallo del servidor: {str(e)}")
 
 
+class FuncionarioNovo(BaseModel):
+    nome: str
+    email: str
+    senha: str
+    rol: str
+
+class FuncionarioEditar(BaseModel):
+    nome: Optional[str] = None
+    email: Optional[str] = None
+    senha: Optional[str] = None
+    rol: Optional[str] = None
+    ativo: Optional[bool] = None
+
 @app.post("/api/login")
 def fazer_login(dados: DadosLogin):
     resultado = banco_dados.autenticar_usuario(dados.ruc, dados.senha)
@@ -335,6 +348,53 @@ def listar_proveedores(x_empresa_id: int = Header(...)):
 def deletar_proveedor(id_prov: int, x_empresa_id: int = Header(...)):
     banco_dados.deletar_proveedor(x_empresa_id, id_prov)
     return {"mensaje": "Proveedor eliminado"}
+
+# ============================================================================
+# Endpoints para Gestão de Equipe (Funcionários)
+# ============================================================================
+
+@app.post("/equipo/adicionar")
+def adicionar_funcionario(func: FuncionarioNovo, x_empresa_id: int = Header(...)):
+    """Adiciona um novo funcionário (Cajero ou Gerente)"""
+    resultado = banco_dados.adicionar_funcionario(
+        empresa_id=x_empresa_id,
+        nome=func.nome,
+        email=func.email,
+        senha=func.senha,
+        rol=func.rol
+    )
+    if resultado["sucesso"]:
+        return {"mensaje": "Funcionário adicionado com sucesso", "id": resultado["id"]}
+    raise HTTPException(status_code=400, detail=resultado["mensagem"])
+
+@app.get("/equipo/listar")
+def listar_funcionarios(x_empresa_id: int = Header(...)):
+    """Lista todos os funcionários da empresa"""
+    return banco_dados.listar_funcionarios(x_empresa_id)
+
+@app.put("/equipo/editar/{funcionario_id}")
+def editar_funcionario(funcionario_id: int, func: FuncionarioEditar, x_empresa_id: int = Header(...)):
+    """Edita os dados de um funcionário"""
+    resultado = banco_dados.atualizar_funcionario(
+        empresa_id=x_empresa_id,
+        funcionario_id=funcionario_id,
+        nome=func.nome,
+        email=func.email,
+        senha=func.senha,
+        rol=func.rol,
+        ativo=func.ativo
+    )
+    if resultado["sucesso"]:
+        return {"mensaje": "Funcionário atualizado com sucesso"}
+    raise HTTPException(status_code=400, detail=resultado["mensagem"])
+
+@app.delete("/equipo/remover/{funcionario_id}")
+def remover_funcionario(funcionario_id: int, x_empresa_id: int = Header(...)):
+    """Remove/desativa um funcionário"""
+    resultado = banco_dados.remover_funcionario(x_empresa_id, funcionario_id)
+    if resultado["sucesso"]:
+        return {"mensaje": "Funcionário removido com sucesso"}
+    raise HTTPException(status_code=400, detail=resultado["mensagem"])
 
 @app.post("/salvar-entrada")
 def api_salvar_entrada(dados: DadosEntrada, x_empresa_id: int = Header(...)):

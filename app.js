@@ -1,9 +1,9 @@
-let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let productosGlobais = [];
+let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let funcionarioId = null; let nomeFuncionario = ''; let productosGlobais = [];
 
 // Constantes de perfis RBAC
 const PERFIL_OWNER = 'admin';
 const PERFIL_MANAGER = 'manager';
-const PERFIL_CASHIER = 'cajero'; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; let contextoCatalogo = ''; let usuariosEquipo = JSON.parse(localStorage.getItem('nube_equipo') || '[]'); 
+const PERFIL_CASHIER = 'cajero'; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; let contextoCatalogo = ''; let usuariosEquipo = []; 
 
 // VARIÁVEIS PARA O PIX
 let radarPix = null;
@@ -91,6 +91,10 @@ async function fazerLogin() {
         const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ruc: ruc, senha: senha}) }); 
         if (res.ok) { 
             const dados = await res.json(); empresaAtualId = dados.empresa_id; rolUsuario = dados.rol; planoAtivo = dados.plano || 'Inicial'; 
+            if (dados.funcionario_id) { 
+                funcionarioId = dados.funcionario_id; 
+                nomeFuncionario = dados.nome || ''; 
+            } 
             document.getElementById('login-screen').classList.add('hidden'); 
             if (rolUsuario === 'superadmin') { 
                 document.getElementById('app-screen').classList.add('hidden'); document.getElementById('superadmin-screen').classList.remove('hidden'); 
@@ -1294,36 +1298,50 @@ function iniciarConfig() {
     actualizarUIEquipe();
 }
 
-function cargarUsuariosEquipo() {
+async function cargarUsuariosEquipo() {
     const tbody = document.getElementById('tabela-equipo');
     if (!tbody) return;
     
-    if (usuariosEquipo.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">No hay usuarios registrados aún.</td></tr>';
-        return;
+    try {
+        const res = await fetch('/equipo/listar', { headers: getSaaSHeaders() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        usuariosEquipo = await res.json();
+        
+        if (usuariosEquipo.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">No hay usuarios registrados aún.</td></tr>';
+            actualizarEstadoBotonAgregar();
+            return;
+        }
+        
+        let html = '';
+        usuariosEquipo.forEach((u, idx) => {
+            let rolLabel = u.rol === 'cajero' ? 'Cajero' : 'Gerente';
+            let estadoLabel = u.activo ? '<span class="text-green-500">Activo</span>' : '<span class="text-red-500">Inactivo</span>';
+            html += `
+                <tr class="border-b border-slate-100 hover:bg-slate-50">
+                    <td class="p-3 text-slate-800 font-bold">${u.nombre}</td>
+                    <td class="p-3">${rolLabel}</td>
+                    <td class="p-3">${u.email}</td>
+                    <td class="p-3">${estadoLabel}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="eliminarUsuarioEquipo(${u.id})" class="text-red-500 hover:text-red-700 font-bold">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+        actualizarEstadoBotonAgregar();
+    } catch (error) {
+        console.error('Error cargando equipo:', error);
+        // Fallback a localStorage solo para compatibilidad
+        if (usuariosEquipo.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">No hay usuarios registrados aún.</td></tr>';
+        }
+        actualizarEstadoBotonAgregar();
     }
-    
-    let html = '';
-    usuariosEquipo.forEach((u, idx) => {
-        let rolLabel = u.rol === 'cajero' ? 'Cajero' : 'Gerente';
-        let estadoLabel = u.activo ? '<span class="text-green-500">Activo</span>' : '<span class="text-red-500">Inactivo</span>';
-        html += `
-            <tr class="border-b border-slate-100 hover:bg-slate-50">
-                <td class="p-3 text-slate-800 font-bold">${u.nombre}</td>
-                <td class="p-3">${rolLabel}</td>
-                <td class="p-3">${u.email}</td>
-                <td class="p-3">${estadoLabel}</td>
-                <td class="p-3 text-right">
-                    <button onclick="eliminarUsuarioEquipo(${idx})" class="text-red-500 hover:text-red-700 font-bold">🗑️</button>
-                </td>
-            </tr>
-        `;
-    });
-    tbody.innerHTML = html;
-    actualizarEstadoBotonAgregar();
 }
 
-function agregarUsuarioEquipo() {
+async function agregarUsuarioEquipo() {
     const nombre = document.getElementById('equipo-nombre').value.trim();
     const rol = document.getElementById('equipo-rol').value;
     const email = document.getElementById('equipo-email').value.trim();
@@ -1334,43 +1352,60 @@ function agregarUsuarioEquipo() {
         return;
     }
     
-    // Restricción de límite para Plan Crecimiento (Pro)
-    if (planoAtivo.includes('Crecimiento')) {
-        const cajerosActuales = usuariosEquipo.filter(u => u.rol === 'cajero').length;
+    // Restricción de límite para Plan Crecimiento (Pro) - validación frontend
+    if (planoAtivo.includes('Crecimiento') && rol === 'cajero') {
+        const cajerosActuales = usuariosEquipo.filter(u => u.rol === 'cajero' && u.activo).length;
         if (cajerosActuales >= 1) {
             showToast("Limite del Plan Crecimiento alcanzado. Mejore al Plan VIP para añadir usuarios ilimitados.");
             return;
         }
     }
     
-    // Crear usuario
-    const nuevoUsuario = {
-        nombre,
-        rol,
-        email,
-        password,
-        activo: true
-    };
-    
-    usuariosEquipo.push(nuevoUsuario);
-    localStorage.setItem('nube_equipo', JSON.stringify(usuariosEquipo));
-    
-    // Limpiar campos
-    document.getElementById('equipo-nombre').value = '';
-    document.getElementById('equipo-email').value = '';
-    document.getElementById('equipo-password').value = '';
-    
-    // Actualizar tabla
-    cargarUsuariosEquipo();
-    showToast("Usuario agregado correctamente.");
+    try {
+        const res = await fetch('/equipo/adicionar', {
+            method: 'POST',
+            headers: { ...getSaaSHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, email, senha: password, rol })
+        });
+        
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Error al agregar usuario');
+        }
+        
+        // Limpiar campos
+        document.getElementById('equipo-nombre').value = '';
+        document.getElementById('equipo-email').value = '';
+        document.getElementById('equipo-password').value = '';
+        
+        // Actualizar tabla
+        await cargarUsuariosEquipo();
+        showToast("Usuario agregado correctamente.");
+    } catch (error) {
+        console.error('Error agregando usuario:', error);
+        showToast(error.message || "Error al agregar usuario", "error");
+    }
 }
 
-function eliminarUsuarioEquipo(index) {
-    if (confirm("¿Eliminar este usuario?")) {
-        usuariosEquipo.splice(index, 1);
-        localStorage.setItem('nube_equipo', JSON.stringify(usuariosEquipo));
-        cargarUsuariosEquipo();
+async function eliminarUsuarioEquipo(funcionarioId) {
+    if (!confirm("¿Eliminar este usuario?")) return;
+    
+    try {
+        const res = await fetch(`/equipo/remover/${funcionarioId}`, {
+            method: 'DELETE',
+            headers: getSaaSHeaders()
+        });
+        
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Error al eliminar usuario');
+        }
+        
+        await cargarUsuariosEquipo();
         showToast("Usuario eliminado.");
+    } catch (error) {
+        console.error('Error eliminando usuario:', error);
+        showToast(error.message || "Error al eliminar usuario", "error");
     }
 }
 

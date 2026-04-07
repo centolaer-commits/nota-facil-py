@@ -1,12 +1,17 @@
 ﻿import os
 import json
 import psycopg2
+import hashlib
 from datetime import date, timedelta
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_conexao():
     return psycopg2.connect(DATABASE_URL)
+
+def hash_senha(senha):
+    """Retorna hash SHA256 da senha"""
+    return hashlib.sha256(senha.encode()).hexdigest()
 
 def inicializar_banco():
     conexao = get_conexao()
@@ -28,6 +33,19 @@ def inicializar_banco():
             data_vencimento DATE,
             valor_mensalidade REAL DEFAULT 0,
             csc TEXT DEFAULT ''
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS funcionarios (
+            id SERIAL PRIMARY KEY,
+            empresa_id INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+            nome TEXT NOT NULL,
+            email TEXT UNIQUE,
+            senha_hash TEXT NOT NULL,
+            rol TEXT NOT NULL CHECK (rol IN ('cajero', 'gerente')),
+            ativo BOOLEAN DEFAULT TRUE,
+            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
@@ -311,8 +329,152 @@ def autenticar_usuario(ruc, senha):
             return {"sucesso": False, "mensagem": "El Plan Inicial es para 1 solo usuario. Actualiza al Plan Crecimiento."}
         return {"sucesso": True, "empresa_id": emp_id, "rol": "cajero", "plano": plano}
         
-    else: 
-        return {"sucesso": False, "mensagem": "ContraseÃ±a incorrecta"}
+    else:
+        # Verificar se é um funcionário
+        senha_hash = hash_senha(senha)
+        conexao = get_conexao()
+        cursor = conexao.cursor()
+        cursor.execute("""
+            SELECT f.id, f.rol, f.nome 
+            FROM funcionarios f 
+            WHERE f.empresa_id = %s AND f.senha_hash = %s AND f.ativo = TRUE
+        """, (emp_id, senha_hash))
+        funcionario = cursor.fetchone()
+        conexao.close()
+        
+        if funcionario:
+            func_id, rol, nome = funcionario
+            # Verificar se o plano da empresa permite este tipo de usuário
+            if rol == 'gerente' and plano not in ['VIP', 'Premium']:
+                return {"sucesso": False, "mensagem": "Seu plano não permite acesso como gerente. Atualize para VIP."}
+            if rol == 'cajero' and plano == 'Inicial':
+                return {"sucesso": False, "mensagem": "El Plan Inicial es para 1 solo usuario. Actualiza al Plan Crecimiento."}
+            return {"sucesso": True, "empresa_id": emp_id, "rol": rol, "plano": plano, "funcionario_id": func_id, "nome": nome}
+        
+        return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
+
+def adicionar_funcionario(empresa_id, nome, email, senha, rol):
+    """Adiciona um novo funcionário para a empresa"""
+    senha_hash = hash_senha(senha)
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO funcionarios (empresa_id, nome, email, senha_hash, rol)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
+        """, (empresa_id, nome, email, senha_hash, rol))
+        funcionario_id = cursor.fetchone()[0]
+        conexao.commit()
+        return {"sucesso": True, "id": funcionario_id}
+    except psycopg2.IntegrityError as e:
+        conexao.rollback()
+        if "email" in str(e):
+            return {"sucesso": False, "mensagem": "Email já cadastrado"}
+        return {"sucesso": False, "mensagem": "Erro ao adicionar funcionário"}
+    except Exception as e:
+        conexao.rollback()
+        return {"sucesso": False, "mensagem": f"Erro: {e}"}
+    finally:
+        cursor.close()
+        conexao.close()
+
+def listar_funcionarios(empresa_id):
+    """Lista todos os funcionários de uma empresa"""
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("""
+        SELECT id, nome, email, rol, ativo, data_criacao
+        FROM funcionarios
+        WHERE empresa_id = %s
+        ORDER BY nome
+    """, (empresa_id,))
+    resultados = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+    return [
+        {
+            "id": r[0],
+            "nome": r[1],
+            "email": r[2],
+            "rol": r[3],
+            "ativo": r[4],
+            "data_criacao": r[5].isoformat() if r[5] else None
+        }
+        for r in resultados
+    ]
+
+def remover_funcionario(empresa_id, funcionario_id):
+    """Remove ou desativa um funcionário"""
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        # Verificar se o funcionário pertence à empresa
+        cursor.execute("SELECT id FROM funcionarios WHERE id = %s AND empresa_id = %s", (funcionario_id, empresa_id))
+        if not cursor.fetchone():
+            return {"sucesso": False, "mensagem": "Funcionário não encontrado"}
+        
+        # Desativar em vez de excluir (soft delete)
+        cursor.execute("UPDATE funcionarios SET ativo = FALSE WHERE id = %s", (funcionario_id,))
+        conexao.commit()
+        return {"sucesso": True}
+    except Exception as e:
+        conexao.rollback()
+        return {"sucesso": False, "mensagem": f"Erro: {e}"}
+    finally:
+        cursor.close()
+        conexao.close()
+
+def atualizar_funcionario(empresa_id, funcionario_id, nome=None, email=None, senha=None, rol=None, ativo=None):
+    """Atualiza os dados de um funcionário"""
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        # Verificar se o funcionário pertence à empresa
+        cursor.execute("SELECT id FROM funcionarios WHERE id = %s AND empresa_id = %s", (funcionario_id, empresa_id))
+        if not cursor.fetchone():
+            return {"sucesso": False, "mensagem": "Funcionário não encontrado"}
+        
+        updates = []
+        params = []
+        if nome is not None:
+            updates.append("nome = %s")
+            params.append(nome)
+        if email is not None:
+            updates.append("email = %s")
+            params.append(email)
+        if senha is not None:
+            updates.append("senha_hash = %s")
+            params.append(hash_senha(senha))
+        if rol is not None:
+            updates.append("rol = %s")
+            params.append(rol)
+        if ativo is not None:
+            updates.append("ativo = %s")
+            params.append(ativo)
+        
+        if not updates:
+            return {"sucesso": False, "mensagem": "Nenhum campo para atualizar"}
+        
+        params.append(funcionario_id)
+        cursor.execute(f"""
+            UPDATE funcionarios 
+            SET {', '.join(updates)}
+            WHERE id = %s
+        """, tuple(params))
+        conexao.commit()
+        return {"sucesso": True}
+    except psycopg2.IntegrityError as e:
+        conexao.rollback()
+        if "email" in str(e):
+            return {"sucesso": False, "mensagem": "Email já cadastrado"}
+        return {"sucesso": False, "mensagem": "Erro ao atualizar funcionário"}
+    except Exception as e:
+        conexao.rollback()
+        return {"sucesso": False, "mensagem": f"Erro: {e}"}
+    finally:
+        cursor.close()
+        conexao.close()
 
 def obter_metricas_saas():
     conexao = get_conexao()
