@@ -127,7 +127,7 @@ async function fazerLogin() {
                 
                 await carregarConfiguracao(); await carregarCategorias(); if(!isInicial) await carregarProveedores(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); 
                 // Pré-carrega dados do dashboard em segundo plano
-                setTimeout(() => carregarDashboard(), 500);
+                setTimeout(() => carregarDashboardComVisibilidade(), 500);
                 showToast(`¡Sesión Iniciada!`); 
             } 
         } else { const err = await res.json(); erroBox.innerText = err.detail || err.mensagem || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); } 
@@ -306,8 +306,8 @@ function mudarTela(telaId, elementoBotao) {
     if(telaId === 'config') carregarConfiguracao(); 
     if(telaId === 'categorias') carregarCategorias(); 
     if(telaId === 'dashboard') {
-        // Pequeno atraso para garantir que a seção esteja visível antes de renderizar gráfico
-        setTimeout(() => carregarDashboard(), 50);
+        // Garantir que a seção esteja visível antes de renderizar gráfico
+        setTimeout(() => carregarDashboardComVisibilidade(), 50);
     } 
     if(telaId === 'pos') checarStatusCaixa(); 
 }
@@ -514,27 +514,92 @@ async function carregarHistorico(busca="") {
 } 
 function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
 
+// Função auxiliar para aguardar elemento estar visível
+function waitForElementVisibility(elementId, timeout = 2000) {
+    return new Promise((resolve, reject) => {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            reject(new Error(`Elemento ${elementId} não encontrado`));
+            return;
+        }
+        
+        // Se já estiver visível
+        if (element.offsetParent !== null && element.style.display !== 'none') {
+            resolve(element);
+            return;
+        }
+        
+        // Observar mudanças no DOM
+        const observer = new MutationObserver(() => {
+            if (element.offsetParent !== null && element.style.display !== 'none') {
+                observer.disconnect();
+                resolve(element);
+            }
+        });
+        
+        observer.observe(element.parentNode || document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+        
+        // Timeout
+        setTimeout(() => {
+            observer.disconnect();
+            reject(new Error(`Timeout aguardando visibilidade de ${elementId}`));
+        }, timeout);
+    });
+}
+
+// Função wrapper que garante visibilidade antes de carregar
+async function carregarDashboardComVisibilidade() {
+    try {
+        // Aguardar a tela do dashboard estar visível
+        await waitForElementVisibility('tela-dashboard', 3000);
+        await carregarDashboard();
+    } catch (error) {
+        console.warn('Aguardando visibilidade do dashboard:', error.message);
+        // Tentar novamente após 200ms
+        setTimeout(() => carregarDashboardComVisibilidade(), 200);
+    }
+}
+
 async function carregarDashboard() { 
     try { 
+        // Mostrar estado de carregamento
+        const dashVendas = document.getElementById('dash-vendas');
+        const dashNotas = document.getElementById('dash-notas');
+        if (dashVendas) dashVendas.innerText = 'Gs. ...';
+        if (dashNotas) dashNotas.innerText = '...';
+        
+        // Limpar gráfico anterior se existir
+        if (graficoAtual) {
+            graficoAtual.destroy();
+            graficoAtual = null;
+        }
+        
         const res = await fetch('/dados-dashboard', {headers: getSaaSHeaders()}); 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const d = await res.json(); 
         
         // Atualizar métricas
-        const dashVendas = document.getElementById('dash-vendas');
-        const dashNotas = document.getElementById('dash-notas');
         if (dashVendas) dashVendas.innerText = 'Gs. ' + d.total_vendas.toLocaleString('es-PY');
         if (dashNotas) dashNotas.innerText = d.total_notas;
         
         // Renderizar gráfico apenas se o canvas estiver disponível
         const canvas = document.getElementById('grafico-produtos');
         if (canvas) {
-            // Se o canvas estiver oculto, aguardar até que esteja visível
-            if (canvas.offsetParent === null) {
-                // Canvas não visível, tentar novamente em breve
+            // Verificar se o canvas está visível e tem dimensões
+            if (canvas.offsetParent === null || canvas.clientWidth === 0) {
+                console.warn('Canvas não visível ou sem dimensões, tentando novamente...');
                 setTimeout(() => carregarDashboard(), 100);
                 return;
             }
+            
+            // Garantir que o canvas esteja pronto para renderização
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            
             const ctx = canvas.getContext('2d');
             if (graficoAtual) graficoAtual.destroy();
             graficoAtual = new Chart(ctx, {
@@ -549,14 +614,24 @@ async function carregarDashboard() {
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 500,
+                        easing: 'easeOutQuart'
+                    }
                 }
             });
         }
     } catch(e) {
         console.error('Erro ao carregar dashboard:', e);
-        // Tentar novamente após 2 segundos
-        setTimeout(() => carregarDashboard(), 2000);
+        // Mostrar erro nas métricas
+        const dashVendas = document.getElementById('dash-vendas');
+        const dashNotas = document.getElementById('dash-notas');
+        if (dashVendas) dashVendas.innerText = 'Gs. Error';
+        if (dashNotas) dashNotas.innerText = 'Error';
+        
+        // Tentar novamente após 3 segundos
+        setTimeout(() => carregarDashboard(), 3000);
     }
 }
 async function carregarCategorias() { try { const res=await fetch('/listar-categorias', {headers:getSaaSHeaders()}); const d=await res.json(); const sf=document.getElementById('novo-cat'); const sfi=document.getElementById('filtro-cat-inventario'); const sfc=document.getElementById('stocktake-categoria'); const tb=document.getElementById('tabela-categorias'); if(sf) sf.innerHTML=''; if(sfi) sfi.innerHTML='<option value="">Todas</option>'; if(sfc) sfc.innerHTML='<option value="">Todas las categorías</option>'; if(tb) tb.innerHTML=''; d.forEach(c=>{ if(sf) sf.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfi) sfi.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfc) sfc.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(tb) tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${c.nome}</td><td class="p-4 text-center"><button onclick="deletarCategoria(${c.id})" class="text-red-400">🗑️</button></td></tr>`; }); } catch(e){} }
