@@ -285,20 +285,144 @@ def inicializar_banco():
 if DATABASE_URL:
     inicializar_banco()
 
+
 def hash_senha(senha):
     """Retorna hash SHA256 da senha (consistente com frontend)"""
     return hashlib.sha256(senha.encode()).hexdigest()
 
 def validar_plano_funcionario(plano_empresa, rol_funcionario):
     """Valida se o plano da empresa permite o tipo de funcionário"""
+    # Gerentes só em planos VIP/Premium
     if rol_funcionario == 'gerente' and plano_empresa not in ['VIP', 'Premium']:
         return "Su plan actual no permite acceso como Gerente. Actualice al Plan VIP."
+    
+    # Cajeros em plano Inicial não são permitidos
     if rol_funcionario == 'cajero' and plano_empresa == 'Inicial':
         return "El Plan Inicial es para 1 solo usuario (el dueño). Actualice al Plan Crecimiento."
-    return None
+    
+    return None # Sem restrições
 
 def autenticar_usuario(identificador, senha_fornecida):
-    # ... (todo o resto do código da função que te mandei antes) ...
+    """Autentica usuários com busca flexível (RUC -> Email fallback)"""
+    print(f"[AUTH DEBUG] Tentativa de autenticação com identificador: '{identificador}'", file=sys.stderr)
+    
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+
+    try:
+        # ====================================================================
+        # FASE 1: Buscar empresa por RUC (para donos e caixas legados)
+        # ====================================================================
+        cursor.execute("""
+            SELECT id, s_admin, s_caja, plano, nome 
+            FROM empresas 
+            WHERE ruc = %s
+        """, (identificador,))
+        
+        empresa = cursor.fetchone()
+
+        if empresa:
+            emp_id, s_admin, s_caja, plano, nome_empresa = empresa
+            print(f"[AUTH DEBUG] Empresa encontrada via RUC: ID {emp_id}, '{nome_empresa}'", file=sys.stderr)
+
+            # Verificar senhas de dono/admin (texto plano - legado)
+            if senha_fornecida == s_admin:
+                print(f"[AUTH DEBUG] Senha de ADMIN correta", file=sys.stderr)
+                cursor.close()
+                conexao.close()
+                return {
+                    "sucesso": True,
+                    "empresa_id": emp_id,
+                    "rol": "admin",
+                    "plano": plano,
+                    "nome_empresa": nome_empresa
+                }
+            
+            # Verificar senha de caixa (texto plano - legado)
+            if senha_fornecida == s_caja:
+                print(f"[AUTH DEBUG] Senha de CAJA correta", file=sys.stderr)
+                cursor.close()
+                conexao.close()
+                return {
+                    "sucesso": True,
+                    "empresa_id": emp_id,
+                    "rol": "cajero",
+                    "plano": plano,
+                    "nome_empresa": nome_empresa
+                }
+
+        # ====================================================================
+        # FASE 2: Buscar funcionário por EMAIL (fallback)
+        # ====================================================================
+        print(f"[AUTH DEBUG] Buscando funcionário por email...", file=sys.stderr)
+        
+        cursor.execute("""
+            SELECT f.id, f.rol, f.nome, f.email, f.empresa_id, e.plano, e.nome
+            FROM funcionarios f
+            JOIN empresas e ON f.empresa_id = e.id
+            WHERE f.email = %s AND f.ativo = TRUE
+        """, (identificador,))
+        
+        funcionario = cursor.fetchone()
+
+        if funcionario:
+            func_id, rol, nome_func, email, emp_id, plano, nome_empresa = funcionario
+            
+            # Verificar hash da senha
+            senha_hash = hash_senha(senha_fornecida)
+            cursor.execute("""
+                SELECT id FROM funcionarios 
+                WHERE id = %s AND senha_hash = %s
+            """, (func_id, senha_hash))
+            
+            if cursor.fetchone():
+                print(f"[AUTH DEBUG] Hash da senha do funcionário verificado com sucesso", file=sys.stderr)
+                
+                # Validar restrições de plano
+                erro_plano = validar_plano_funcionario(plano, rol)
+                if erro_plano:
+                    cursor.close()
+                    conexao.close()
+                    return {"sucesso": False, "mensagem": erro_plano}
+                
+                cursor.close()
+                conexao.close()
+                return {
+                    "sucesso": True,
+                    "empresa_id": emp_id,
+                    "rol": rol,
+                    "plano": plano,
+                    "funcionario_id": func_id,
+                    "nome": nome_func,
+                    "email": email,
+                    "nome_empresa": nome_empresa
+                }
+            else:
+                print(f"[AUTH DEBUG] Hash da senha do funcionário INCORRETO", file=sys.stderr)
+                cursor.close()
+                conexao.close()
+                return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
+
+        # ====================================================================
+        # FASE 3: Nenhum usuário encontrado
+        # ====================================================================
+        cursor.close()
+        conexao.close()
+        
+        if '@' in identificador:
+            return {"sucesso": False, "mensagem": "Email no registrado en el sistema"}
+        else:
+            return {"sucesso": False, "mensagem": "Empresa no registrada con ese RUC"}
+
+    except Exception as e:
+        print(f"[AUTH ERROR] Erro durante autenticação: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        try:
+            cursor.close()
+            conexao.close()
+        except:
+            pass
+        return {"sucesso": False, "mensagem": "Error interno del servidor. Intente nuevamente."}
 
 def adicionar_funcionario(empresa_id, nome, email, senha, rol):
     """Adiciona um novo funcionário para a empresa"""
