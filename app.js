@@ -343,6 +343,24 @@ function atualizarStatusConexao() { const badge = document.getElementById('badge
 function showToast(message, type = 'success') { const container = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = `text-white p-4 rounded-lg shadow-lg min-w-[300px] toast-enter relative overflow-hidden ${type==='success'?'bg-brand-accent':(type==='error'?'bg-red-600':'bg-yellow-500')}`; toast.innerHTML = `<p class="font-bold text-sm">${message}</p>`; container.appendChild(toast); requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); }); setTimeout(() => { toast.classList.remove('toast-enter-active'); toast.classList.add('toast-exit-active'); setTimeout(() => container.removeChild(toast), 300); }, 3000); }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
 function toggleHubSidebar() { document.getElementById('hub-sidebar').classList.toggle('-translate-x-full'); document.getElementById('hub-overlay').classList.toggle('hidden'); }
+function cambiarTabConfig(tabName) {
+    // Ocultar todas las pestañas
+    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
+    // Mostrar la pestaña seleccionada
+    const targetPane = document.getElementById(`tab-${tabName}-content`);
+    if (targetPane) targetPane.classList.remove('hidden');
+    
+    // Actualizar botones de navegación
+    document.querySelectorAll('.tab-config').forEach(btn => {
+        btn.classList.remove('border-b-2', 'border-brand-accent', 'bg-brand-accent/5', 'text-slate-700');
+        btn.classList.add('text-slate-500');
+    });
+    const activeBtn = document.getElementById(`tab-${tabName}`);
+    if (activeBtn) {
+        activeBtn.classList.add('border-b-2', 'border-brand-accent', 'bg-brand-accent/5', 'text-slate-700');
+        activeBtn.classList.remove('text-slate-500');
+    }
+}
 function toggleAcordeao(menuId, setaId) { const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; } }
 
 function calcularMensualidad() {
@@ -1367,6 +1385,8 @@ function actualizarUIEquipe() {
 function iniciarConfig() {
     // Actualizar UI de gestión de equipo basado en el plan
     actualizarUIEquipe();
+    // Activar pestaña Empresa por defecto
+    cambiarTabConfig('empresa');
 }
 
 async function cargarUsuariosEquipo() {
@@ -1520,5 +1540,47 @@ function actualizarEstadoBotonAgregar() {
         boton.disabled = false;
         boton.classList.remove('opacity-50', 'cursor-not-allowed');
         boton.title = "";
+    }
+}
+
+async function alterarCredenciaisAdmin() {
+    const senhaAtual = document.getElementById('seguridad-senha-atual').value.trim();
+    const novoLogin = document.getElementById('seguridad-novo-login').value.trim();
+    const novaSenha = document.getElementById('seguridad-nova-senha').value.trim();
+    
+    if (!senhaAtual || !novoLogin || !novaSenha) {
+        showToast("Complete todos los campos del formulario.", "error");
+        return;
+    }
+    if (novaSenha.length < 6) {
+        showToast("La nueva contraseña debe tener al menos 6 caracteres.", "error");
+        return;
+    }
+    
+    try {
+        const res = await fetch('/api/admin/credenciais', {
+            method: 'POST',
+            headers: { ...getSaaSHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                senha_atual: senhaAtual,
+                novo_login: novoLogin,
+                nova_senha: novaSenha
+            })
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            showToast(data.mensagem || "Credenciales actualizadas correctamente.");
+            // Limpar campos
+            document.getElementById('seguridad-senha-atual').value = '';
+            document.getElementById('seguridad-novo-login').value = '';
+            document.getElementById('seguridad-nova-senha').value = '';
+        } else {
+            const error = await res.json();
+            showToast(error.detail || "Error al actualizar credenciales", "error");
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast("Error de conexión", "error");
     }
 }

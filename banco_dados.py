@@ -1354,6 +1354,56 @@ def obter_nota_por_cdc(empresa_id, cdc):
         }
     return None
 
+def alterar_credenciais_admin(empresa_id, senha_atual, novo_ruc, nova_senha):
+    """
+    Altera o RUC e senha do administrador (dono) da empresa.
+    Verifica a senha atual antes de atualizar.
+    Retorna dict {sucesso: bool, mensagem: str}
+    """
+    conexao = None
+    cursor = None
+    try:
+        conexao = get_conexao()
+        cursor = conexao.cursor()
+        
+        # 1. Verificar senha atual
+        cursor.execute("""
+            SELECT senha_admin FROM empresas WHERE id = %s
+        """, (empresa_id,))
+        linha = cursor.fetchone()
+        if not linha:
+            return {"sucesso": False, "mensagem": "Empresa não encontrada"}
+        
+        senha_admin_atual = linha[0]
+        if senha_atual != senha_admin_atual:
+            return {"sucesso": False, "mensagem": "Senha atual incorreta"}
+        
+        # 2. Verificar se novo RUC já existe (e não é o mesmo da empresa atual)
+        cursor.execute("""
+            SELECT id FROM empresas WHERE ruc = %s AND id != %s
+        """, (novo_ruc, empresa_id))
+        if cursor.fetchone():
+            return {"sucesso": False, "mensagem": "O novo RUC já está em uso por outra empresa"}
+        
+        # 3. Atualizar RUC e senha_admin
+        cursor.execute("""
+            UPDATE empresas SET ruc = %s, senha_admin = %s WHERE id = %s
+        """, (novo_ruc, nova_senha, empresa_id))
+        conexao.commit()
+        
+        return {"sucesso": True, "mensagem": "Credenciais atualizadas com sucesso"}
+        
+    except psycopg2.Error as e:
+        if conexao:
+            conexao.rollback()
+        print(f"[ERRO] Falha ao alterar credenciais: {e}")
+        return {"sucesso": False, "mensagem": f"Erro no banco de dados: {e}"}
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao:
+            conexao.close()
+
 def injetar_dados_demo():
     """Cria o usuÃ¡rio de teste pÃºblico (RUC 9999999-9) com dados completos de demonstraÃ§Ã£o"""
     conexao = None

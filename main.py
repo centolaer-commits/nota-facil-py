@@ -49,6 +49,11 @@ class EdicaoEmpresa(BaseModel):
     plano: str
     valor_mensalidade: float
 
+class AlterarCredenciaisAdmin(BaseModel):
+    senha_atual: str
+    novo_login: str
+    nova_senha: str
+
 class ProdutoNovo(BaseModel):
     codigo_barras: str
     descricao: str
@@ -396,6 +401,24 @@ def remover_funcionario(funcionario_id: int, x_empresa_id: int = Header(...)):
     if resultado["sucesso"]:
         return {"mensaje": "Funcionário removido com sucesso"}
     raise HTTPException(status_code=400, detail=resultado["mensagem"])
+
+@app.post("/api/admin/credenciais")
+def alterar_credenciais_admin(dados: AlterarCredenciaisAdmin, x_empresa_id: int = Header(...)):
+    """
+    Altera o login (RUC) e senha do administrador da empresa.
+    Requer senha atual para confirmação.
+    """
+    resultado = banco_dados.alterar_credenciais_admin(
+        empresa_id=x_empresa_id,
+        senha_atual=dados.senha_atual,
+        novo_ruc=dados.novo_login,
+        nova_senha=dados.nova_senha
+    )
+    
+    if resultado["sucesso"]:
+        return {"mensagem": resultado["mensagem"]}
+    else:
+        raise HTTPException(status_code=400, detail=resultado["mensagem"])
 
 @app.post("/salvar-entrada")
 def api_salvar_entrada(dados: DadosEntrada, x_empresa_id: int = Header(...)):
