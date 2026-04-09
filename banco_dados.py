@@ -314,32 +314,32 @@ def autenticar_usuario(identificador, senha_fornecida):
         # FASE 1: Buscar empresa por RUC (para donos e caixas legados)
         # ====================================================================
         cursor.execute("""
-            SELECT id, s_admin, s_caja, plano, nome 
-            FROM empresas 
-            WHERE ruc = %s
-        """, (identificador,))
+        SELECT id, senha_admin, senha_caixa, plano, nome_empresa
+        FROM empresas
+        WHERE ruc = %s
+    """, (identificador,))
+
+    empresa = cursor.fetchone()
+
+    if empresa:
+        emp_id, senha_admin, senha_caixa, plano, nome_empresa = empresa
+        print(f"[AUTH DEBUG] Empresa encontrada via RUC: ID {emp_id}")
+
+        # Verificar senhas de dono/admin (texto plano - legado)
+        if senha_fornecida == senha_admin:
+            print("[AUTH DEBUG] Senha de ADMIN correta")
+            cursor.close()
+            conexao.close()
+            return {
+                "sucesso": True,
+                "empresa_id": emp_id,
+                "rol": "admin",
+                "plano": plano,
+                "nome_empresa": nome_empresa
+            }
         
-        empresa = cursor.fetchone()
-
-        if empresa:
-            emp_id, s_admin, s_caja, plano, nome_empresa = empresa
-            print(f"[AUTH DEBUG] Empresa encontrada via RUC: ID {emp_id}, '{nome_empresa}'", file=sys.stderr)
-
-            # Verificar senhas de dono/admin (texto plano - legado)
-            if senha_fornecida == s_admin:
-                print(f"[AUTH DEBUG] Senha de ADMIN correta", file=sys.stderr)
-                cursor.close()
-                conexao.close()
-                return {
-                    "sucesso": True,
-                    "empresa_id": emp_id,
-                    "rol": "admin",
-                    "plano": plano,
-                    "nome_empresa": nome_empresa
-                }
-            
-            # Verificar senha de caixa (texto plano - legado)
-            if senha_fornecida == s_caja:
+        # Verificar senha de caixa (texto plano - legado)
+        if senha_fornecida == senha_caixa:
                 print(f"[AUTH DEBUG] Senha de CAJA correta", file=sys.stderr)
                 cursor.close()
                 conexao.close()
