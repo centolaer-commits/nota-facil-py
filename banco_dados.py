@@ -310,109 +310,109 @@ def autenticar_usuario(identificador, senha_fornecida):
     cursor = conexao.cursor()
 
     try:
-        # ====================================================================
-        # FASE 1: Buscar empresa por RUC (para donos e caixas legados)
-        # ====================================================================
-        cursor.execute("""
-        SELECT id, senha_admin, senha_caixa, plano, nome_empresa
-        FROM empresas
-        WHERE ruc = %s
-    """, (identificador,))
-
-    empresa = cursor.fetchone()
-
-    if empresa:
-        emp_id, senha_admin, senha_caixa, plano, nome_empresa = empresa
-        print(f"[AUTH DEBUG] Empresa encontrada via RUC: ID {emp_id}")
-
-        # Verificar senhas de dono/admin (texto plano - legado)
-        if senha_fornecida == senha_admin:
-            print("[AUTH DEBUG] Senha de ADMIN correta")
-            cursor.close()
-            conexao.close()
-            return {
-                "sucesso": True,
-                "empresa_id": emp_id,
-                "rol": "admin",
-                "plano": plano,
-                "nome_empresa": nome_empresa
-            }
-        
-        # Verificar senha de caixa (texto plano - legado)
-        if senha_fornecida == senha_caixa:
-                print(f"[AUTH DEBUG] Senha de CAJA correta", file=sys.stderr)
-                cursor.close()
-                conexao.close()
-                return {
-                    "sucesso": True,
-                    "empresa_id": emp_id,
-                    "rol": "cajero",
-                    "plano": plano,
-                    "nome_empresa": nome_empresa
-                }
-
-        # ====================================================================
-        # FASE 2: Buscar funcionário por EMAIL (fallback)
-        # ====================================================================
-        print(f"[AUTH DEBUG] Buscando funcionário por email...", file=sys.stderr)
-        
-        cursor.execute("""
-            SELECT f.id, f.rol, f.nome, f.email, f.empresa_id, e.plano, e.nome
-            FROM funcionarios f
-            JOIN empresas e ON f.empresa_id = e.id
-            WHERE f.email = %s AND f.ativo = TRUE
-        """, (identificador,))
-        
-        funcionario = cursor.fetchone()
-
-        if funcionario:
-            func_id, rol, nome_func, email, emp_id, plano, nome_empresa = funcionario
-            
-            # Verificar hash da senha
-            senha_hash = hash_senha(senha_fornecida)
+            # ====================================================================
+            # FASE 1: Buscar empresa por RUC (para donos e caixas legados)
+            # ====================================================================
             cursor.execute("""
-                SELECT id FROM funcionarios 
-                WHERE id = %s AND senha_hash = %s
-            """, (func_id, senha_hash))
-            
-            if cursor.fetchone():
-                print(f"[AUTH DEBUG] Hash da senha do funcionário verificado com sucesso", file=sys.stderr)
-                
-                # Validar restrições de plano
-                erro_plano = validar_plano_funcionario(plano, rol)
-                if erro_plano:
+            SELECT id, senha_admin, senha_caixa, plano, nome_empresa
+            FROM empresas
+            WHERE ruc = %s
+        """, (identificador,))
+
+            empresa = cursor.fetchone()
+
+            if empresa:
+                emp_id, senha_admin, senha_caixa, plano, nome_empresa = empresa
+                print(f"[AUTH DEBUG] Empresa encontrada via RUC: ID {emp_id}")
+
+                # Verificar senhas de dono/admin (texto plano - legado)
+                if senha_fornecida == senha_admin:
+                    print("[AUTH DEBUG] Senha de ADMIN correta")
                     cursor.close()
                     conexao.close()
-                    return {"sucesso": False, "mensagem": erro_plano}
+                    return {
+                        "sucesso": True,
+                        "empresa_id": emp_id,
+                        "rol": "admin",
+                        "plano": plano,
+                        "nome_empresa": nome_empresa
+                    }
                 
-                cursor.close()
-                conexao.close()
-                return {
-                    "sucesso": True,
-                    "empresa_id": emp_id,
-                    "rol": rol,
-                    "plano": plano,
-                    "funcionario_id": func_id,
-                    "nome": nome_func,
-                    "email": email,
-                    "nome_empresa": nome_empresa
-                }
-            else:
-                print(f"[AUTH DEBUG] Hash da senha do funcionário INCORRETO", file=sys.stderr)
-                cursor.close()
-                conexao.close()
-                return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
+                # Verificar senha de caixa (texto plano - legado)
+                if senha_fornecida == senha_caixa:
+                        print(f"[AUTH DEBUG] Senha de CAJA correta", file=sys.stderr)
+                        cursor.close()
+                        conexao.close()
+                        return {
+                            "sucesso": True,
+                            "empresa_id": emp_id,
+                            "rol": "cajero",
+                            "plano": plano,
+                            "nome_empresa": nome_empresa
+                        }
 
-        # ====================================================================
-        # FASE 3: Nenhum usuário encontrado
-        # ====================================================================
-        cursor.close()
-        conexao.close()
-        
-        if '@' in identificador:
-            return {"sucesso": False, "mensagem": "Email no registrado en el sistema"}
-        else:
-            return {"sucesso": False, "mensagem": "Empresa no registrada con ese RUC"}
+                # ====================================================================
+                # FASE 2: Buscar funcionário por EMAIL (fallback)
+                # ====================================================================
+                print(f"[AUTH DEBUG] Buscando funcionário por email...", file=sys.stderr)
+                
+                cursor.execute("""
+                    SELECT f.id, f.rol, f.nome, f.email, f.empresa_id, e.plano, e.nome
+                    FROM funcionarios f
+                    JOIN empresas e ON f.empresa_id = e.id
+                    WHERE f.email = %s AND f.ativo = TRUE
+                """, (identificador,))
+                
+                funcionario = cursor.fetchone()
+
+                if funcionario:
+                    func_id, rol, nome_func, email, emp_id, plano, nome_empresa = funcionario
+                    
+                    # Verificar hash da senha
+                    senha_hash = hash_senha(senha_fornecida)
+                    cursor.execute("""
+                        SELECT id FROM funcionarios 
+                        WHERE id = %s AND senha_hash = %s
+                    """, (func_id, senha_hash))
+                    
+                    if cursor.fetchone():
+                        print(f"[AUTH DEBUG] Hash da senha do funcionário verificado com sucesso", file=sys.stderr)
+                        
+                        # Validar restrições de plano
+                        erro_plano = validar_plano_funcionario(plano, rol)
+                        if erro_plano:
+                            cursor.close()
+                            conexao.close()
+                            return {"sucesso": False, "mensagem": erro_plano}
+                        
+                        cursor.close()
+                        conexao.close()
+                        return {
+                            "sucesso": True,
+                            "empresa_id": emp_id,
+                            "rol": rol,
+                            "plano": plano,
+                            "funcionario_id": func_id,
+                            "nome": nome_func,
+                            "email": email,
+                            "nome_empresa": nome_empresa
+                        }
+                    else:
+                        print(f"[AUTH DEBUG] Hash da senha do funcionário INCORRETO", file=sys.stderr)
+                        cursor.close()
+                        conexao.close()
+                        return {"sucesso": False, "mensagem": "Contraseña incorrecta"}
+
+                # ====================================================================
+                # FASE 3: Nenhum usuário encontrado
+                # ====================================================================
+                cursor.close()
+                conexao.close()
+                
+                if '@' in identificador:
+                    return {"sucesso": False, "mensagem": "Email no registrado en el sistema"}
+                else:
+                    return {"sucesso": False, "mensagem": "Empresa no registrada con ese RUC"}
 
     except Exception as e:
         print(f"[AUTH ERROR] Erro durante autenticação: {e}", file=sys.stderr)
