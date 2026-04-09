@@ -41,7 +41,7 @@ class NovaEmpresa(BaseModel):
     nome: str
     ruc: str
     senha_admin: str
-    senha_caixa: str
+    senha_caixa: str = ""
     plano: str
     valor_mensalidade: float
 

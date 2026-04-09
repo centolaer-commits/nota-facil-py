@@ -290,6 +290,52 @@ async function carregarEmpresasSaaS() {
         
     } catch(e) {} 
 }
+
+async function criarEmpresaSaaS() {
+    const nome = document.getElementById('sa-nome').value.trim();
+    const ruc = document.getElementById('sa-ruc').value.trim();
+    const plano = document.getElementById('sa-plano').value;
+    const valor = parseFloat(document.getElementById('sa-valor').value) || 0;
+    const senha_admin = document.getElementById('sa-pass-admin').value.trim();
+    
+    if (!nome || !ruc || !plano || !senha_admin) {
+        showToast("Complete todos los campos requeridos.", "error");
+        return;
+    }
+    
+    try {
+        const res = await fetch('/super-admin/criar-empresa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nome,
+                ruc,
+                senha_admin,
+                senha_caixa: "",
+                plano,
+                valor_mensalidade: valor
+            })
+        });
+        
+        if (res.ok) {
+            showToast("Empresa creada exitosamente.");
+            // Limpar campos
+            document.getElementById('sa-nome').value = '';
+            document.getElementById('sa-ruc').value = '';
+            document.getElementById('sa-valor').value = '';
+            document.getElementById('sa-pass-admin').value = '';
+            // Recarregar lista
+            carregarEmpresasSaaS();
+        } else {
+            const err = await res.json();
+            showToast(err.detail || "Error al crear empresa", "error");
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast("Error de conexión", "error");
+    }
+}
+
 function exportarTabelaParaCSV(idTbody, nomeBase) { const tbody = document.getElementById(idTbody); if(!tbody) return; let csv = []; const linhas = tbody.closest('table').querySelectorAll('tr'); for(let i=0;i<linhas.length;i++){ let l=[]; const cols = linhas[i].querySelectorAll('td, th'); for(let j=0;j<cols.length;j++) l.push('"'+cols[j].innerText.replace(/"/g,'""')+'"'); csv.push(l.join(',')); } const blob = new Blob(["\uFEFF"+csv.join('\n')], {type:'text/csv;charset=utf-8;'}); const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download=`${nomeBase}.csv`; link.click(); }
 function abrirModalLegal() { document.getElementById('modal-legal').classList.remove('hidden'); document.getElementById('modal-legal').classList.add('flex'); } function fecharModalLegal() { document.getElementById('modal-legal').classList.add('hidden'); document.getElementById('modal-legal').classList.remove('flex'); }
 function fecharModalAudit() { document.getElementById('modal-audit-details').classList.add('hidden'); document.getElementById('modal-audit-details').classList.remove('flex'); }
