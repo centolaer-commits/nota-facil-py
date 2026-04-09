@@ -1316,10 +1316,10 @@ async function cargarUsuariosEquipo() {
         let html = '';
         usuariosEquipo.forEach((u, idx) => {
             let rolLabel = u.rol === 'cajero' ? 'Cajero' : 'Gerente';
-            let estadoLabel = u.activo ? '<span class="text-green-500">Activo</span>' : '<span class="text-red-500">Inactivo</span>';
+            let estadoLabel = u.ativo ? '<span class="text-green-500">Activo</span>' : '<span class="text-red-500">Inactivo</span>';
             html += `
                 <tr class="border-b border-slate-100 hover:bg-slate-50">
-                    <td class="p-3 text-slate-800 font-bold">${u.nombre}</td>
+                    <td class="p-3 text-slate-800 font-bold">${u.nome}</td>
                     <td class="p-3">${rolLabel}</td>
                     <td class="p-3">${u.email}</td>
                     <td class="p-3">${estadoLabel}</td>
@@ -1346,6 +1346,11 @@ async function agregarUsuarioEquipo() {
     const rol = document.getElementById('equipo-rol').value;
     const email = document.getElementById('equipo-email').value.trim();
     const password = document.getElementById('equipo-password').value.trim();
+
+    // Força a tradução do cargo para o formato aceito pelo banco de dados
+    let rolFormatado = rol.toLowerCase();
+    if (rolFormatado === 'manager') rolFormatado = 'gerente';
+    if (rolFormatado === 'cashier') rolFormatado = 'cajero';
     
     if (!nombre || !rol || !email || !password) {
         showToast("Complete todos los campos.", "warning");
@@ -1365,12 +1370,23 @@ async function agregarUsuarioEquipo() {
         const res = await fetch('/equipo/adicionar', {
             method: 'POST',
             headers: { ...getSaaSHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre, email, senha: password, rol })
+            body: JSON.stringify({ nome: nombre, email, senha: password, rol: rolFormatado })
         });
         
         if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.detail || 'Error al agregar usuario');
+            let errorMsg = 'Error al agregar usuario';
+            const textoResposta = await res.text(); // Lemos o pacote do servidor apenas UMA vez
+            
+            try {
+                // Tentamos ver se o texto é um dicionário JSON
+                const errorData = JSON.parse(textoResposta);
+                errorMsg = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData);
+            } catch {
+                // Se não for um JSON, usamos o texto puro mesmo
+                errorMsg = textoResposta || errorMsg;
+            }
+            
+            throw new Error(errorMsg);
         }
         
         // Limpiar campos
@@ -1381,10 +1397,15 @@ async function agregarUsuarioEquipo() {
         // Actualizar tabla
         await cargarUsuariosEquipo();
         showToast("Usuario agregado correctamente.");
-    } catch (error) {
-        console.error('Error agregando usuario:', error);
-        showToast(error.message || "Error al agregar usuario", "error");
-    }
+   } catch (error) {
+            console.error('Error agregando usuario:', error);
+            let mensaje = "Error al agregar usuario";
+            if (typeof error.message === 'string') mensaje = error.message;
+            else if (error.detail) mensaje = error.detail;
+            else if (error.error) mensaje = JSON.stringify(error.error);
+            
+            showToast(mensaje, "error");
+        }
 }
 
 async function eliminarUsuarioEquipo(funcionarioId) {
