@@ -1370,12 +1370,17 @@ async function agregarUsuarioEquipo() {
         
         if (!res.ok) {
             let errorMsg = 'Error al agregar usuario';
+            const textoResposta = await res.text(); // Lemos o pacote do servidor apenas UMA vez
+            
             try {
-                const errorData = await res.json();
+                // Tentamos ver se o texto é um dicionário JSON
+                const errorData = JSON.parse(textoResposta);
                 errorMsg = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData);
             } catch {
-                errorMsg = await res.text();
+                // Se não for um JSON, usamos o texto puro mesmo
+                errorMsg = textoResposta || errorMsg;
             }
+            
             throw new Error(errorMsg);
         }
         
