@@ -351,9 +351,9 @@ function calcularMensualidad() {
     
     // Precios base por plan (en guaraníes)
     const precios = {
-        'Inicial': 100000,
-        'Crecimiento': 300000,
-        'VIP': 800000
+        'Inicial': 140000,
+        'Crecimiento': 320000,
+        'VIP': 420000
     };
     
     const precioBase = precios[plano] || 0;
