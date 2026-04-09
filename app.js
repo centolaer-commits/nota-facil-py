@@ -1346,6 +1346,11 @@ async function agregarUsuarioEquipo() {
     const rol = document.getElementById('equipo-rol').value;
     const email = document.getElementById('equipo-email').value.trim();
     const password = document.getElementById('equipo-password').value.trim();
+
+    // Força a tradução do cargo para o formato aceito pelo banco de dados
+    let rolFormatado = rol.toLowerCase();
+    if (rolFormatado === 'manager') rolFormatado = 'gerente';
+    if (rolFormatado === 'cashier') rolFormatado = 'cajero';
     
     if (!nombre || !rol || !email || !password) {
         showToast("Complete todos los campos.", "warning");
@@ -1365,7 +1370,7 @@ async function agregarUsuarioEquipo() {
         const res = await fetch('/equipo/adicionar', {
             method: 'POST',
             headers: { ...getSaaSHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome: nombre, email, senha: password, rol })
+            body: JSON.stringify({ nome: nombre, email, senha: password, rol: rolFormatado })
         });
         
         if (!res.ok) {
