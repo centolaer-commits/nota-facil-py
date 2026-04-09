@@ -1369,8 +1369,14 @@ async function agregarUsuarioEquipo() {
         });
         
         if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.detail || 'Error al agregar usuario');
+            let errorMsg = 'Error al agregar usuario';
+            try {
+                const errorData = await res.json();
+                errorMsg = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData);
+            } catch {
+                errorMsg = await res.text();
+            }
+            throw new Error(errorMsg);
         }
         
         // Limpiar campos
