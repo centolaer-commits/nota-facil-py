@@ -366,6 +366,13 @@ function cambiarTabConfig(tabName) {
         actualizarUIEquipe();
     }
 }
+function traduzirCargo(rol) {
+    // Converte 'manager' -> 'gerente', 'cashier' -> 'cajero', mantém otros valores
+    if (rol === 'manager' || rol === 'Manager') return 'gerente';
+    if (rol === 'cashier' || rol === 'Cashier') return 'cajero';
+    return rol; // 'cajero', 'gerente', etc.
+}
+
 function toggleAcordeao(menuId, setaId) { const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; } }
 
 function calcularMensualidad() {
