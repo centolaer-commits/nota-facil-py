@@ -129,6 +129,11 @@ async function fazerLogin() {
                     idsCajero.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; }); 
                 } 
                 
+                if (rolUsuario === 'gerente') {
+                    const el = document.getElementById('nav-btn-config');
+                    if (el) el.style.display = 'none';
+                }
+                
                 await carregarConfiguracao(); await carregarCategorias(); if(!isInicial) await carregarProveedores(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); 
                 // Pré-carrega dados do dashboard em segundo plano
                 setTimeout(() => carregarDashboardComVisibilidade(), 500);
@@ -1358,7 +1363,7 @@ async function agregarUsuarioEquipo() {
     }
     
     // Restricción de límite para Plan Crecimiento (Pro) - validación frontend
-    if (planoAtivo.includes('Crecimiento') && rol === 'cajero') {
+    if (planoAtivo.includes('Crecimiento') && rolFormatado === 'cajero') {
         const cajerosActuales = usuariosEquipo.filter(u => u.rol === 'cajero' && u.activo).length;
         if (cajerosActuales >= 1) {
             showToast("Limite del Plan Crecimiento alcanzado. Mejore al Plan VIP para añadir usuarios ilimitados.");
