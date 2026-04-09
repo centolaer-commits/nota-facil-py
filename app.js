@@ -360,6 +360,11 @@ function cambiarTabConfig(tabName) {
         activeBtn.classList.add('border-b-2', 'border-brand-accent', 'bg-brand-accent/5', 'text-slate-700');
         activeBtn.classList.remove('text-slate-500');
     }
+    
+    // Si se activa la pestaña Equipo, actualizar la UI según el plan
+    if (tabName === 'equipo') {
+        actualizarUIEquipe();
+    }
 }
 function toggleAcordeao(menuId, setaId) { const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; } }
 
