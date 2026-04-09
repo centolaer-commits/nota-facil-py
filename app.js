@@ -1365,7 +1365,7 @@ async function agregarUsuarioEquipo() {
         const res = await fetch('/equipo/adicionar', {
             method: 'POST',
             headers: { ...getSaaSHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre, email, senha: password, rol })
+            body: JSON.stringify({ nome: nombre, email, senha: password, rol })
         });
         
         if (!res.ok) {
