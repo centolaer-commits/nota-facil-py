@@ -354,18 +354,19 @@ def deletar_proveedor(id_prov: int, x_empresa_id: int = Header(...)):
 # ============================================================================
 
 @app.post("/equipo/adicionar")
-def adicionar_funcionario(func: FuncionarioNovo, x_empresa_id: int = Header(...)):
-    """Adiciona um novo funcionário (Cajero ou Gerente)"""
+def adicionar_funcionario(dados_func: FuncionarioNovo, x_empresa_id: int = Header(...)):
     resultado = banco_dados.adicionar_funcionario(
         empresa_id=x_empresa_id,
-        nome=func.nome,
-        email=func.email,
-        senha=func.senha,
-        rol=func.rol
+        nome=dados_func.nome,
+        email=dados_func.email,
+        senha=dados_func.senha,
+        rol=dados_func.rol
     )
+    
     if resultado["sucesso"]:
-        return {"mensaje": "Funcionário adicionado com sucesso", "id": resultado["id"]}
-    raise HTTPException(status_code=400, detail=resultado["mensagem"])
+        return {"mensagem": "Usuário adicionado com sucesso", "id": resultado.get("id")}
+    else:
+        raise HTTPException(status_code=400, detail=resultado["mensagem"])
 
 @app.get("/equipo/listar")
 def listar_funcionarios(x_empresa_id: int = Header(...)):
