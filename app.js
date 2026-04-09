@@ -1375,18 +1375,20 @@ function actualizarUIEquipe() {
         container.style.display = '';
     }
     
-    // Configurar dropdown de roles según plan
+   // Configurar dropdown de roles segun plan
     const selectRol = document.getElementById('equipo-rol');
-    if (!selectRol) return;
-    
-    selectRol.innerHTML = '';
-    if (planoAtivo.includes('Crecimiento') || planoAtivo.includes('Pro')) {
-        selectRol.innerHTML = '<option value="cajero">Cajero</option>';
-    } else if (planoAtivo.includes('VIP') || planoAtivo.includes('Premium')) {
-        selectRol.innerHTML = '<option value="cajero">Cajero</option><option value="manager">Gerente</option>';
-    } else {
-        // Para otros planes no definidos
-        selectRol.innerHTML = '<option value="cajero">Cajero</option>';
+    if (selectRol) {
+        if (planoAtivo.includes('Crecimiento')) {
+            selectRol.innerHTML = '<option value="cajero">Cajero</option>';
+            selectRol.disabled = true;
+            selectRol.title = "Plan Crecimiento: solo puede agregar usuarios con rol Cajero.";
+        } else {
+            // Planos VIP e outros
+            selectRol.innerHTML = '<option value="cajero">Cajero</option><option value="gerente">Gerente</option>';
+            selectRol.disabled = false;
+            selectRol.title = "";
+            selectRol.classList.remove('bg-slate-100', 'cursor-not-allowed');
+        }
     }
     
     // Cargar usuarios existentes y actualizar estado del botón
