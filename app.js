@@ -343,7 +343,25 @@ function atualizarStatusConexao() { const badge = document.getElementById('badge
 function showToast(message, type = 'success') { const container = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = `text-white p-4 rounded-lg shadow-lg min-w-[300px] toast-enter relative overflow-hidden ${type==='success'?'bg-brand-accent':(type==='error'?'bg-red-600':'bg-yellow-500')}`; toast.innerHTML = `<p class="font-bold text-sm">${message}</p>`; container.appendChild(toast); requestAnimationFrame(() => { toast.classList.remove('toast-enter'); toast.classList.add('toast-enter-active'); }); setTimeout(() => { toast.classList.remove('toast-enter-active'); toast.classList.add('toast-exit-active'); setTimeout(() => container.removeChild(toast), 300); }, 3000); }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
 function toggleHubSidebar() { document.getElementById('hub-sidebar').classList.toggle('-translate-x-full'); document.getElementById('hub-overlay').classList.toggle('hidden'); }
-function toggleAcordeao(menuId, setaId) { const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; } } 
+function toggleAcordeao(menuId, setaId) { const menu = document.getElementById(menuId); const seta = document.getElementById(setaId); if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); seta.innerText = '▲'; } else { menu.classList.add('hidden'); menu.classList.remove('flex'); seta.innerText = '▼'; } }
+
+function calcularMensualidad() {
+    const plano = document.getElementById('sa-plano').value;
+    const descuento = parseInt(document.getElementById('sa-descuento').value) || 0;
+    
+    // Precios base por plan (en guaraníes)
+    const precios = {
+        'Inicial': 100000,
+        'Crecimiento': 300000,
+        'VIP': 800000
+    };
+    
+    const precioBase = precios[plano] || 0;
+    const descuentoValor = (precioBase * descuento) / 100;
+    const precioFinal = precioBase - descuentoValor;
+    
+    document.getElementById('sa-valor').value = precioFinal;
+}
 
 function mudarTela(telaId, elementoBotao) { 
     document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden')); 

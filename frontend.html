@@ -297,8 +297,14 @@
                         <div class="space-y-4">
                             <input type="text" id="sa-nome" placeholder="Nombre" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
                             <input type="text" id="sa-ruc" placeholder="RUC" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
-                            <select id="sa-plano" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800"><option value="Inicial">Inicial</option><option value="Crecimiento">Crecimiento</option><option value="VIP">VIP</option></select>
-                            <input type="number" id="sa-valor" placeholder="Mensualidad" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800">
+                            <select id="sa-plano" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800" onchange="calcularMensualidad()"><option value="Inicial">Inicial</option><option value="Crecimiento">Crecimiento</option><option value="VIP">VIP</option></select>
+                            <select id="sa-descuento" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800" onchange="calcularMensualidad()">
+                                <option value="0">0% (Padrão)</option>
+                                <option value="10">10%</option>
+                                <option value="30">30%</option>
+                                <option value="50">50%</option>
+                            </select>
+                            <input type="number" id="sa-valor" placeholder="Mensualidad" class="w-full border-slate-300 border p-3 rounded-lg bg-slate-50 text-slate-800" readonly>
                             <input type="text" id="sa-pass-admin" placeholder="Contraseña" class="w-full border-brand-accent/30 border p-3 rounded-lg bg-brand-light text-slate-800 font-bold">
                             <button onclick="criarEmpresaSaaS()" class="w-full bg-brand-accent text-white font-bold py-4 rounded-xl hover:bg-brand-accentHover shadow-md">Crear</button>
                         </div>
@@ -409,6 +415,7 @@
                 carregarEmpresasSaaS(); // Loads metrics (MRR, activos, vencidos)
             } else if (viewId === 'clientes') {
                 carregarEmpresasSaaS();
+                calcularMensualidad();
             } else if (viewId === 'pagos') {
                 carregarFaturasSaaS();
             }
