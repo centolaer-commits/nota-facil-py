@@ -1392,10 +1392,15 @@ async function agregarUsuarioEquipo() {
         // Actualizar tabla
         await cargarUsuariosEquipo();
         showToast("Usuario agregado correctamente.");
-    } catch (error) {
-        console.error('Error agregando usuario:', error);
-        showToast(error.message || "Error al agregar usuario", "error");
-    }
+   } catch (error) {
+            console.error('Error agregando usuario:', error);
+            let mensaje = "Error al agregar usuario";
+            if (typeof error.message === 'string') mensaje = error.message;
+            else if (error.detail) mensaje = error.detail;
+            else if (error.error) mensaje = JSON.stringify(error.error);
+            
+            showToast(mensaje, "error");
+        }
 }
 
 async function eliminarUsuarioEquipo(funcionarioId) {
