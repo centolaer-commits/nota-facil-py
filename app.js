@@ -1385,10 +1385,6 @@ function actualizarUIEquipe() {
     actualizarEstadoBotonAgregar();
 }
     
-    // Cargar usuarios existentes y actualizar estado del botón
-    cargarUsuariosEquipo();
-    actualizarEstadoBotonAgregar();
-}
 
 function iniciarConfig() {
     // Actualizar UI de gestión de equipo basado en el plan
