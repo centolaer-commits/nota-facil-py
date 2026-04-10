@@ -684,6 +684,51 @@ async function carregarDashboardComVisibilidade() {
 
 async function carregarDashboard() { 
     try { 
+        // Verificar se é conta Demo (plano Demo ou RUC especial)
+        const isDemoAccount = planoAtivo && (planoAtivo.toLowerCase().includes('demo') || planoAtivo === 'Plan Demo');
+        
+        if (isDemoAccount) {
+            // Dados estáticos para conta Demo
+            const dashVendas = document.getElementById('dash-vendas');
+            const dashNotas = document.getElementById('dash-notas');
+            if (dashVendas) dashVendas.innerText = 'Gs. 15.450.000';
+            if (dashNotas) dashNotas.innerText = '142';
+            
+            // Dados mock para gráfico
+            const mockTopProdutos = [
+                { nome: 'Arroz 1kg', quantidade: 45 },
+                { nome: 'Azúcar 1kg', quantidade: 38 },
+                { nome: 'Aceite 900ml', quantidade: 32 },
+                { nome: 'Harina 1kg', quantidade: 28 },
+                { nome: 'Fideos 500g', quantidade: 25 }
+            ];
+            
+            // Renderizar gráfico se canvas disponível
+            const canvas = document.getElementById('grafico-produtos');
+            if (canvas && canvas.offsetParent !== null && canvas.clientWidth !== 0) {
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                const ctx = canvas.getContext('2d');
+                if (graficoAtual) graficoAtual.destroy();
+                graficoAtual = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: mockTopProdutos.map(p => p.nome),
+                        datasets: [{
+                            label: 'Unidades',
+                            data: mockTopProdutos.map(p => p.quantidade),
+                            backgroundColor: '#0d9488'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 500, easing: 'easeOutQuart' }
+                    }
+                });
+            }
+            return; // Abortar fetch
+        }
+        
         // Mostrar estado de carregamento
         const dashVendas = document.getElementById('dash-vendas');
         const dashNotas = document.getElementById('dash-notas');
