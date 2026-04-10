@@ -1,4 +1,4 @@
-let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let funcionarioId = null; let nomeFuncionario = ''; let productosGlobais = [];
+let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let rucAtual = null; let funcionarioId = null; let nomeFuncionario = ''; let productosGlobais = [];
 
 // Constantes de perfis RBAC
 const PERFIL_OWNER = 'admin';
@@ -90,7 +90,7 @@ async function fazerLogin() {
     try { 
         const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ruc: ruc, senha: senha}) }); 
         if (res.ok) { 
-            const dados = await res.json(); empresaAtualId = dados.empresa_id; rolUsuario = dados.rol; planoAtivo = dados.plano || 'Inicial'; 
+            const dados = await res.json(); empresaAtualId = dados.empresa_id; rolUsuario = dados.rol; planoAtivo = dados.plano || 'Inicial'; rucAtual = ruc; 
             if (dados.funcionario_id) { 
                 funcionarioId = dados.funcionario_id; 
                 nomeFuncionario = dados.nome || ''; 
@@ -685,7 +685,7 @@ async function carregarDashboardComVisibilidade() {
 async function carregarDashboard() { 
     try { 
         // Verificar se é conta Demo (plano Demo ou RUC especial)
-        const isDemoAccount = planoAtivo && (planoAtivo.toLowerCase().includes('demo') || planoAtivo === 'Plan Demo');
+        const isDemoAccount = (planoAtivo && (planoAtivo.toLowerCase().includes('demo') || planoAtivo === 'Plan Demo')) || (rucAtual && rucAtual.startsWith('800'));
         
         if (isDemoAccount) {
             // Dados estáticos para conta Demo
