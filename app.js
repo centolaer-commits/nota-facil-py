@@ -1364,18 +1364,7 @@ async function aprovarPagamentoSaaS(faturaId) {
 // ==========================================
 
 function actualizarUIEquipe() {
-    const container = document.getElementById('container-gestao-equipo');
-    if (!container) return;
-    
-    // Visibilidad según plan
-    if (planoAtivo.includes('Inicial') || planoAtivo.includes('Básico')) {
-        container.style.display = 'none';
-        return; // No es necesario configurar el resto para plan Inicial
-    } else {
-        container.style.display = '';
-    }
-    
-   // Configurar dropdown de roles segun plan
+    // Configurar dropdown de roles segun plan de forma direta
     const selectRol = document.getElementById('equipo-rol');
     if (selectRol) {
         if (planoAtivo.includes('Crecimiento')) {
@@ -1383,13 +1372,18 @@ function actualizarUIEquipe() {
             selectRol.disabled = true;
             selectRol.title = "Plan Crecimiento: solo puede agregar usuarios con rol Cajero.";
         } else {
-            // Planos VIP e outros
+            // Planos VIP e outros (habilita as duas opções)
             selectRol.innerHTML = '<option value="cajero">Cajero</option><option value="gerente">Gerente</option>';
             selectRol.disabled = false;
             selectRol.title = "";
             selectRol.classList.remove('bg-slate-100', 'cursor-not-allowed');
         }
     }
+
+    // Cargar usuarios existentes y actualizar estado del boton
+    cargarUsuariosEquipo();
+    actualizarEstadoBotonAgregar();
+}
     
     // Cargar usuarios existentes y actualizar estado del botón
     cargarUsuariosEquipo();
