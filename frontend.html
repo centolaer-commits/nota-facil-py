@@ -999,7 +999,15 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Contraseña Actual</label>
-                                <input type="password" id="seguridad-senha-atual" placeholder="Ingrese su contraseña actual" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 focus:border-brand-accent outline-none">
+                                <div class="relative">
+                                    <input type="password" id="seguridad-senha-atual" placeholder="Ingrese su contraseña actual" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 focus:border-brand-accent outline-none pr-12">
+                                    <button type="button" onclick="togglePasswordVisibility('seguridad-senha-atual')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nuevo Login (RUC o Email)</label>
@@ -1007,7 +1015,27 @@
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Nueva Contraseña</label>
-                                <input type="password" id="seguridad-nova-senha" placeholder="Mínimo 6 caracteres" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 focus:border-brand-accent outline-none">
+                                <div class="relative">
+                                    <input type="password" id="seguridad-nova-senha" placeholder="Mínimo 6 caracteres" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 focus:border-brand-accent outline-none pr-12">
+                                    <button type="button" onclick="togglePasswordVisibility('seguridad-nova-senha')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Confirmar Nueva Contraseña</label>
+                                <div class="relative">
+                                    <input type="password" id="seguridad-confirmar-senha" placeholder="Repita la nueva contraseña" class="w-full border border-slate-300 p-3 rounded-xl bg-white text-sm text-slate-800 focus:border-brand-accent outline-none pr-12">
+                                    <button type="button" onclick="togglePasswordVisibility('seguridad-confirmar-senha')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="flex justify-end">
                                 <button type="button" onclick="alterarCredenciaisAdmin()" class="bg-brand-accent hover:bg-brand-accentHover text-white font-bold py-3 px-6 rounded-xl shadow-md transition">🔄 Actualizar Credenciales</button>
@@ -1025,7 +1053,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=3"></script>
+  <script src="/app.js?v=4"></script>
   <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
   <script>
     AOS.init({
