@@ -294,7 +294,26 @@ function switchOpTab(tab) {
     }
 }
 
-function abrirModalEditarEmpresa(id, planoAtual, valorAtual) { document.getElementById('edit-empresa-id').value = id; let p = document.getElementById('edit-plano'); p.value = planoAtual.includes('Inicial') ? 'Inicial' : (planoAtual.includes('Crecimiento') ? 'Crecimiento' : 'VIP'); document.getElementById('edit-valor').value = valorAtual; document.getElementById('modal-editar-empresa').classList.remove('hidden'); document.getElementById('modal-editar-empresa').classList.add('flex'); }
+function abrirModalEditarEmpresa(id, planoAtual, valorAtual) { 
+    document.getElementById('edit-empresa-id').value = id; 
+    let p = document.getElementById('edit-plano'); 
+    let planoValor = 'Inicial'; // default
+    if (planoAtual.includes('Lite Premium')) {
+        planoValor = 'Lite Premium';
+    } else if (planoAtual.includes('Lite')) {
+        planoValor = 'Lite';
+    } else if (planoAtual.includes('Crecimiento')) {
+        planoValor = 'Crecimiento';
+    } else if (planoAtual.includes('VIP')) {
+        planoValor = 'VIP';
+    } else if (planoAtual.includes('Inicial')) {
+        planoValor = 'Inicial';
+    }
+    p.value = planoValor; 
+    document.getElementById('edit-valor').value = valorAtual; 
+    document.getElementById('modal-editar-empresa').classList.remove('hidden'); 
+    document.getElementById('modal-editar-empresa').classList.add('flex'); 
+}
 function fecharModalEditarEmpresa() { document.getElementById('modal-editar-empresa').classList.add('hidden'); document.getElementById('modal-editar-empresa').classList.remove('flex'); }
 async function salvarEdicaoEmpresa() { const id = document.getElementById('edit-empresa-id').value; const plano = document.getElementById('edit-plano').value; const valor = parseFloat(document.getElementById('edit-valor').value) || 0; try { const res = await fetch(`/super-admin/editar-empresa/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({plano: plano, valor_mensalidade: valor}) }); if(res.ok) { showToast("✅ Plan actualizado."); fecharModalEditarEmpresa(); carregarEmpresasSaaS(); } else { showToast("❌ Error.", "error"); } } catch(e) { showToast("❌ Error.", "error"); } }
 async function carregarEmpresasSaaS() { 
@@ -428,7 +447,9 @@ function calcularMensualidad() {
     const precios = {
         'Inicial': 140000,
         'Crecimiento': 320000,
-        'VIP': 420000
+        'VIP': 420000,
+        'Lite': 80000,
+        'Lite Premium': 160000
     };
     
     const precioBase = precios[plano] || 0;
