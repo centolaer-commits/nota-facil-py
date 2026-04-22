@@ -143,7 +143,8 @@ async function fazerLogin() {
                 await carregarConfiguracao(); await carregarCategorias(); if(!isInicial) await carregarProveedores(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); 
                 // Pré-carrega dados do dashboard em segundo plano
                 setTimeout(() => carregarDashboardComVisibilidade(), 500);
-                showToast(`¡Sesión Iniciada!`); 
+                showToast(`¡Sesión Iniciada!`);
+                ajustarCamposFiscais(); // Ajusta obrigatoriedade do RUC conforme plano 
             } 
         } else { const err = await res.json(); erroBox.innerText = err.detail || err.mensagem || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); } 
     } catch(e) { erroBox.innerText = "Error de red."; erroBox.classList.remove('hidden'); } finally { btn.innerText = "Ingresar al Sistema"; btn.disabled = false; } 
@@ -207,6 +208,31 @@ async function imprimirTicketHistorico(cdc) {
             document.getElementById('print-area').classList.add('hidden');
         } else { showToast("Error", "error"); }
     } catch(e) { showToast("Error", "error"); }
+}
+
+function ajustarCamposFiscais() {
+    const campoRuc = document.getElementById('ruc');
+    if (!campoRuc) return;
+    
+    const isLite = planoAtivo.includes('Lite');
+    const isLitePremium = planoAtivo.includes('Lite Premium');
+    
+    if (isLite || isLitePremium) {
+        // Remover obrigatoriedade
+        campoRuc.removeAttribute('required');
+        campoRuc.placeholder = 'Opcional (uso interno)';
+        // Se estiver vazio, preencher com valor padrão
+        if (!campoRuc.value.trim()) {
+            campoRuc.value = 'S/RUC';
+        }
+    } else {
+        // Restaurar obrigatoriedade para planos fiscais
+        campoRuc.setAttribute('required', 'required');
+        campoRuc.placeholder = 'RUC del cliente';
+        if (campoRuc.value === 'S/RUC') {
+            campoRuc.value = '';
+        }
+    }
 }
 
 function enviarWhatsApp() {
@@ -433,7 +459,10 @@ function mudarTela(telaId, elementoBotao) {
         // Garantir que a seção esteja visível antes de renderizar gráfico
         setTimeout(() => carregarDashboardComVisibilidade(), 50);
     } 
-    if(telaId === 'pos') checarStatusCaixa(); 
+    if(telaId === 'pos') {
+        checarStatusCaixa();
+        ajustarCamposFiscais();
+    }
 }
 
 async function checarStatusCaixa() { try { const res = await fetch('/status-caixa', { headers: getSaaSHeaders() }); const status = await res.json(); const bloqueio = document.getElementById('bloqueio-caixa'); const badge = document.getElementById('badge-caixa'); if(!status.aberto) { bloqueio.classList.remove('hidden'); bloqueio.classList.add('flex'); badge.classList.add('hidden'); } else { bloqueio.classList.add('hidden'); badge.classList.remove('hidden'); } } catch(e) {} }
