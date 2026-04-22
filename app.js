@@ -114,6 +114,7 @@ async function fazerLogin() {
                 if(document.getElementById('box-novo-prov')) document.getElementById('box-novo-prov').style.display = 'block';
 
                 const isInicial = planoAtivo.includes('Inicial'); const isCrecimiento = planoAtivo.includes('Crecimiento');
+                const isLite = planoAtivo.includes('Lite'); const isLitePremium = planoAtivo.includes('Lite Premium');
                 
                 if (isInicial && rolUsuario === 'admin') {
                     const idsOcultarInicial = ['nav-btn-dashboard', 'btn-nav-stocktake', 'btn-nav-stocktakereport', 'btn-nav-variancia', 'btn-nav-proveedores', 'btn-nav-entrada'];
@@ -123,6 +124,11 @@ async function fazerLogin() {
                 if (isCrecimiento && rolUsuario === 'admin') { 
                     const el1 = document.getElementById('btn-nav-stocktakereport'); if(el1) el1.style.display = 'none'; 
                     const el2 = document.getElementById('btn-nav-variancia'); if(el2) el2.style.display = 'none';
+                }
+                if (isLite || isLitePremium) {
+                    // Ocultar elementos relacionados a SIFEN/Facturación
+                    const idsFiscales = ['btn-nav-autofactura', 'btn-nav-remision'];
+                    idsFiscales.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
                 }
                 if (rolUsuario === 'cajero') { 
                     const idsCajero = ['nav-group-inventario','nav-btn-dashboard','nav-group-reportes','nav-btn-config','btn-cerrar-turno'];
@@ -148,7 +154,7 @@ function prepararTicket(empresaNome, rucEmissor, cdc, cliente, itens, total, qrc
     <div style="text-align: center; margin-bottom: 10px; font-family: monospace; color: black;">
         <strong style="font-size: 16px;">${empresaNome}</strong><br>
         RUC: ${rucEmissor}<br>
-        Factura Electrónica (KuDE)<br>
+        ${(planoAtivo.includes('Lite') || planoAtivo.includes('Lite Premium')) ? 'Comprobante de Venta Interno<br>' : 'Factura Electrónica (KuDE)<br>'}
         --------------------------------<br>
         CDC:<br>${cdc}<br>
         Fecha: ${dataEmissao}<br>
@@ -170,6 +176,7 @@ function prepararTicket(empresaNome, rucEmissor, cdc, cliente, itens, total, qrc
     <div style="text-align: center; margin-top: 15px;">
         <img src="${qrcode}" style="width: 150px; height: 150px; margin: 0 auto; display: block;">
         <p style="font-family: monospace; font-size: 10px; margin-top: 5px; color: black;">Consulte mediante el código QR</p>
+        ${(planoAtivo.includes('Lite') || planoAtivo.includes('Lite Premium')) ? '<p style="font-family: monospace; font-size: 10px; margin-top: 5px; color: black; font-style: italic;">Este documento es de uso interno y no tiene validez fiscal.</p>' : ''}
         <p style="font-family: monospace; font-size: 10px; margin-top: 10px; color: black;">¡Gracias por su preferencia!</p>
     </div>`;
     document.getElementById('print-area').innerHTML = html;

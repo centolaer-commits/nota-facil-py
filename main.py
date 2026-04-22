@@ -442,15 +442,27 @@ def api_emitir_autofactura(dados: DadosAutofactura, x_empresa_id: int = Header(.
     config = banco_dados.obter_configuracao(x_empresa_id)
     if not config: raise HTTPException(status_code=400, detail="Configuración no encontrada.")
 
+    # Verificar se o plano permite emissão SIFEN
+    plano = banco_dados.obter_plano_empresa(x_empresa_id)
+    permite_sifen = banco_dados.plano_permite_sifen(plano)
+
     ambiente = config.get("ambiente_sifen", "testes")
 
     import os
-    cdc_real = f"03{x_empresa_id}AUT{os.urandom(8).hex().upper()}"
-    link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
-    if ambiente == "produccion":
-        link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
+    if not permite_sifen:
+        # Modo interno para planos Lite/Lite Premium
+        cdc_real = f"INT-AUT-{os.urandom(6).hex().upper()}"
+        link_pdf = ""
+        link_qrcode = ""
+        mensaje = "Autofactura generada (Uso Interno)"
     else:
-        link_qrcode = f"https://sifen-test.set.gov.py/consultas/qr?nId={cdc_real}"
+        cdc_real = f"03{x_empresa_id}AUT{os.urandom(8).hex().upper()}"
+        link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
+        if ambiente == "produccion":
+            link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
+        else:
+            link_qrcode = f"https://sifen-test.set.gov.py/consultas/qr?nId={cdc_real}"
+        mensaje = "Autofactura generada (Aprobado SIFEN)"
 
     itens_dicts = [{"codigo_barras": i.codigo_barras, "descricao": i.descricao, "quantidade": i.quantidade, "preco_unitario": i.preco_unitario} for i in dados.itens]
 
@@ -463,7 +475,7 @@ def api_emitir_autofactura(dados: DadosAutofactura, x_empresa_id: int = Header(.
         raise HTTPException(status_code=400, detail=msg)
 
     return {
-        "mensaje": "Autofactura generada (Aprobado SIFEN)",
+        "mensaje": mensaje,
         "cdc": cdc_real,
         "link_qrcode": link_qrcode,
         "link_pdf": link_pdf
@@ -596,6 +608,10 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
 
     config = banco_dados.obter_configuracao(x_empresa_id)
     if not config: raise HTTPException(status_code=400, detail="Configuración no encontrada.")
+    
+    # Verificar se o plano permite emissão SIFEN
+    plano = banco_dados.obter_plano_empresa(x_empresa_id)
+    permite_sifen = banco_dados.plano_permite_sifen(plano)
 
     # Modo demo para RUC 9999999-9
     if dados.ruc_emissor == '9999999-9':
@@ -618,6 +634,28 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
             "link_pdf": link_pdf
         }
         
+    if not permite_sifen:
+        # Modo interno para planos Lite/Lite Premium
+        import random
+        cdc_real = f"INT-{random.randint(100000, 999999)}"
+        link_pdf = ""
+        link_qrcode = ""
+        if dados.cdc_referencia:
+            banco_dados.salvar_nota_credito(x_empresa_id, dados.cdc_referencia, cdc_real, dados.nome_cliente, dados.valor_total, dados.itens, link_pdf)
+            mensagem_retorno = "Nota de Crédito generada (Uso Interno)"
+        else:
+            banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
+            mensagem_retorno = "Comprobante de Venta Interno generado"
+        gerar_pdf_nota(dados, cdc_real, interno=True)
+        return {
+            "interno": True,
+            "mensaje": mensagem_retorno,
+            "cdc": cdc_real,
+            "link_qrcode": link_qrcode,
+            "link_pdf": link_pdf
+        }
+    
+    # Fluxo normal SIFEN
     ambiente = config.get("ambiente_sifen", "testes")
     xml_bruto, cdc_real = construir_xml_sifen(dados, config)
     
@@ -653,7 +691,7 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
         banco_dados.salvar_nota(x_empresa_id, dados.ruc_emissor, dados.nome_cliente, dados.valor_total, cdc_real, dados.itens, link_pdf, link_qrcode, dados.metodo_pago)
         mensagem_retorno = f"Factura generada | SIFEN: {status_sifen}"
 
-    gerar_pdf_nota(dados, cdc_real)
+    gerar_pdf_nota(dados, cdc_real, interno=False)
     
     return {
         "mensaje": mensagem_retorno, 
@@ -667,16 +705,27 @@ def api_emitir_remision(dados: DadosRemision, x_empresa_id: int = Header(...)):
     config = banco_dados.obter_configuracao(x_empresa_id)
     if not config: raise HTTPException(status_code=400, detail="Configuración no encontrada.")
     
+    # Verificar se o plano permite emissão SIFEN
+    plano = banco_dados.obter_plano_empresa(x_empresa_id)
+    permite_sifen = banco_dados.plano_permite_sifen(plano)
+    
     ambiente = config.get("ambiente_sifen", "testes")
     
     import os
-    cdc_real = f"02{x_empresa_id}REM{os.urandom(8).hex().upper()}"
-    link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
-    
-    if ambiente == "produccion":
-        link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
+    if not permite_sifen:
+        # Modo interno para planos Lite/Lite Premium
+        cdc_real = f"INT-REM-{os.urandom(6).hex().upper()}"
+        link_pdf = ""
+        link_qrcode = ""
+        mensaje = "Nota de Remisión generada (Uso Interno)"
     else:
-        link_qrcode = f"https://sifen-test.set.gov.py/consultas/qr?nId={cdc_real}"
+        cdc_real = f"02{x_empresa_id}REM{os.urandom(8).hex().upper()}"
+        link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
+        if ambiente == "produccion":
+            link_qrcode = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc_real}"
+        else:
+            link_qrcode = f"https://sifen-test.set.gov.py/consultas/qr?nId={cdc_real}"
+        mensaje = "Nota de Remisión generada (Aprobado SIFEN)"
         
     itens_dicts = [{"codigo_barras": i.codigo_barras, "descricao": i.descricao, "quantidade": i.quantidade} for i in dados.itens]
     
@@ -687,7 +736,7 @@ def api_emitir_remision(dados: DadosRemision, x_empresa_id: int = Header(...)):
     )
     
     return {
-        "mensaje": "Nota de Remisión generada (Aprobado SIFEN)",
+        "mensaje": mensaje,
         "cdc": cdc_real,
         "link_qrcode": link_qrcode,
         "link_pdf": link_pdf

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rDE xmlns="http://ekuatia.set.gov.py/sifen/xsd">
+    <dVerFor>150</dVerFor>
+    <DE Id="01800123451001001000000122026041718710550078">
+        <dDVId>8</dDVId>
+        <dFecFirma>2026-04-17T15:51:02</dFecFirma>
+        <dSisFact>1</dSisFact>
+        <gOpeDE>
+            <iTipEmi>1</iTipEmi>
+            <dDesTipEmi>Normal</dDesTipEmi>
+            <dCodSeg>0000000000000000</dCodSeg>
+        </gOpeDE>
+        <gTimb>
+            <iTiDE>1</iTiDE>
+            <dNumTim>12345678</dNumTim>
+            <dEst>001</dEst>
+            <dPunExp>001</dPunExp>
+            <dNumDoc>0000001</dNumDoc>
+        </gTimb>
+        <gDatGralOpe>
+            <dFeEmiDE>2026-04-17T15:51:02</dFeEmiDE>
+            <gEmis>
+                <dRucEm>80012345</dRucEm>
+                <dDVEmi>1</dDVEmi>
+                <dNomEmi>Mi Empresa S.A. (DEMO)</dNomEmi>
+            </gEmis>
+            <gDatRec>
+                <iNatRec>1</iNatRec>
+                <iTiOpe>1</iTiOpe>
+                <dNomRec>Consumidor Final</dNomRec>
+            </gDatRec>
+        </gDatGralOpe>
+        <gDtipDE>
+            <gCamFE>
+                <iIndPres>1</iIndPres>
+            </gCamFE>
+        </gDtipDE>
+        <gTotSub>
+            <dSubExe>0</dSubExe>
+            <dSubExo>0</dSubExo>
+            <dSub5>0</dSub5>
+            <dSub10>108500</dSub10>
+            <dTotOpe>108500</dTotOpe>
+            <dTotGralOpe>108500</dTotGralOpe>
+            <dIVA5>0</dIVA5>
+            <dIVA10>9863.63</dIVA10>
+            <dLiqTotIVA5>0</dLiqTotIVA5>
+            <dLiqTotIVA10>9863.63</dLiqTotIVA10>
+            <dTotalIVA>9863.63</dTotalIVA>
+        </gTotSub>
+        <gDetGral>
+            
+            <gCamItem>
+                <dTipOp>1</dTipOp>
+                <dCodInt>ARROZ-001</dCodInt>
+                <dDesProSer>Arroz tipo 1 - 1kg</dDesProSer>
+                <dCantProSer>10</dCantProSer>
+                <gValorItem>
+                    <dPUniProSer>5000</dPUniProSer>
+                    <dTotBruOpeItem>50000</dTotBruOpeItem>
+                </gValorItem>
+                <gCamIVA>
+                    <iAfecIVA>1</iAfecIVA>
+                    <dPropIVA>100</dPropIVA>
+                    <dTasaIVA>10</dTasaIVA>
+                    <dLiqIVAItem>4545.45</dLiqIVAItem>
+                </gCamIVA>
+            </gCamItem>
+            <gCamItem>
+                <dTipOp>1</dTipOp>
+                <dCodInt>AZUCAR-001</dCodInt>
+                <dDesProSer>Azúcar refinada - 1kg</dDesProSer>
+                <dCantProSer>5</dCantProSer>
+                <gValorItem>
+                    <dPUniProSer>4500</dPUniProSer>
+                    <dTotBruOpeItem>22500</dTotBruOpeItem>
+                </gValorItem>
+                <gCamIVA>
+                    <iAfecIVA>1</iAfecIVA>
+                    <dPropIVA>100</dPropIVA>
+                    <dTasaIVA>10</dTasaIVA>
+                    <dLiqIVAItem>2045.45</dLiqIVAItem>
+                </gCamIVA>
+            </gCamItem>
+            <gCamItem>
+                <dTipOp>1</dTipOp>
+                <dCodInt>ACEITE-001</dCodInt>
+                <dDesProSer>Aceite de girasol - 900ml</dDesProSer>
+                <dCantProSer>3</dCantProSer>
+                <gValorItem>
+                    <dPUniProSer>12000</dPUniProSer>
+                    <dTotBruOpeItem>36000</dTotBruOpeItem>
+                </gValorItem>
+                <gCamIVA>
+                    <iAfecIVA>1</iAfecIVA>
+                    <dPropIVA>100</dPropIVA>
+                    <dTasaIVA>10</dTasaIVA>
+                    <dLiqIVAItem>3272.73</dLiqIVAItem>
+                </gCamIVA>
+            </gCamItem>
+        </gDetGral>
+    </DE>
+</rDE>

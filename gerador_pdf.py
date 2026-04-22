@@ -2,13 +2,16 @@ from fpdf import FPDF
 import os
 import qrcode
 
-def gerar_pdf_nota(dados_nota, cdc):
+def gerar_pdf_nota(dados_nota, cdc, interno=False):
     pdf = FPDF()
     pdf.add_page()
     
     # Cabeçalho
     pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, "FACTURA ELECTRÓNICA SIFEN", ln=True, align="C")
+    if interno:
+        pdf.cell(0, 10, "COMPROBANTE DE VENTA INTERNO", ln=True, align="C")
+    else:
+        pdf.cell(0, 10, "FACTURA ELECTRÓNICA SIFEN", ln=True, align="C")
     pdf.set_font("Arial", "", 10)
     pdf.cell(0, 7, f"RUC Emisor: {dados_nota.ruc_emissor}", ln=True, align="C")
     pdf.ln(5)
@@ -49,16 +52,21 @@ def gerar_pdf_nota(dados_nota, cdc):
     pdf.set_font("Arial", "I", 9)
     pdf.multi_cell(0, 5, f"CDC (Código de Control): {cdc}")
     
-    url_consulta = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc}"
-    qr = qrcode.make(url_consulta)
-    temp_qr = f"temp_qr_{cdc[:10]}.png"
-    qr.save(temp_qr)
-    
-    pdf.image(temp_qr, x=80, y=pdf.get_y() + 5, w=50)
-    
-    pdf.set_y(pdf.get_y() + 60)
-    pdf.set_font("Arial", "B", 10)
-    pdf.cell(0, 10, "Consulte la validez en el sitio web de la SET/DNIT", ln=True, align="C")
+    if not interno:
+        url_consulta = f"https://ekuatia.set.gov.py/consultas/qr?nId={cdc}"
+        qr = qrcode.make(url_consulta)
+        temp_qr = f"temp_qr_{cdc[:10]}.png"
+        qr.save(temp_qr)
+        
+        pdf.image(temp_qr, x=80, y=pdf.get_y() + 5, w=50)
+        
+        pdf.set_y(pdf.get_y() + 60)
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(0, 10, "Consulte la validez en el sitio web de la SET/DNIT", ln=True, align="C")
+    else:
+        pdf.ln(10)
+        pdf.set_font("Arial", "I", 9)
+        pdf.multi_cell(0, 5, "Este documento es de uso interno y no tiene validez fiscal.", align="C")
 
     if not os.path.exists("notas_pdf"):
         os.makedirs("notas_pdf")
@@ -66,7 +74,7 @@ def gerar_pdf_nota(dados_nota, cdc):
     nome_arquivo = f"notas_pdf/nota_{cdc[:10]}.pdf"
     pdf.output(nome_arquivo)
     
-    if os.path.exists(temp_qr):
+    if not interno and os.path.exists(temp_qr):
         os.remove(temp_qr)
     
     return nome_arquivo

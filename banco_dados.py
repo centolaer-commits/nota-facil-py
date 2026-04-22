@@ -292,8 +292,8 @@ def hash_senha(senha):
 
 def validar_plano_funcionario(plano_empresa, rol_funcionario):
     """Valida se o plano da empresa permite o tipo de funcionário"""
-    # Gerentes só em planos VIP/Premium
-    if rol_funcionario == 'gerente' and plano_empresa not in ['VIP', 'Premium']:
+    # Gerentes só em planos VIP/Premium/Lite Premium
+    if rol_funcionario == 'gerente' and plano_empresa not in ['VIP', 'Premium', 'Lite Premium']:
         return "Su plan actual no permite acceso como Gerente. Actualice al Plan VIP."
     
     # Cajeros em plano Inicial não são permitidos
@@ -301,6 +301,21 @@ def validar_plano_funcionario(plano_empresa, rol_funcionario):
         return "El Plan Inicial es para 1 solo usuario (el dueño). Actualice al Plan Crecimiento."
     
     return None # Sem restrições
+
+def plano_permite_sifen(plano_empresa):
+    """Retorna True se o plano permite emissão de notas fiscais SIFEN"""
+    # Planos que NÃO emitem notas fiscais (uso interno apenas)
+    planos_nao_fiscais = ['Lite', 'Lite Premium', 'Demo']
+    return plano_empresa not in planos_nao_fiscais
+
+def obter_plano_empresa(empresa_id):
+    """Obtém o plano da empresa pelo ID"""
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT plano FROM empresas WHERE id = %s", (empresa_id,))
+    linha = cursor.fetchone()
+    conexao.close()
+    return linha[0] if linha else 'Inicial'
 
 def autenticar_usuario(identificador, senha_fornecida):
     print(f"[AUTH DEBUG] Tentativa de autenticação com identificador: {identificador}")
