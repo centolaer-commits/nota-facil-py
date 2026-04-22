@@ -175,8 +175,10 @@ function prepararTicket(empresaNome, rucEmissor, cdc, cliente, itens, total, qrc
         TOTAL: Gs. ${total.toLocaleString('es-PY')}
     </div>
     <div style="text-align: center; margin-top: 15px;">
+        ${qrcode && qrcode.trim() !== '' ? `
         <img src="${qrcode}" style="width: 150px; height: 150px; margin: 0 auto; display: block;">
         <p style="font-family: monospace; font-size: 10px; margin-top: 5px; color: black;">Consulte mediante el código QR</p>
+        ` : ''}
         ${(planoAtivo.includes('Lite') || planoAtivo.includes('Lite Premium')) ? '<p style="font-family: monospace; font-size: 10px; margin-top: 5px; color: black; font-style: italic;">Este documento es de uso interno y no tiene validez fiscal.</p>' : ''}
         <p style="font-family: monospace; font-size: 10px; margin-top: 10px; color: black;">¡Gracias por su preferencia!</p>
     </div>`;
@@ -247,7 +249,10 @@ function enviarWhatsApp() {
             showToast("Número inválido.", "error");
             return;
         }
-        const texto = encodeURIComponent("¡Hola! Gracias por su compra. Aquí tiene el enlace a su Factura (KuDE): " + ultimoLinkSifen);
+        const isLite = planoAtivo.includes('Lite');
+        const isLitePremium = planoAtivo.includes('Lite Premium');
+        const mensajeFactura = (isLite || isLitePremium) ? "Comprobante de Venta Interno" : "Factura (KuDE)";
+        const texto = encodeURIComponent(`¡Hola! Gracias por su compra. Aquí tiene el enlace a su ${mensajeFactura}: ` + ultimoLinkSifen);
         const url = `https://wa.me/${numLimpio}?text=${texto}`;
         
         const novaAba = window.open(url, '_blank');
@@ -538,11 +543,39 @@ async function confirmarVenta() {
         pixJaFoiConfirmado = false; 
         document.getElementById('btn-pdf').href = dados.link_pdf; 
         
+        // Verificar se é plano não-fiscal (Lite/Lite Premium) ou venda interna
+        const isLite = planoAtivo.includes('Lite');
+        const isLitePremium = planoAtivo.includes('Lite Premium');
+        const isInterno = dados.interno === true || isLite || isLitePremium;
+        
+        // Alterar título conforme tipo de comprovante
+        const textoResultado = document.getElementById('texto-resultado');
+        if (isInterno) {
+            textoResultado.textContent = '✅ Venta Registrada';
+            textoResultado.classList.remove('text-green-600');
+            textoResultado.classList.add('text-blue-600');
+        } else {
+            textoResultado.textContent = '✅ ¡Factura Aprobada!';
+            textoResultado.classList.remove('text-blue-600');
+            textoResultado.classList.add('text-green-600');
+        }
+        
         ultimoCDCGerado = dados.cdc;
         ultimoLinkSifen = window.location.origin + dados.link_pdf; 
-        ultimoQRGerado = `https://quickchart.io/qr?text=${encodeURIComponent(dados.link_qrcode)}&size=150`;
         
-        document.getElementById('qrcode-img').src = ultimoQRGerado; 
+        // Gerar QR Code apenas para planos fiscais com link válido
+        const qrcodeImg = document.getElementById('qrcode-img');
+        // Definir ultimoQRGerado (usado para impressão)
+        if (dados.link_qrcode && dados.link_qrcode.trim() !== '' && !isInterno) {
+            ultimoQRGerado = `https://quickchart.io/qr?text=${encodeURIComponent(dados.link_qrcode)}&size=150`;
+            qrcodeImg.src = ultimoQRGerado;
+            qrcodeImg.classList.remove('hidden');
+        } else {
+            // Ocultar QR Code para planos não-fiscais
+            ultimoQRGerado = '';
+            qrcodeImg.classList.add('hidden');
+            qrcodeImg.src = '';
+        } 
         
         document.getElementById('btn-emitir').classList.add('hidden'); 
         atualizarInterfaceCaixa(); 

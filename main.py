@@ -452,7 +452,7 @@ def api_emitir_autofactura(dados: DadosAutofactura, x_empresa_id: int = Header(.
     if not permite_sifen:
         # Modo interno para planos Lite/Lite Premium
         cdc_real = f"INT-AUT-{os.urandom(6).hex().upper()}"
-        link_pdf = ""
+        link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
         link_qrcode = ""
         mensaje = "Autofactura generada (Uso Interno)"
     else:
@@ -638,7 +638,7 @@ def emitir_nota(dados: DadosNota, x_empresa_id: int = Header(...)):
         # Modo interno para planos Lite/Lite Premium
         import random
         cdc_real = f"INT-{random.randint(100000, 999999)}"
-        link_pdf = ""
+        link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
         link_qrcode = ""
         if dados.cdc_referencia:
             banco_dados.salvar_nota_credito(x_empresa_id, dados.cdc_referencia, cdc_real, dados.nome_cliente, dados.valor_total, dados.itens, link_pdf)
@@ -715,7 +715,7 @@ def api_emitir_remision(dados: DadosRemision, x_empresa_id: int = Header(...)):
     if not permite_sifen:
         # Modo interno para planos Lite/Lite Premium
         cdc_real = f"INT-REM-{os.urandom(6).hex().upper()}"
-        link_pdf = ""
+        link_pdf = f"/baixar-pdf/{cdc_real[:10]}"
         link_qrcode = ""
         mensaje = "Nota de Remisión generada (Uso Interno)"
     else:
