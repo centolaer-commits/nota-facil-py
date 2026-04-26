@@ -80,6 +80,16 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const toggleStock = document.getElementById('auto-mover-stock');
     if(toggleStock) { toggleStock.addEventListener('change', function() { document.getElementById('auto-stock-status').innerText = this.checked ? "SÍ, añadir al stock" : "NO, es solo un gasto"; document.getElementById('auto-stock-status').className = this.checked ? "text-sm font-bold text-orange-400" : "text-sm font-bold text-gray-500"; }); }
+    
+    // Garantir que os containers principais estejam visíveis (força remoção de hidden)
+    const containers = ['app-screen', 'superadmin-screen', 'mobile-header'];
+    containers.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.remove('hidden');
+            el.classList.remove('d-none');
+        }
+    });
 });
 
 async function fazerLogin() { 
@@ -778,27 +788,31 @@ async function carregarDashboard() {
             ];
             
             // Renderizar gráfico se canvas disponível
-            const canvas = document.getElementById('grafico-produtos');
-            if (canvas && canvas.offsetParent !== null && canvas.clientWidth !== 0) {
-                await new Promise(resolve => requestAnimationFrame(resolve));
-                const ctx = canvas.getContext('2d');
-                if (graficoAtual) graficoAtual.destroy();
-                graficoAtual = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: mockTopProdutos.map(p => p.nome),
-                        datasets: [{
-                            label: 'Unidades',
-                            data: mockTopProdutos.map(p => p.quantidade),
-                            backgroundColor: '#0d9488'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: { duration: 500, easing: 'easeOutQuart' }
-                    }
-                });
+            try {
+                const canvas = document.getElementById('grafico-produtos');
+                if (canvas) {
+                    await new Promise(resolve => requestAnimationFrame(resolve));
+                    const ctx = canvas.getContext('2d');
+                    if (graficoAtual) graficoAtual.destroy();
+                    graficoAtual = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: mockTopProdutos.map(p => p.nome),
+                            datasets: [{
+                                label: 'Unidades',
+                                data: mockTopProdutos.map(p => p.quantidade),
+                                backgroundColor: '#0d9488'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 500, easing: 'easeOutQuart' }
+                        }
+                    });
+                }
+            } catch(e) {
+                console.warn('Dashboard canvas render skipped:', e.message);
             }
             return; // Abortar fetch
         }
@@ -826,37 +840,32 @@ async function carregarDashboard() {
         // Renderizar gráfico apenas se o canvas estiver disponível
         const canvas = document.getElementById('grafico-produtos');
         if (canvas) {
-            // Verificar se o canvas está visível e tem dimensões
-            if (canvas.offsetParent === null || canvas.clientWidth === 0) {
-                console.warn('Canvas não visível ou sem dimensões, tentando novamente...');
-                setTimeout(() => carregarDashboard(), 100);
-                return;
-            }
-            
-            // Garantir que o canvas esteja pronto para renderização
-            await new Promise(resolve => requestAnimationFrame(resolve));
-            
-            const ctx = canvas.getContext('2d');
-            if (graficoAtual) graficoAtual.destroy();
-            graficoAtual = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: d.top_produtos.map(p => p.nome),
-                    datasets: [{
-                        label: 'Unidades',
-                        data: d.top_produtos.map(p => p.quantidade),
-                        backgroundColor: '#0d9488'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 500,
-                        easing: 'easeOutQuart'
+            try {
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                const ctx = canvas.getContext('2d');
+                if (graficoAtual) graficoAtual.destroy();
+                graficoAtual = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: d.top_produtos.map(p => p.nome),
+                        datasets: [{
+                            label: 'Unidades',
+                            data: d.top_produtos.map(p => p.quantidade),
+                            backgroundColor: '#0d9488'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 500,
+                            easing: 'easeOutQuart'
+                        }
                     }
-                }
-            });
+                });
+            } catch(e) {
+                console.warn('Canvas render skipped (not ready yet):', e.message);
+            }
         }
     } catch(e) {
         console.error('Erro ao carregar dashboard:', e);
