@@ -476,17 +476,33 @@ function calcularMensualidad() {
 
 function mudarTela(telaId, elementoBotao) { 
     try {
-        document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden')); 
+        // 1. Esconder TODAS as seções (class + inline style)
+        document.querySelectorAll('.section-tela').forEach(t => {
+            t.classList.add('hidden');
+            t.style.display = 'none';
+        });
+        
+        // 2. Mostrar a seção alvo (remover class + forçar display)
         const telaAlvo = document.getElementById('tela-' + telaId);
         if(telaAlvo) {
             telaAlvo.classList.remove('hidden');
             telaAlvo.classList.remove('d-none');
-            telaAlvo.style.display = '';
+            telaAlvo.style.display = 'block';
         }
         
-        if(elementoBotao !== null) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); elementoBotao.classList.add('menu-ativo'); } 
-        if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); } 
+        // 3. Atualizar botão ativo
+        if(elementoBotao !== null) { 
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); 
+            elementoBotao.classList.add('menu-ativo'); 
+        }
         
+        // 4. Fechar sidebar em mobile
+        if(window.innerWidth < 768) { 
+            document.getElementById('sidebar').classList.add('-translate-x-full'); 
+            document.getElementById('overlay').classList.add('hidden'); 
+        }
+        
+        // 5. Carregar dados específicos da seção
         if(['inventario','pos','entrada','operaciones','remision','autofactura'].includes(telaId)) carregarEstoque();
         if(telaId === 'proveedores' || telaId === 'entrada') carregarProveedores(); if(telaId === 'stocktake') carregarStockTake(); if(telaId === 'stocktakereport') carregarStockTakeReport(); if(telaId === 'variancia') carregarRelatorioVariancia(); if(telaId === 'config') iniciarConfig();
         if(telaId === 'operaciones') { document.getElementById('nc-cdc').value=''; document.getElementById('nc-cliente').value=''; ncProductosCaixa=[]; atualizarInterfaceNC(); document.getElementById('merma-cod').value=''; carregarMermas(); }
@@ -497,7 +513,8 @@ function mudarTela(telaId, elementoBotao) {
         if(telaId === 'config') carregarConfiguracao(); 
         if(telaId === 'categorias') carregarCategorias(); 
         if(telaId === 'dashboard') {
-            setTimeout(() => carregarDashboard(), 100);
+            // Chamar o carregamento dos dados imediatamente
+            carregarDashboard();
         } 
         if(telaId === 'pos') {
             checarStatusCaixa();
