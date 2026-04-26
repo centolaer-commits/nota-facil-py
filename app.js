@@ -465,29 +465,36 @@ function calcularMensualidad() {
 }
 
 function mudarTela(telaId, elementoBotao) { 
-    document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden')); 
-    const telaAlvo = document.getElementById('tela-' + telaId);
-    if(telaAlvo) telaAlvo.classList.remove('hidden'); 
-    
-    if(elementoBotao !== null) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); elementoBotao.classList.add('menu-ativo'); } 
-    if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); } 
-    
-    if(['inventario','pos','entrada','operaciones','remision','autofactura'].includes(telaId)) carregarEstoque();
-    if(telaId === 'proveedores' || telaId === 'entrada') carregarProveedores(); if(telaId === 'stocktake') carregarStockTake(); if(telaId === 'stocktakereport') carregarStockTakeReport(); if(telaId === 'variancia') carregarRelatorioVariancia(); if(telaId === 'config') iniciarConfig();
-    if(telaId === 'operaciones') { document.getElementById('nc-cdc').value=''; document.getElementById('nc-cliente').value=''; ncProductosCaixa=[]; atualizarInterfaceNC(); document.getElementById('merma-cod').value=''; carregarMermas(); }
-    if(telaId === 'remision') { carregarRemisiones(); remProductosCaixa=[]; atualizarInterfaceRemision(); }
-    if(telaId === 'autofactura') { carregarAutofacturas(); autoProductosCaixa=[]; atualizarInterfaceAuto(); }
-    if(telaId === 'reportes') carregarHistorico(); 
-    if(telaId === 'cierre') carregarCierreCaja(); 
-    if(telaId === 'config') carregarConfiguracao(); 
-    if(telaId === 'categorias') carregarCategorias(); 
-    if(telaId === 'dashboard') {
-        // Garantir que a seção esteja visível antes de renderizar gráfico
-        setTimeout(() => carregarDashboardComVisibilidade(), 50);
-    } 
-    if(telaId === 'pos') {
-        checarStatusCaixa();
-        ajustarCamposFiscais();
+    try {
+        document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden')); 
+        const telaAlvo = document.getElementById('tela-' + telaId);
+        if(telaAlvo) {
+            telaAlvo.classList.remove('hidden');
+            telaAlvo.classList.remove('d-none');
+            telaAlvo.style.display = '';
+        }
+        
+        if(elementoBotao !== null) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); elementoBotao.classList.add('menu-ativo'); } 
+        if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); } 
+        
+        if(['inventario','pos','entrada','operaciones','remision','autofactura'].includes(telaId)) carregarEstoque();
+        if(telaId === 'proveedores' || telaId === 'entrada') carregarProveedores(); if(telaId === 'stocktake') carregarStockTake(); if(telaId === 'stocktakereport') carregarStockTakeReport(); if(telaId === 'variancia') carregarRelatorioVariancia(); if(telaId === 'config') iniciarConfig();
+        if(telaId === 'operaciones') { document.getElementById('nc-cdc').value=''; document.getElementById('nc-cliente').value=''; ncProductosCaixa=[]; atualizarInterfaceNC(); document.getElementById('merma-cod').value=''; carregarMermas(); }
+        if(telaId === 'remision') { carregarRemisiones(); remProductosCaixa=[]; atualizarInterfaceRemision(); }
+        if(telaId === 'autofactura') { carregarAutofacturas(); autoProductosCaixa=[]; atualizarInterfaceAuto(); }
+        if(telaId === 'reportes') carregarHistorico(); 
+        if(telaId === 'cierre') carregarCierreCaja(); 
+        if(telaId === 'config') carregarConfiguracao(); 
+        if(telaId === 'categorias') carregarCategorias(); 
+        if(telaId === 'dashboard') {
+            setTimeout(() => carregarDashboard(), 100);
+        } 
+        if(telaId === 'pos') {
+            checarStatusCaixa();
+            ajustarCamposFiscais();
+        }
+    } catch(e) {
+        console.error('mudarTela error:', e);
     }
 }
 
