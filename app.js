@@ -743,54 +743,10 @@ async function carregarHistorico(busca="") {
 function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
 
 // Função auxiliar para aguardar elemento estar visível
-function waitForElementVisibility(elementId, timeout = 2000) {
-    return new Promise((resolve, reject) => {
-        const element = document.getElementById(elementId);
-        if (!element) {
-            reject(new Error(`Elemento ${elementId} não encontrado`));
-            return;
-        }
-        
-        // Se já estiver visível
-        if (element.offsetParent !== null && element.style.display !== 'none') {
-            resolve(element);
-            return;
-        }
-        
-        // Observar mudanças no DOM
-        const observer = new MutationObserver(() => {
-            if (element.offsetParent !== null && element.style.display !== 'none') {
-                observer.disconnect();
-                resolve(element);
-            }
-        });
-        
-        observer.observe(element.parentNode || document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['style', 'class']
-        });
-        
-        // Timeout
-        setTimeout(() => {
-            observer.disconnect();
-            reject(new Error(`Timeout aguardando visibilidade de ${elementId}`));
-        }, timeout);
-    });
-}
-
-// Função wrapper que garante visibilidade antes de carregar
+// Função wrapper simplificada — sem observer nem timeout que possa travar
 async function carregarDashboardComVisibilidade() {
-    try {
-        // Aguardar a tela do dashboard estar visível
-        await waitForElementVisibility('tela-dashboard', 3000);
-        await carregarDashboard();
-    } catch (error) {
-        console.warn('Aguardando visibilidade do dashboard:', error.message);
-        // Tentar novamente após 200ms
-        setTimeout(() => carregarDashboardComVisibilidade(), 200);
-    }
+    await new Promise(r => setTimeout(r, 100));
+    await carregarDashboard();
 }
 
 async function carregarDashboard() { 
