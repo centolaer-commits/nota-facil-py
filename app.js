@@ -598,11 +598,13 @@ function atualizarInterfaceCaixa() { const tbody = document.getElementById('list
 function toggleFormProducto() {
     const form = document.getElementById('form-novo-produto');
     const list = document.getElementById('produto-list-wrapper');
+    if (!form || !list) return;
     const open = !form.classList.contains('hidden');
     form.classList.toggle('hidden');
     list.classList.toggle('hidden', !open);
     if (!open) {
-        document.getElementById('produto-original-cod').value = '';
+        const orig = document.getElementById('produto-original-cod');
+        if (orig) orig.value = '';
         document.getElementById('novo-cod').disabled = false;
     } else {
         cancelarEdicaoProduto();
@@ -686,11 +688,13 @@ function abrirEditarProduto(codigo) {
 }
 function cancelarEdicaoProduto() {
     // Hide form, show list
-    document.getElementById('form-novo-produto').classList.add('hidden');
+    const form = document.getElementById('form-novo-produto');
+    if (form) form.classList.add('hidden');
     const list = document.getElementById('produto-list-wrapper');
     if (list) list.classList.remove('hidden');
     // Reset fields
-    document.getElementById('produto-original-cod').value = '';
+    const orig = document.getElementById('produto-original-cod');
+    if (orig) orig.value = '';
     document.getElementById('novo-cod').disabled = false;
     document.getElementById('novo-cod').value = '';
     document.getElementById('novo-desc').value = '';
