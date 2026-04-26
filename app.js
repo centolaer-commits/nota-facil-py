@@ -595,7 +595,19 @@ async function verificarScanner(e) { if(e && e.key === 'Enter') { if(e.preventDe
 function pedirDescuento() { const desc = prompt("Descuento (%):"); if(desc) { descuentoPorcentaje = parseFloat(desc) || 0; atualizarInterfaceCaixa(); } } function alterarQuantidade(idx, delta) { productosCaixa[idx].quantidade += delta; if(productosCaixa[idx].quantidade <= 0) productosCaixa.splice(idx,1); atualizarInterfaceCaixa(); }
 function atualizarInterfaceCaixa() { const tbody = document.getElementById('lista-produtos'); tbody.innerHTML = ''; let sub = 0; productosCaixa.forEach((p, i) => { const st = p.quantidade * p.preco_unitario; sub += st; tbody.innerHTML += `<div class="bg-slate-700/50 p-3 rounded-lg flex justify-between items-center mb-2"><div><span class="text-black block" style="color: #000 !important;">${p.descricao}</span></div><div class="flex items-center gap-2"><button onclick="alterarQuantidade(${i},-1)" class="text-brand-accent px-2 font-bold">-</button><span class="text-black" style="color: #000 !important;">${p.quantidade}</span><button onclick="alterarQuantidade(${i},1)" class="text-brand-accent px-2 font-bold">+</button><span class="text-brand-accent w-24 text-right">Gs. ${st.toLocaleString('es-PY')}</span></div></div>`; }); const descV = sub*(descuentoPorcentaje/100); totalDaVendaAtual = sub - descV; document.getElementById('subtotal-tela').innerText = sub.toLocaleString('es-PY'); document.getElementById('descuento-tela').innerText = descV.toLocaleString('es-PY'); document.getElementById('valor-total-tela').innerText = totalDaVendaAtual.toLocaleString('es-PY'); }
 
-function toggleFormProducto() { document.getElementById('form-novo-produto').classList.toggle('hidden'); if (document.getElementById('form-novo-produto').classList.contains('hidden')) cancelarEdicaoProduto(); } function filtrarEstoque() { const termo=document.getElementById('busca-inventario').value.toLowerCase(); const cat=document.getElementById('filtro-cat-inventario').value; const res=productosGlobais.filter(p=>(p.descricao.toLowerCase().includes(termo)||p.codigo_barras.toLowerCase().includes(termo))&&(cat===""||p.categoria===cat)); const tbody=document.getElementById('tabela-estoque'); tbody.innerHTML=''; res.forEach(p=>{ tbody.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${p.descricao}<br><span class="text-xs text-gray-400 font-mono">${p.codigo_barras}</span></td><td class="p-4">${p.categoria}</td><td class="p-4">${p.codigo_proveedor||'-'}</td><td class="p-4 text-right text-white">Gs. ${p.preco_venda.toLocaleString('es-PY')}</td><td class="p-4 text-center font-bold text-brand-accent">${p.quantidade}</td><td class="p-4"><button onclick="abrirEditarProduto('${p.codigo_barras}')" class="text-blue-400 mr-2">✏️</button><button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-400">🗑️</button></td></tr>`; }); }
+function toggleFormProducto() {
+    const form = document.getElementById('form-novo-produto');
+    const list = document.getElementById('produto-list-wrapper');
+    const open = !form.classList.contains('hidden');
+    form.classList.toggle('hidden');
+    list.classList.toggle('hidden', !open);
+    if (!open) {
+        document.getElementById('produto-original-cod').value = '';
+        document.getElementById('novo-cod').disabled = false;
+    } else {
+        cancelarEdicaoProduto();
+    }
+} function filtrarEstoque() { const termo=document.getElementById('busca-inventario').value.toLowerCase(); const cat=document.getElementById('filtro-cat-inventario').value; const res=productosGlobais.filter(p=>(p.descricao.toLowerCase().includes(termo)||p.codigo_barras.toLowerCase().includes(termo))&&(cat===""||p.categoria===cat)); const tbody=document.getElementById('tabela-estoque'); tbody.innerHTML=''; res.forEach(p=>{ tbody.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${p.descricao}<br><span class="text-xs text-gray-400 font-mono">${p.codigo_barras}</span></td><td class="p-4">${p.categoria}</td><td class="p-4">${p.codigo_proveedor||'-'}</td><td class="p-4 text-right text-white">Gs. ${p.preco_venda.toLocaleString('es-PY')}</td><td class="p-4 text-center font-bold text-brand-accent">${p.quantidade}</td><td class="p-4"><button onclick="abrirEditarProduto('${p.codigo_barras}')" class="text-blue-400 mr-2">✏️</button><button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-400">🗑️</button></td></tr>`; }); }
 function preencherFiltroCategorias() {
     const select = document.getElementById('filtro-cat-inventario');
     if (!select) return;
@@ -668,11 +680,18 @@ function abrirEditarProduto(codigo) {
     if (btnCancelarEdit) btnCancelarEdit.classList.remove('hidden');
     // Exibir formulário se estiver oculto
     document.getElementById('form-novo-produto').classList.remove('hidden');
+    // Ocultar lista
+    const list = document.getElementById('produto-list-wrapper');
+    if (list) list.classList.add('hidden');
 }
 function cancelarEdicaoProduto() {
+    // Hide form, show list
+    document.getElementById('form-novo-produto').classList.add('hidden');
+    const list = document.getElementById('produto-list-wrapper');
+    if (list) list.classList.remove('hidden');
+    // Reset fields
     document.getElementById('produto-original-cod').value = '';
     document.getElementById('novo-cod').disabled = false;
-    // Limpar campos
     document.getElementById('novo-cod').value = '';
     document.getElementById('novo-desc').value = '';
     document.getElementById('novo-cat').value = '';
@@ -681,10 +700,8 @@ function cancelarEdicaoProduto() {
     document.getElementById('novo-qtd').value = '';
     const selectProv = document.getElementById('novo-prov');
     if (selectProv) selectProv.value = '';
-    // Restaurar texto do botão
     const btnGuardar = document.querySelector('#form-novo-produto button[onclick="cadastrarProduto()"]');
     if (btnGuardar) btnGuardar.textContent = 'Guardar Producto';
-    // Ocultar botão de cancelar edição
     const btnCancelarEdit = document.getElementById('btn-cancelar-edicao');
     if (btnCancelarEdit) btnCancelarEdit.classList.add('hidden');
 }
