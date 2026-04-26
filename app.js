@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if(toggleStock) { toggleStock.addEventListener('change', function() { document.getElementById('auto-stock-status').innerText = this.checked ? "SÍ, añadir al stock" : "NO, es solo un gasto"; document.getElementById('auto-stock-status').className = this.checked ? "text-sm font-bold text-orange-400" : "text-sm font-bold text-gray-500"; }); }
     
     // Garantir que os containers principais estejam visíveis (força remoção de hidden)
-    const containers = ['app-screen', 'superadmin-screen', 'mobile-header'];
+    const containers = ['app-screen', 'mobile-header'];
     containers.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
