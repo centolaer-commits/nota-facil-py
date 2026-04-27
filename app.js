@@ -143,6 +143,22 @@ async function fazerLogin() {
                 await carregarConfiguracao(); await carregarCategorias(); if(!isInicial) await carregarProveedores(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); 
 
                 showToast(`¡Sesión Iniciada!`);
+                
+                // Forçar visibilidade do container pai e seção ativa
+                try {
+                    document.getElementById('app-screen').classList.remove('hidden', 'invisible', 'opacity-0');
+                    document.getElementById('app-screen').classList.add('flex');
+                    document.getElementById('mobile-header').classList.remove('hidden');
+                    
+                    // Forçar BRUTA: remover hidden de TODOS os containers
+                    document.querySelectorAll('.section-tela').forEach(t => {
+                        t.classList.remove('hidden', 'invisible', 'opacity-0');
+                        t.style.display = '';
+                    });
+                    // Mostrar POS por defeito
+                    document.getElementById('tela-pos').style.display = '';
+                } catch(e) { console.warn('Brute force visibility:', e); }
+                
                 ajustarCamposFiscais(); // Ajusta obrigatoriedade do RUC conforme plano 
             } 
         } else { const err = await res.json(); erroBox.innerText = err.detail || err.mensagem || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); } 
@@ -464,9 +480,12 @@ function calcularMensualidad() {
 }
 
 function mudarTela(telaId, elementoBotao) { 
-    document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden')); 
+    document.querySelectorAll('.section-tela').forEach(t => { t.classList.add('hidden'); t.classList.add('d-none'); t.style.display = 'none'; }); 
     const telaAlvo = document.getElementById('tela-' + telaId);
-    if(telaAlvo) telaAlvo.classList.remove('hidden'); 
+    if(telaAlvo) {
+        ['hidden', 'invisible', 'opacity-0'].forEach(cls => telaAlvo.classList.remove(cls));
+        telaAlvo.style.display = 'block';
+    } 
     
     if(elementoBotao !== null) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); elementoBotao.classList.add('menu-ativo'); } 
     if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); } 
