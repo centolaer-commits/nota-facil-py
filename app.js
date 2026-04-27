@@ -141,48 +141,9 @@ async function fazerLogin() {
                 }
                 
                 await carregarConfiguracao(); await carregarCategorias(); if(!isInicial) await carregarProveedores(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); 
-
-                console.log("LOGIN SUCCESS - ATTEMPTING TO RENDER");
+                // Pré-carrega dados do dashboard em segundo plano
+                setTimeout(() => carregarDashboardComVisibilidade(), 500);
                 showToast(`¡Sesión Iniciada!`);
-                
-                console.log("LOGIN - FORCING VISIBILITY");
-                // Forçar visibilidade do container pai e seção ativa
-                try {
-                    document.getElementById('app-screen').classList.remove('hidden', 'invisible', 'opacity-0');
-                    document.getElementById('app-screen').classList.add('flex');
-                    document.getElementById('mobile-header').classList.remove('hidden');
-                    
-                    // ESCONDER QUALQUER overlay/z-index
-                    ['login-screen', 'superadmin-screen', 'hub-overlay', 'overlay', 'bloqueio-caixa'].forEach(function(id) {
-                        var el = document.getElementById(id);
-                        if(el) { el.style.display = 'none'; el.classList.add('hidden'); }
-                    });
-                    // TESTE NUCLEAR: forçar wrapper por ID
-                    var wrapper = document.getElementById('main-content-wrapper');
-                    if(wrapper) {
-                        wrapper.classList.remove('hidden', 'invisible', 'opacity-0');
-                        wrapper.style.display = 'block';
-                        // Injetar faixa vermelha de prova
-                        wrapper.insertAdjacentHTML('afterbegin', '<div id="pyra-v25-banner" style="background:red; color:white; padding:20px; text-align:center; font-weight:bold; width:100%; z-index:9999;">WRAPPER ESTÁ VISÍVEL V=25</div>');
-                        console.log('WRAPPER ENCONTRADO E FORÇADO');
-                    } else {
-                        console.error('ERRO CRÍTICO: main-content-wrapper NÃO EXISTE NO DOM');
-                    }
-                    // Alvo por ID, não por classe - cada seção
-                    ['tela-dashboard', 'tela-pos', 'tela-config', 'tela-cierre', 'tela-inventario', 'tela-operaciones', 'tela-proveedores', 'tela-entrada', 'tela-remision', 'tela-autofactura', 'tela-categorias', 'tela-reportes', 'tela-stocktake', 'tela-variancia', 'tela-stocktakereport', 'tela-ayuda'].forEach(function(id) {
-                        var el = document.getElementById(id);
-                        if(el) {
-                            el.classList.remove('hidden', 'invisible', 'opacity-0');
-                            el.style.display = 'block';
-                        } else {
-                            console.error('ERRO CRÍTICO: ' + id + ' NÃO EXISTE NO DOM');
-                        }
-                    });
-                    // POS específico para já mostrar conteúdo
-                    var posEl = document.getElementById('tela-pos');
-                    if(posEl) { posEl.style.display = 'block'; }
-                } catch(e) { console.warn('Visibility error:', e); }
-                
                 ajustarCamposFiscais(); // Ajusta obrigatoriedade do RUC conforme plano 
             } 
         } else { const err = await res.json(); erroBox.innerText = err.detail || err.mensagem || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); } 
@@ -504,13 +465,9 @@ function calcularMensualidad() {
 }
 
 function mudarTela(telaId, elementoBotao) { 
-    try {
-    document.querySelectorAll('.section-tela').forEach(t => { t.classList.add('hidden'); t.style.display = 'none'; }); 
+    document.querySelectorAll('.section-tela').forEach(t => t.classList.add('hidden')); 
     const telaAlvo = document.getElementById('tela-' + telaId);
-    if(telaAlvo) {
-        ['hidden', 'invisible', 'opacity-0'].forEach(cls => telaAlvo.classList.remove(cls));
-        telaAlvo.style.display = 'block';
-    } 
+    if(telaAlvo) telaAlvo.classList.remove('hidden'); 
     
     if(elementoBotao !== null) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); elementoBotao.classList.add('menu-ativo'); } 
     if(window.innerWidth < 768) { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); } 
@@ -525,13 +482,13 @@ function mudarTela(telaId, elementoBotao) {
     if(telaId === 'config') carregarConfiguracao(); 
     if(telaId === 'categorias') carregarCategorias(); 
     if(telaId === 'dashboard') {
-        carregarDashboard();
+        // Garantir que a seção esteja visível antes de renderizar gráfico
+        setTimeout(() => carregarDashboardComVisibilidade(), 50);
     } 
     if(telaId === 'pos') {
         checarStatusCaixa();
         ajustarCamposFiscais();
     }
-    } catch(mt_error) { console.error('MUDARTELA ERROR:', mt_error, 'telaId:', telaId); }
 }
 
 async function checarStatusCaixa() { try { const res = await fetch('/status-caixa', { headers: getSaaSHeaders() }); const status = await res.json(); const bloqueio = document.getElementById('bloqueio-caixa'); const badge = document.getElementById('badge-caixa'); if(!status.aberto) { bloqueio.classList.remove('hidden'); bloqueio.classList.add('flex'); badge.classList.add('hidden'); } else { bloqueio.classList.add('hidden'); badge.classList.remove('hidden'); } } catch(e) {} }
@@ -629,7 +586,7 @@ function novaVenda() { document.getElementById('resultado').classList.add('hidde
 async function sincronizarFila() { if (filaContingencia.length === 0 || !navigator.onLine) return; let pendentes = [...filaContingencia]; filaContingencia = []; let sucesso = 0; for (let n of pendentes) { try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(n) }); if (res.ok) sucesso++; else filaContingencia.push(n); } catch(e) { filaContingencia.push(n); } } localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); atualizarStatusConexao(); if(sucesso>0) showToast(`✅ ${sucesso} sincronizadas.`); }
 
 function abrirCamera(idCampo) { campoDestinoScanner = idCampo; document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-modal').classList.add('flex'); if (!html5QrCode) html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, ()=>{}); } 
-function onScanSucesso(codigo) { fecharCamera(); document.getElementById(campoDestinoScanner).value = codigo; if (campoDestinoScanner === 'scanner-barras') verificarScanner({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'entrada-scanner') agregarProductoEntrada(codigo); else if (campoDestinoScanner === 'nc-scanner') verificarScannerNC({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'merma-cod') buscarParaMerma({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'rem-scanner') verificarScannerRemision({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'auto-scanner') verificarScannerAuto({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'busca-st') filtrarStockTake(); else if (campoDestinoScanner === 'busca-inventario') { setTimeout(()=>filtrarEstoque(),100); } } 
+function onScanSucesso(codigo) { fecharCamera(); document.getElementById(campoDestinoScanner).value = codigo; if (campoDestinoScanner === 'scanner-barras') verificarScanner({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'entrada-scanner') agregarProductoEntrada(codigo); else if (campoDestinoScanner === 'nc-scanner') verificarScannerNC({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'merma-cod') buscarParaMerma({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'rem-scanner') verificarScannerRemision({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'auto-scanner') verificarScannerAuto({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'busca-st') filtrarStockTake(); } 
 function fecharCamera() { document.getElementById('camera-modal').classList.add('hidden'); if(html5QrCode) html5QrCode.stop().then(()=>html5QrCode.clear()); }
 
 let isScanning = false; function filtrarPOS() { const input = document.getElementById('scanner-barras').value.toLowerCase(); const dropdown = document.getElementById('pos-dropdown'); dropdown.innerHTML = ''; if (input.length < 2) { dropdown.classList.add('hidden'); return; } const resultados = productosGlobais.filter(p => p.descricao.toLowerCase().includes(input) || p.codigo_barras.toLowerCase().includes(input)).slice(0, 10); if (resultados.length > 0) { dropdown.classList.remove('hidden'); resultados.forEach(p => { const div = document.createElement('div'); div.className = 'p-4 hover:bg-slate-700/50 cursor-pointer border-b border-slate-700 flex justify-between text-white'; div.innerHTML = `<span>${p.descricao}</span><span class="text-brand-accent">Gs. ${p.preco_venda.toLocaleString('es-PY')}</span>`; div.onclick = () => seleccionarProductoPOS(p); dropdown.appendChild(div); }); } else { dropdown.classList.add('hidden'); } }
@@ -638,21 +595,7 @@ async function verificarScanner(e) { if(e && e.key === 'Enter') { if(e.preventDe
 function pedirDescuento() { const desc = prompt("Descuento (%):"); if(desc) { descuentoPorcentaje = parseFloat(desc) || 0; atualizarInterfaceCaixa(); } } function alterarQuantidade(idx, delta) { productosCaixa[idx].quantidade += delta; if(productosCaixa[idx].quantidade <= 0) productosCaixa.splice(idx,1); atualizarInterfaceCaixa(); }
 function atualizarInterfaceCaixa() { const tbody = document.getElementById('lista-produtos'); tbody.innerHTML = ''; let sub = 0; productosCaixa.forEach((p, i) => { const st = p.quantidade * p.preco_unitario; sub += st; tbody.innerHTML += `<div class="bg-slate-700/50 p-3 rounded-lg flex justify-between items-center mb-2"><div><span class="text-black block" style="color: #000 !important;">${p.descricao}</span></div><div class="flex items-center gap-2"><button onclick="alterarQuantidade(${i},-1)" class="text-brand-accent px-2 font-bold">-</button><span class="text-black" style="color: #000 !important;">${p.quantidade}</span><button onclick="alterarQuantidade(${i},1)" class="text-brand-accent px-2 font-bold">+</button><span class="text-brand-accent w-24 text-right">Gs. ${st.toLocaleString('es-PY')}</span></div></div>`; }); const descV = sub*(descuentoPorcentaje/100); totalDaVendaAtual = sub - descV; document.getElementById('subtotal-tela').innerText = sub.toLocaleString('es-PY'); document.getElementById('descuento-tela').innerText = descV.toLocaleString('es-PY'); document.getElementById('valor-total-tela').innerText = totalDaVendaAtual.toLocaleString('es-PY'); }
 
-function toggleFormProducto() {
-    const form = document.getElementById('form-novo-produto');
-    const list = document.getElementById('produto-list-wrapper');
-    if (!form || !list) return;
-    const open = !form.classList.contains('hidden');
-    form.classList.toggle('hidden');
-    list.classList.toggle('hidden', !open);
-    if (!open) {
-        const orig = document.getElementById('produto-original-cod');
-        if (orig) orig.value = '';
-        document.getElementById('novo-cod').disabled = false;
-    } else {
-        cancelarEdicaoProduto();
-    }
-} function filtrarEstoque() { const termo=document.getElementById('busca-inventario').value.toLowerCase(); const cat=document.getElementById('filtro-cat-inventario').value; const res=productosGlobais.filter(p=>(p.descricao.toLowerCase().includes(termo)||p.codigo_barras.toLowerCase().includes(termo))&&(cat===""||p.categoria===cat)); const tbody=document.getElementById('tabela-estoque'); tbody.innerHTML=''; res.forEach(p=>{ tbody.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${p.descricao}<br><span class="text-xs text-gray-400 font-mono">${p.codigo_barras}</span></td><td class="p-4">${p.categoria}</td><td class="p-4">${p.codigo_proveedor||'-'}</td><td class="p-4 text-right text-white">Gs. ${p.preco_venda.toLocaleString('es-PY')}</td><td class="p-4 text-center font-bold text-brand-accent">${p.quantidade}</td><td class="p-4"><button onclick="abrirEditarProduto('${p.codigo_barras}')" class="text-blue-400 mr-2">✏️</button><button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-400">🗑️</button></td></tr>`; }); }
+function toggleFormProducto() { document.getElementById('form-novo-produto').classList.toggle('hidden'); if (document.getElementById('form-novo-produto').classList.contains('hidden')) cancelarEdicaoProduto(); } function filtrarEstoque() { const termo=document.getElementById('busca-inventario').value.toLowerCase(); const cat=document.getElementById('filtro-cat-inventario').value; const res=productosGlobais.filter(p=>(p.descricao.toLowerCase().includes(termo)||p.codigo_barras.toLowerCase().includes(termo))&&(cat===""||p.categoria===cat)); const tbody=document.getElementById('tabela-estoque'); tbody.innerHTML=''; res.forEach(p=>{ tbody.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${p.descricao}<br><span class="text-xs text-gray-400 font-mono">${p.codigo_barras}</span></td><td class="p-4">${p.categoria}</td><td class="p-4">${p.codigo_proveedor||'-'}</td><td class="p-4 text-right text-white">Gs. ${p.preco_venda.toLocaleString('es-PY')}</td><td class="p-4 text-center font-bold text-brand-accent">${p.quantidade}</td><td class="p-4"><button onclick="abrirEditarProduto('${p.codigo_barras}')" class="text-blue-400 mr-2">✏️</button><button onclick="deletarProduto('${p.codigo_barras}')" class="text-red-400">🗑️</button></td></tr>`; }); }
 function preencherFiltroCategorias() {
     const select = document.getElementById('filtro-cat-inventario');
     if (!select) return;
@@ -725,20 +668,11 @@ function abrirEditarProduto(codigo) {
     if (btnCancelarEdit) btnCancelarEdit.classList.remove('hidden');
     // Exibir formulário se estiver oculto
     document.getElementById('form-novo-produto').classList.remove('hidden');
-    // Ocultar lista
-    const list = document.getElementById('produto-list-wrapper');
-    if (list) list.classList.add('hidden');
 }
 function cancelarEdicaoProduto() {
-    // Hide form, show list
-    const form = document.getElementById('form-novo-produto');
-    if (form) form.classList.add('hidden');
-    const list = document.getElementById('produto-list-wrapper');
-    if (list) list.classList.remove('hidden');
-    // Reset fields
-    const orig = document.getElementById('produto-original-cod');
-    if (orig) orig.value = '';
+    document.getElementById('produto-original-cod').value = '';
     document.getElementById('novo-cod').disabled = false;
+    // Limpar campos
     document.getElementById('novo-cod').value = '';
     document.getElementById('novo-desc').value = '';
     document.getElementById('novo-cat').value = '';
@@ -747,8 +681,10 @@ function cancelarEdicaoProduto() {
     document.getElementById('novo-qtd').value = '';
     const selectProv = document.getElementById('novo-prov');
     if (selectProv) selectProv.value = '';
+    // Restaurar texto do botão
     const btnGuardar = document.querySelector('#form-novo-produto button[onclick="cadastrarProduto()"]');
     if (btnGuardar) btnGuardar.textContent = 'Guardar Producto';
+    // Ocultar botão de cancelar edição
     const btnCancelarEdit = document.getElementById('btn-cancelar-edicao');
     if (btnCancelarEdit) btnCancelarEdit.classList.add('hidden');
 }
@@ -786,8 +722,55 @@ async function carregarHistorico(busca="") {
 function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
 
 // Função auxiliar para aguardar elemento estar visível
+function waitForElementVisibility(elementId, timeout = 2000) {
+    return new Promise((resolve, reject) => {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            reject(new Error(`Elemento ${elementId} não encontrado`));
+            return;
+        }
+        
+        // Se já estiver visível
+        if (element.offsetParent !== null && element.style.display !== 'none') {
+            resolve(element);
+            return;
+        }
+        
+        // Observar mudanças no DOM
+        const observer = new MutationObserver(() => {
+            if (element.offsetParent !== null && element.style.display !== 'none') {
+                observer.disconnect();
+                resolve(element);
+            }
+        });
+        
+        observer.observe(element.parentNode || document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+        
+        // Timeout
+        setTimeout(() => {
+            observer.disconnect();
+            reject(new Error(`Timeout aguardando visibilidade de ${elementId}`));
+        }, timeout);
+    });
+}
 
-
+// Função wrapper que garante visibilidade antes de carregar
+async function carregarDashboardComVisibilidade() {
+    try {
+        // Aguardar a tela do dashboard estar visível
+        await waitForElementVisibility('tela-dashboard', 3000);
+        await carregarDashboard();
+    } catch (error) {
+        console.warn('Aguardando visibilidade do dashboard:', error.message);
+        // Tentar novamente após 200ms
+        setTimeout(() => carregarDashboardComVisibilidade(), 200);
+    }
+}
 
 async function carregarDashboard() { 
     try { 
@@ -812,12 +795,11 @@ async function carregarDashboard() {
             
             // Renderizar gráfico se canvas disponível
             const canvas = document.getElementById('grafico-produtos');
-            if (canvas) {
-                try {
-                    await new Promise(resolve => requestAnimationFrame(resolve));
-                    const ctx = canvas.getContext('2d');
-                    if (graficoAtual) graficoAtual.destroy();
-                    graficoAtual = new Chart(ctx, {
+            if (canvas && canvas.offsetParent !== null && canvas.clientWidth !== 0) {
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                const ctx = canvas.getContext('2d');
+                if (graficoAtual) graficoAtual.destroy();
+                graficoAtual = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: mockTopProdutos.map(p => p.nome),
@@ -833,8 +815,6 @@ async function carregarDashboard() {
                         animation: { duration: 500, easing: 'easeOutQuart' }
                     }
                 });
-                    graficoAtual.update();
-                    } catch(e) { console.warn('Chart error:', e); }
             }
             return; // Abortar fetch
         }
@@ -862,13 +842,19 @@ async function carregarDashboard() {
         // Renderizar gráfico apenas se o canvas estiver disponível
         const canvas = document.getElementById('grafico-produtos');
         if (canvas) {
-            try {
-                // Garantir que o canvas esteja pronto para renderização
-                await new Promise(resolve => requestAnimationFrame(resolve));
-                
-                const ctx = canvas.getContext('2d');
-                if (graficoAtual) graficoAtual.destroy();
-                graficoAtual = new Chart(ctx, {
+            // Verificar se o canvas está visível e tem dimensões
+            if (canvas.offsetParent === null || canvas.clientWidth === 0) {
+                console.warn('Canvas não visível ou sem dimensões, tentando novamente...');
+                setTimeout(() => carregarDashboard(), 100);
+                return;
+            }
+            
+            // Garantir que o canvas esteja pronto para renderização
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            
+            const ctx = canvas.getContext('2d');
+            if (graficoAtual) graficoAtual.destroy();
+            graficoAtual = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: d.top_produtos.map(p => p.nome),
@@ -886,9 +872,8 @@ async function carregarDashboard() {
                         easing: 'easeOutQuart'
                     }
                 }
-                });
-                } catch(e) { console.warn('Chart error:', e); }
-            }
+            });
+        }
     } catch(e) {
         console.error('Erro ao carregar dashboard:', e);
         // Mostrar erro nas métricas
@@ -897,6 +882,8 @@ async function carregarDashboard() {
         if (dashVendas) dashVendas.innerText = 'Gs. Error';
         if (dashNotas) dashNotas.innerText = 'Error';
         
+        // Tentar novamente após 3 segundos
+        setTimeout(() => carregarDashboard(), 3000);
     }
 }
 async function carregarCategorias() { try { const res=await fetch('/listar-categorias', {headers:getSaaSHeaders()}); const d=await res.json(); const sf=document.getElementById('novo-cat'); const sfi=document.getElementById('filtro-cat-inventario'); const sfc=document.getElementById('stocktake-categoria'); const tb=document.getElementById('tabela-categorias'); if(sf) sf.innerHTML=''; if(sfi) sfi.innerHTML='<option value="">Todas</option>'; if(sfc) sfc.innerHTML='<option value="">Todas las categorías</option>'; if(tb) tb.innerHTML=''; d.forEach(c=>{ if(sf) sf.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfi) sfi.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfc) sfc.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(tb) tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${c.nome}</td><td class="p-4 text-center"><button onclick="deletarCategoria(${c.id})" class="text-red-400">🗑️</button></td></tr>`; }); } catch(e){} }
