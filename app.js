@@ -3,16 +3,16 @@ let empresaAtualId = null; let rolUsuario = null; let planoAtivo = ''; let rucAt
 // Constantes de perfis RBAC
 const PERFIL_OWNER = 'admin';
 const PERFIL_MANAGER = 'manager';
-const PERFIL_CASHIER = 'cajero'; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; let contextoCatalogo = ''; let usuariosEquipo = []; 
+const PERFIL_CASHIER = 'cajero'; let productosCaixa = []; let ncProductosCaixa = []; let remProductosCaixa = []; let autoProductosCaixa = []; let graficoAtual = null; let html5QrCode = null; let campoDestinoScanner = ''; let totalDaVendaAtual = 0; let totalNCTela = 0; let descuentoPorcentaje = 0; let filaContingencia = JSON.parse(localStorage.getItem('nube_fila') || '[]'); let itensEntrada = []; let ultimoCDCGerado = ''; let ultimoQRGerado = ''; let ultimoLinkSifen = ''; let contextoCatalogo = ''; let usuariosEquipo = [];
 
 // VARIÁVEIS PARA O PIX
 let radarPix = null;
-let pixJaFoiConfirmado = false; 
+let pixJaFoiConfirmado = false;
 let pixCopiaEColaAtual = "";
 
 // O MOTOR DO RADAR
 function iniciarRadarPix(pagamentoId) {
-    clearInterval(radarPix); 
+    clearInterval(radarPix);
     radarPix = setInterval(async () => {
         try {
             const resposta = await fetch(`/status-pix/${pagamentoId}`, {
@@ -20,15 +20,15 @@ function iniciarRadarPix(pagamentoId) {
                 headers: { 'X-Empresa-ID': empresaAtualId.toString() }
             });
             const dados = await resposta.json();
-            
+
             if (dados.sucesso && dados.status === "approved") {
                 clearInterval(radarPix);
                 showToast("✅ Pago Aprobado!");
                 fecharModalPix();
-                
+
                 document.getElementById('checkout-metodo').value = "Pix Confirmado";
                 pixJaFoiConfirmado = true;
-                confirmarVenta(); 
+                confirmarVenta();
             }
         } catch (erro) {
             console.log("Aguardando pagamento...");
@@ -37,14 +37,14 @@ function iniciarRadarPix(pagamentoId) {
 }
 
 const getSaaSHeaders = (extraHeaders = {}) => { return { 'Content-Type': 'application/json', 'X-Empresa-ID': empresaAtualId ? empresaAtualId.toString() : "1", ...extraHeaders }; };
-    
+
 document.addEventListener("DOMContentLoaded", () => {
     const hoje = new Date();
     const hojeStr = hoje.toISOString().split('T')[0];
     const hojeMenos30 = new Date();
     hojeMenos30.setDate(hoje.getDate() - 30);
     const hojeMenos30Str = hojeMenos30.toISOString().split('T')[0];
-    
+
     // Preenche datas padrão (últimos 30 dias)
     const camposData = {
         'filtro-data-inicio-cierre': hojeMenos30Str,
@@ -55,12 +55,12 @@ document.addEventListener("DOMContentLoaded", () => {
         'filtro-data-inicio-stocktake': hojeMenos30Str,
         'filtro-data-fim-stocktake': hojeStr
     };
-    
+
     for (const [id, valor] of Object.entries(camposData)) {
         const el = document.getElementById(id);
         if (el) el.value = valor;
     }
-    
+
     // Carrega automaticamente os relatórios se a tela já estiver visível (ex.: ao recarregar página)
     if (document.getElementById('tela-cierre') && !document.getElementById('tela-cierre').classList.contains('hidden')) {
         carregarCierreCaja();
@@ -71,16 +71,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById('tela-stocktake') && !document.getElementById('tela-stocktake').classList.contains('hidden')) {
         carregarStockTake();
     }
-    
+
     // Event listener para botão Filtrar da Varianza (caso o onclick não funcione)
     const btnFiltrarVariancia = document.querySelector('button[onclick*="carregarRelatorioVariancia"]');
     if (btnFiltrarVariancia) {
         btnFiltrarVariancia.addEventListener('click', carregarRelatorioVariancia);
     }
-    
+
     const toggleStock = document.getElementById('auto-mover-stock');
     if(toggleStock) { toggleStock.addEventListener('change', function() { document.getElementById('auto-stock-status').innerText = this.checked ? "SÍ, añadir al stock" : "NO, es solo un gasto"; document.getElementById('auto-stock-status').className = this.checked ? "text-sm font-bold text-orange-400" : "text-sm font-bold text-gray-500"; }); }
-    
+
     // Garantir que os containers principais estejam visíveis (força remoção de hidden)
     const containers = ['app-screen', 'mobile-header'];
     containers.forEach(id => {
@@ -92,47 +92,49 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-async function fazerLogin() { 
-    const ruc = document.getElementById('login-ruc').value.trim(); const senha = document.getElementById('login-senha').value; 
-    const btn = document.getElementById('btn-login'); const erroBox = document.getElementById('erro-login'); 
-    if(!ruc || !senha) { erroBox.innerText = "Complete todos los campos."; erroBox.classList.remove('hidden'); return; } 
-    btn.innerText = "Verificando..."; btn.disabled = true; 
-    try { 
-        const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ruc: ruc, senha: senha}) }); 
-        if (res.ok) { 
-            const dados = await res.json(); empresaAtualId = dados.empresa_id; rolUsuario = dados.rol; planoAtivo = dados.plano || 'Inicial'; rucAtual = ruc; 
-            if (dados.funcionario_id) { 
-                funcionarioId = dados.funcionario_id; 
-                nomeFuncionario = dados.nome || ''; 
-            } 
-            document.getElementById('login-screen').classList.add('hidden'); 
-            if (rolUsuario === 'superadmin') { 
-                document.getElementById('app-screen').classList.add('hidden'); document.getElementById('superadmin-screen').classList.remove('hidden'); 
+async function fazerLogin() {
+    const ruc = document.getElementById('login-ruc').value.trim(); const senha = document.getElementById('login-senha').value;
+    const btn = document.getElementById('btn-login'); const erroBox = document.getElementById('erro-login');
+    if(!ruc || !senha) { erroBox.innerText = "Complete todos los campos."; erroBox.classList.remove('hidden'); return; }
+    btn.innerText = "Verificando..."; btn.disabled = true;
+    try {
+        const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ruc: ruc, senha: senha}) });
+        if (res.ok) {
+            const dados = await res.json(); empresaAtualId = dados.empresa_id; rolUsuario = dados.rol; planoAtivo = dados.plano || 'Inicial'; rucAtual = ruc;
+            if (dados.funcionario_id) {
+                funcionarioId = dados.funcionario_id;
+                nomeFuncionario = dados.nome || '';
+            }
+            document.getElementById('login-screen').classList.add('hidden');
+            if (rolUsuario === 'superadmin') {
+                document.getElementById('app-screen').classList.add('hidden'); document.getElementById('superadmin-screen').classList.remove('hidden');
                 // Ensure dashboard view is active
                 setTimeout(() => { if (typeof adminMudarView === 'function') adminMudarView('dashboard'); }, 100);
-                carregarEmpresasSaaS(); showToast("¡Bienvenido al Panel Super Admin!"); 
-            } else { 
-                document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden'); 
+                carregarEmpresasSaaS(); showToast("¡Bienvenido al Panel Super Admin!");
+            } else {
+                document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden');
+                // Mostrar POS imediatamente e esconder todas as outras seções
+                mudarTela('pos', null);
                 // Mapeia rótulo amigável do perfil
                 let etiquetaPerfil = 'Cajero';
                 if (rolUsuario === PERFIL_OWNER) etiquetaPerfil = 'Dueño';
                 else if (rolUsuario === PERFIL_MANAGER) etiquetaPerfil = 'Gerente';
-                document.getElementById('sidebar-rol-loja').innerText = `${etiquetaPerfil} | Plan ${planoAtivo.split(' ')[0]}`; 
-                
+                document.getElementById('sidebar-rol-loja').innerText = `${etiquetaPerfil} | Plan ${planoAtivo.split(' ')[0]}`;
+
                 const idsTodos = ['nav-group-inventario','nav-btn-dashboard','nav-group-reportes','btn-nav-stocktake','btn-nav-stocktakereport','btn-nav-proveedores','btn-nav-entrada','btn-nav-remision','btn-nav-autofactura','btn-nav-variancia','nav-btn-config','nav-btn-ayuda','btn-cerrar-turno'];
                 idsTodos.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = ''; });
                 if(document.getElementById('box-novo-prov')) document.getElementById('box-novo-prov').style.display = 'block';
 
                 const isInicial = planoAtivo.includes('Inicial'); const isCrecimiento = planoAtivo.includes('Crecimiento');
                 const isLite = planoAtivo.includes('Lite'); const isLitePremium = planoAtivo.includes('Lite Premium');
-                
+
                 if (isInicial && rolUsuario === 'admin') {
                     const idsOcultarInicial = ['nav-btn-dashboard', 'btn-nav-stocktake', 'btn-nav-stocktakereport', 'btn-nav-variancia', 'btn-nav-proveedores', 'btn-nav-entrada'];
                     idsOcultarInicial.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
                     if(document.getElementById('box-novo-prov')) document.getElementById('box-novo-prov').style.display = 'none';
-                } 
-                if (isCrecimiento && rolUsuario === 'admin') { 
-                    const el1 = document.getElementById('btn-nav-stocktakereport'); if(el1) el1.style.display = 'none'; 
+                }
+                if (isCrecimiento && rolUsuario === 'admin') {
+                    const el1 = document.getElementById('btn-nav-stocktakereport'); if(el1) el1.style.display = 'none';
                     const el2 = document.getElementById('btn-nav-variancia'); if(el2) el2.style.display = 'none';
                 }
                 if (isLite || isLitePremium) {
@@ -140,24 +142,24 @@ async function fazerLogin() {
                     const idsFiscales = ['btn-nav-autofactura', 'btn-nav-remision'];
                     idsFiscales.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
                 }
-                if (rolUsuario === 'cajero') { 
+                if (rolUsuario === 'cajero') {
                     const idsCajero = ['nav-group-inventario','nav-btn-dashboard','nav-group-reportes','nav-btn-config','btn-cerrar-turno'];
-                    idsCajero.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; }); 
-                } 
-                
+                    idsCajero.forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
+                }
+
                 if (rolUsuario === 'gerente') {
                     const el = document.getElementById('nav-btn-config');
                     if (el) el.style.display = 'none';
                 }
-                
-                await carregarConfiguracao(); await carregarCategorias(); if(!isInicial) await carregarProveedores(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); 
+
+                await carregarConfiguracao(); await carregarCategorias(); if(!isInicial) await carregarProveedores(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao();
                 // Pré-carrega dados do dashboard em segundo plano
                 setTimeout(() => carregarDashboardComVisibilidade(), 500);
                 showToast(`¡Sesión Iniciada!`);
-                ajustarCamposFiscais(); // Ajusta obrigatoriedade do RUC conforme plano 
-            } 
-        } else { const err = await res.json(); erroBox.innerText = err.detail || err.mensagem || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); } 
-    } catch(e) { erroBox.innerText = "Error de red."; erroBox.classList.remove('hidden'); } finally { btn.innerText = "Ingresar al Sistema"; btn.disabled = false; } 
+                ajustarCamposFiscais(); // Ajusta obrigatoriedade do RUC conforme plano
+            }
+        } else { const err = await res.json(); erroBox.innerText = err.detail || err.mensagem || "Credenciales incorrectas."; erroBox.classList.remove('hidden'); }
+    } catch(e) { erroBox.innerText = "Error de red."; erroBox.classList.remove('hidden'); } finally { btn.innerText = "Ingresar al Sistema"; btn.disabled = false; }
 }
 
 function prepararTicket(empresaNome, rucEmissor, cdc, cliente, itens, total, qrcode, dataEmissao) {
@@ -201,7 +203,7 @@ function imprimirTicketLocal() {
     const cliente = document.getElementById('cliente').value || "Consumidor Final";
     const dataAgora = new Date().toLocaleString('es-PY');
     prepararTicket(empresaNome, rucEmissor, ultimoCDCGerado, cliente, productosCaixa, totalDaVendaAtual, ultimoQRGerado, dataAgora);
-    
+
     document.getElementById('print-area').classList.remove('hidden');
     window.print();
     document.getElementById('print-area').classList.add('hidden');
@@ -214,7 +216,7 @@ async function imprimirTicketHistorico(cdc) {
             const nota = await res.json();
             const empresaNome = document.getElementById('sidebar-nome-loja').innerText;
             prepararTicket(empresaNome, nota.ruc_emissor, cdc, nota.nome_cliente, nota.itens, nota.valor_total, nota.link_qrcode, nota.data_emissao);
-            
+
             document.getElementById('print-area').classList.remove('hidden');
             window.print();
             document.getElementById('print-area').classList.add('hidden');
@@ -225,10 +227,10 @@ async function imprimirTicketHistorico(cdc) {
 function ajustarCamposFiscais() {
     const campoRuc = document.getElementById('ruc');
     if (!campoRuc) return;
-    
+
     const isLite = planoAtivo.includes('Lite');
     const isLitePremium = planoAtivo.includes('Lite Premium');
-    
+
     if (isLite || isLitePremium) {
         // Remover obrigatoriedade
         campoRuc.removeAttribute('required');
@@ -264,7 +266,7 @@ function enviarWhatsApp() {
         const mensajeFactura = (isLite || isLitePremium) ? "Comprobante de Venta Interno" : "Factura (KuDE)";
         const texto = encodeURIComponent(`¡Hola! Gracias por su compra. Aquí tiene el enlace a su ${mensajeFactura}: ` + ultimoLinkSifen);
         const url = `https://wa.me/${numLimpio}?text=${texto}`;
-        
+
         const novaAba = window.open(url, '_blank');
         if (!novaAba || novaAba.closed || typeof novaAba.closed === 'undefined') {
             window.location.href = url;
@@ -294,7 +296,7 @@ function switchOpTab(tab) {
     document.getElementById('op-merma-content').classList.add('hidden');
     document.getElementById('tab-nc-btn').className = "flex-1 bg-slate-800 text-gray-400 font-bold py-3 rounded-lg border border-slate-700 hover:bg-slate-700 transition";
     document.getElementById('tab-merma-btn').className = "flex-1 bg-slate-800 text-gray-400 font-bold py-3 rounded-lg border border-slate-700 hover:bg-slate-700 transition";
-    
+
     if(isInicial) document.getElementById('tab-merma-btn').style.display = 'none';
 
     if(tab === 'nc') {
@@ -309,9 +311,9 @@ function switchOpTab(tab) {
     }
 }
 
-function abrirModalEditarEmpresa(id, planoAtual, valorAtual) { 
-    document.getElementById('edit-empresa-id').value = id; 
-    let p = document.getElementById('edit-plano'); 
+function abrirModalEditarEmpresa(id, planoAtual, valorAtual) {
+    document.getElementById('edit-empresa-id').value = id;
+    let p = document.getElementById('edit-plano');
     let planoValor = 'Inicial'; // default
     if (planoAtual.includes('Lite Premium')) {
         planoValor = 'Lite Premium';
@@ -324,38 +326,38 @@ function abrirModalEditarEmpresa(id, planoAtual, valorAtual) {
     } else if (planoAtual.includes('Inicial')) {
         planoValor = 'Inicial';
     }
-    p.value = planoValor; 
-    document.getElementById('edit-valor').value = valorAtual; 
-    document.getElementById('modal-editar-empresa').classList.remove('hidden'); 
-    document.getElementById('modal-editar-empresa').classList.add('flex'); 
+    p.value = planoValor;
+    document.getElementById('edit-valor').value = valorAtual;
+    document.getElementById('modal-editar-empresa').classList.remove('hidden');
+    document.getElementById('modal-editar-empresa').classList.add('flex');
 }
 function fecharModalEditarEmpresa() { document.getElementById('modal-editar-empresa').classList.add('hidden'); document.getElementById('modal-editar-empresa').classList.remove('flex'); }
 async function salvarEdicaoEmpresa() { const id = document.getElementById('edit-empresa-id').value; const plano = document.getElementById('edit-plano').value; const valor = parseFloat(document.getElementById('edit-valor').value) || 0; try { const res = await fetch(`/super-admin/editar-empresa/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({plano: plano, valor_mensalidade: valor}) }); if(res.ok) { showToast("✅ Plan actualizado."); fecharModalEditarEmpresa(); carregarEmpresasSaaS(); } else { showToast("❌ Error.", "error"); } } catch(e) { showToast("❌ Error.", "error"); } }
-async function carregarEmpresasSaaS() { 
-    try { 
-        const resMet = await fetch('/super-admin/metricas'); 
-        if (resMet.ok) { 
-            const met = await resMet.json(); 
-            document.getElementById('saas-mrr').innerText = met.mrr.toLocaleString('es-PY'); 
-            document.getElementById('saas-ativos').innerText = met.clientes_ativos; 
-            document.getElementById('saas-vencidos').innerText = met.clientes_vencidos; 
-        } 
-        const res = await fetch('/super-admin/empresas'); 
-        if (res.ok) { 
-            const empresas = await res.json(); 
-            const tbody = document.getElementById('tabela-saas'); 
-            tbody.innerHTML = ''; 
-            empresas.forEach(emp => { 
-                let corStatus = emp.status === 'Activo' ? 'text-green-400' : 'text-red-400'; 
+async function carregarEmpresasSaaS() {
+    try {
+        const resMet = await fetch('/super-admin/metricas');
+        if (resMet.ok) {
+            const met = await resMet.json();
+            document.getElementById('saas-mrr').innerText = met.mrr.toLocaleString('es-PY');
+            document.getElementById('saas-ativos').innerText = met.clientes_ativos;
+            document.getElementById('saas-vencidos').innerText = met.clientes_vencidos;
+        }
+        const res = await fetch('/super-admin/empresas');
+        if (res.ok) {
+            const empresas = await res.json();
+            const tbody = document.getElementById('tabela-saas');
+            tbody.innerHTML = '';
+            empresas.forEach(emp => {
+                let corStatus = emp.status === 'Activo' ? 'text-green-400' : 'text-red-400';
                 // ADICIONAMOS O BOTÃO "COBRAR" BEM AQUI NO FINAL DA LINHA ABAIXO:
-                tbody.innerHTML += `<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${emp.nome}</td><td class="p-4">${emp.ruc}</td><td class="p-4">${emp.plano}</td><td class="p-4 ${corStatus}">${emp.status}</td><td class="p-4 flex gap-3"><button onclick="abrirModalEditarEmpresa(${emp.id}, '${emp.plano}', ${emp.valor})" class="text-blue-400 font-bold hover:underline">Editar</button> <button onclick="gerarFaturaSaaS(${emp.id})" class="text-brand-accent font-bold hover:underline">Generar Factura</button></td></tr>`; 
-            }); 
-        } 
-        
+                tbody.innerHTML += `<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${emp.nome}</td><td class="p-4">${emp.ruc}</td><td class="p-4">${emp.plano}</td><td class="p-4 ${corStatus}">${emp.status}</td><td class="p-4 flex gap-3"><button onclick="abrirModalEditarEmpresa(${emp.id}, '${emp.plano}', ${emp.valor})" class="text-blue-400 font-bold hover:underline">Editar</button> <button onclick="gerarFaturaSaaS(${emp.id})" class="text-brand-accent font-bold hover:underline">Generar Factura</button></td></tr>`;
+            });
+        }
+
         // Puxa as faturas assim que carrega as empresas
         carregarFaturasSaaS();
-        
-    } catch(e) {} 
+
+    } catch(e) {}
 }
 
 async function criarEmpresaSaaS() {
@@ -364,12 +366,12 @@ async function criarEmpresaSaaS() {
     const plano = document.getElementById('sa-plano').value;
     const valor = parseFloat(document.getElementById('sa-valor').value) || 0;
     const senha_admin = document.getElementById('sa-pass-admin').value.trim();
-    
+
     if (!nome || !ruc || !plano || !senha_admin) {
         showToast("Complete todos los campos requeridos.", "error");
         return;
     }
-    
+
     try {
         const res = await fetch('/super-admin/criar-empresa', {
             method: 'POST',
@@ -383,7 +385,7 @@ async function criarEmpresaSaaS() {
                 valor_mensalidade: valor
             })
         });
-        
+
         if (res.ok) {
             showToast("Empresa creada exitosamente.");
             // Limpar campos
@@ -428,7 +430,7 @@ function cambiarTabConfig(tabName) {
     // Mostrar la pestaña seleccionada
     const targetPane = document.getElementById(`tab-${tabName}-content`);
     if (targetPane) targetPane.classList.remove('hidden');
-    
+
     // Actualizar botones de navegación
     document.querySelectorAll('.tab-config').forEach(btn => {
         btn.classList.remove('border-b-2', 'border-brand-accent', 'bg-brand-accent/5', 'text-slate-700');
@@ -439,7 +441,7 @@ function cambiarTabConfig(tabName) {
         activeBtn.classList.add('border-b-2', 'border-brand-accent', 'bg-brand-accent/5', 'text-slate-700');
         activeBtn.classList.remove('text-slate-500');
     }
-    
+
     // Si se activa la pestaña Equipo, actualizar la UI según el plan
     if (tabName === 'equipo') {
         actualizarUIEquipe();
@@ -457,7 +459,7 @@ function toggleAcordeao(menuId, setaId) { const menu = document.getElementById(m
 function calcularMensualidad() {
     const plano = document.getElementById('sa-plano').value;
     const descuento = parseInt(document.getElementById('sa-descuento').value) || 0;
-    
+
     // Precios base por plan (en guaraníes)
     const precios = {
         'Inicial': 140000,
@@ -466,22 +468,22 @@ function calcularMensualidad() {
         'Lite': 80000,
         'Lite Premium': 160000
     };
-    
+
     const precioBase = precios[plano] || 0;
     const descuentoValor = (precioBase * descuento) / 100;
     const precioFinal = precioBase - descuentoValor;
-    
+
     document.getElementById('sa-valor').value = precioFinal;
 }
 
-function mudarTela(telaId, elementoBotao) { 
+function mudarTela(telaId, elementoBotao) {
     try {
         // 1. Esconder TODAS as seções (class + inline style)
         document.querySelectorAll('.section-tela').forEach(t => {
             t.classList.add('hidden');
             t.style.display = 'none';
         });
-        
+
         // 2. Mostrar a seção alvo (remover class + forçar display)
         const telaAlvo = document.getElementById('tela-' + telaId);
         if(telaAlvo) {
@@ -489,33 +491,33 @@ function mudarTela(telaId, elementoBotao) {
             telaAlvo.classList.remove('d-none');
             telaAlvo.style.display = 'block';
         }
-        
+
         // 3. Atualizar botão ativo
-        if(elementoBotao !== null) { 
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo')); 
-            elementoBotao.classList.add('menu-ativo'); 
+        if(elementoBotao !== null) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('menu-ativo'));
+            elementoBotao.classList.add('menu-ativo');
         }
-        
+
         // 4. Fechar sidebar em mobile
-        if(window.innerWidth < 768) { 
-            document.getElementById('sidebar').classList.add('-translate-x-full'); 
-            document.getElementById('overlay').classList.add('hidden'); 
+        if(window.innerWidth < 768) {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('overlay').classList.add('hidden');
         }
-        
+
         // 5. Carregar dados específicos da seção
         if(['inventario','pos','entrada','operaciones','remision','autofactura'].includes(telaId)) carregarEstoque();
         if(telaId === 'proveedores' || telaId === 'entrada') carregarProveedores(); if(telaId === 'stocktake') carregarStockTake(); if(telaId === 'stocktakereport') carregarStockTakeReport(); if(telaId === 'variancia') carregarRelatorioVariancia(); if(telaId === 'config') iniciarConfig();
         if(telaId === 'operaciones') { document.getElementById('nc-cdc').value=''; document.getElementById('nc-cliente').value=''; ncProductosCaixa=[]; atualizarInterfaceNC(); document.getElementById('merma-cod').value=''; carregarMermas(); }
         if(telaId === 'remision') { carregarRemisiones(); remProductosCaixa=[]; atualizarInterfaceRemision(); }
         if(telaId === 'autofactura') { carregarAutofacturas(); autoProductosCaixa=[]; atualizarInterfaceAuto(); }
-        if(telaId === 'reportes') carregarHistorico(); 
-        if(telaId === 'cierre') carregarCierreCaja(); 
-        if(telaId === 'config') carregarConfiguracao(); 
-        if(telaId === 'categorias') carregarCategorias(); 
+        if(telaId === 'reportes') carregarHistorico();
+        if(telaId === 'cierre') carregarCierreCaja();
+        if(telaId === 'config') carregarConfiguracao();
+        if(telaId === 'categorias') carregarCategorias();
         if(telaId === 'dashboard') {
             // Chamar o carregamento dos dados imediatamente
             carregarDashboard();
-        } 
+        }
         if(telaId === 'pos') {
             checarStatusCaixa();
             ajustarCamposFiscais();
@@ -531,39 +533,39 @@ async function fecharTurnoCaixa() { const valor = prompt("Efectivo en gaveta:");
 function abrirModalSangria() { document.getElementById('modal-sangria').classList.remove('hidden'); document.getElementById('modal-sangria').classList.add('flex'); } function fecharModalSangria() { document.getElementById('modal-sangria').classList.add('hidden'); }
 async function salvarSangria() { const valor = parseFloat(document.getElementById('sangria-valor').value) || 0; const motivo = document.getElementById('sangria-motivo').value.trim(); try { const res = await fetch('/registrar-sangria', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({valor, motivo}) }); if (res.ok) { showToast("✅ Retiro registrado."); fecharModalSangria(); } } catch(e) {} }
 function abrirCheckout() { if(productosCaixa.length === 0) return; document.getElementById('checkout-total').innerText = totalDaVendaAtual.toLocaleString('es-PY'); document.getElementById('checkout-metodo').value = "Efectivo"; atualizarTroco(); document.getElementById('modal-checkout').classList.remove('hidden'); document.getElementById('modal-checkout').classList.add('flex'); } function fecharCheckout() { document.getElementById('modal-checkout').classList.add('hidden'); }
-function atualizarTroco() { 
-    const metodo = document.getElementById('checkout-metodo').value; 
-    const boxVuelto = document.getElementById('box-vuelto'); 
-    
-    if(metodo === "Efectivo") { 
-        boxVuelto.classList.remove('hidden'); 
-        const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0; 
-        document.getElementById('checkout-vuelto').innerText = Math.max(recebido - totalDaVendaAtual, 0).toLocaleString('es-PY'); 
-    } else { 
-        boxVuelto.classList.add('hidden'); 
-    } 
+function atualizarTroco() {
+    const metodo = document.getElementById('checkout-metodo').value;
+    const boxVuelto = document.getElementById('box-vuelto');
+
+    if(metodo === "Efectivo") {
+        boxVuelto.classList.remove('hidden');
+        const recebido = parseFloat(document.getElementById('checkout-recebido').value) || 0;
+        document.getElementById('checkout-vuelto').innerText = Math.max(recebido - totalDaVendaAtual, 0).toLocaleString('es-PY');
+    } else {
+        boxVuelto.classList.add('hidden');
+    }
 }
 
-async function confirmarVenta() { 
-    const metodoPago = document.getElementById('checkout-metodo').value; 
+async function confirmarVenta() {
+    const metodoPago = document.getElementById('checkout-metodo').value;
 
     if (metodoPago === "Pix" && pixJaFoiConfirmado === false) {
-        fecharCheckout(); 
-        gerarPixNaTela(totalDaVendaAtual); 
-        return; 
+        fecharCheckout();
+        gerarPixNaTela(totalDaVendaAtual);
+        return;
     }
 
-    const btn = document.getElementById('btn-confirmar-venta'); btn.disabled = true; 
-    const payload = { ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: totalDaVendaAtual, itens: productosCaixa, metodo_pago: metodoPago }; 
-    
-    if (!navigator.onLine) { 
-        filaContingencia.push(payload); localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); 
-        fecharCheckout(); showToast("🔴 Guardado Offline.", "warning"); return; 
-    } 
-    try { 
-        const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payload) }); 
-        if (!res.ok) throw new Error(); 
-        const dados = await res.json(); 
+    const btn = document.getElementById('btn-confirmar-venta'); btn.disabled = true;
+    const payload = { ruc_emissor: document.getElementById('ruc').value, nome_cliente: document.getElementById('cliente').value || "Consumidor Final", valor_total: totalDaVendaAtual, itens: productosCaixa, metodo_pago: metodoPago };
+
+    if (!navigator.onLine) {
+        filaContingencia.push(payload); localStorage.setItem('nube_fila', JSON.stringify(filaContingencia));
+        fecharCheckout(); showToast("🔴 Guardado Offline.", "warning"); return;
+    }
+    try {
+        const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payload) });
+        if (!res.ok) throw new Error();
+        const dados = await res.json();
         if (dados.demo_mode) {
             // Modo demo: mostrar alerta, limpar carrinho, fechar checkout
             fecharCheckout();
@@ -572,16 +574,16 @@ async function confirmarVenta() {
             atualizarInterfaceCaixa();
             return;
         }
-        fecharCheckout(); 
+        fecharCheckout();
         document.getElementById('resultado').classList.remove('hidden');
-        pixJaFoiConfirmado = false; 
-        document.getElementById('btn-pdf').href = dados.link_pdf; 
-        
+        pixJaFoiConfirmado = false;
+        document.getElementById('btn-pdf').href = dados.link_pdf;
+
         // Verificar se é plano não-fiscal (Lite/Lite Premium) ou venda interna
         const isLite = planoAtivo.includes('Lite');
         const isLitePremium = planoAtivo.includes('Lite Premium');
         const isInterno = dados.interno === true || isLite || isLitePremium;
-        
+
         // Alterar título conforme tipo de comprovante
         const textoResultado = document.getElementById('texto-resultado');
         if (isInterno) {
@@ -593,10 +595,10 @@ async function confirmarVenta() {
             textoResultado.classList.remove('text-blue-600');
             textoResultado.classList.add('text-green-600');
         }
-        
+
         ultimoCDCGerado = dados.cdc;
-        ultimoLinkSifen = window.location.origin + dados.link_pdf; 
-        
+        ultimoLinkSifen = window.location.origin + dados.link_pdf;
+
         // Gerar QR Code apenas para planos fiscais com link válido
         const qrcodeImg = document.getElementById('qrcode-img');
         // Definir ultimoQRGerado (usado para impressão)
@@ -609,18 +611,18 @@ async function confirmarVenta() {
             ultimoQRGerado = '';
             qrcodeImg.classList.add('hidden');
             qrcodeImg.src = '';
-        } 
-        
-        document.getElementById('btn-emitir').classList.add('hidden'); 
-        atualizarInterfaceCaixa(); 
-    } catch(e) { showToast("❌ Error.", "error"); } finally { btn.disabled = false; } 
+        }
+
+        document.getElementById('btn-emitir').classList.add('hidden');
+        atualizarInterfaceCaixa();
+    } catch(e) { showToast("❌ Error.", "error"); } finally { btn.disabled = false; }
 }
 
 function novaVenda() { document.getElementById('resultado').classList.add('hidden'); document.getElementById('btn-emitir').classList.remove('hidden'); document.getElementById('cliente').value = ''; descuentoPorcentaje = 0; productosCaixa = []; atualizarInterfaceCaixa(); }
 async function sincronizarFila() { if (filaContingencia.length === 0 || !navigator.onLine) return; let pendentes = [...filaContingencia]; filaContingencia = []; let sucesso = 0; for (let n of pendentes) { try { const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(n) }); if (res.ok) sucesso++; else filaContingencia.push(n); } catch(e) { filaContingencia.push(n); } } localStorage.setItem('nube_fila', JSON.stringify(filaContingencia)); atualizarStatusConexao(); if(sucesso>0) showToast(`✅ ${sucesso} sincronizadas.`); }
 
-function abrirCamera(idCampo) { campoDestinoScanner = idCampo; document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-modal').classList.add('flex'); if (!html5QrCode) html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, ()=>{}); } 
-function onScanSucesso(codigo) { fecharCamera(); document.getElementById(campoDestinoScanner).value = codigo; if (campoDestinoScanner === 'scanner-barras') verificarScanner({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'entrada-scanner') agregarProductoEntrada(codigo); else if (campoDestinoScanner === 'nc-scanner') verificarScannerNC({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'merma-cod') buscarParaMerma({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'rem-scanner') verificarScannerRemision({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'auto-scanner') verificarScannerAuto({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'busca-st') filtrarStockTake(); else if (campoDestinoScanner === 'busca-inventario') { setTimeout(()=>filtrarEstoque(),100); } } 
+function abrirCamera(idCampo) { campoDestinoScanner = idCampo; document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-modal').classList.add('flex'); if (!html5QrCode) html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSucesso, ()=>{}); }
+function onScanSucesso(codigo) { fecharCamera(); document.getElementById(campoDestinoScanner).value = codigo; if (campoDestinoScanner === 'scanner-barras') verificarScanner({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'entrada-scanner') agregarProductoEntrada(codigo); else if (campoDestinoScanner === 'nc-scanner') verificarScannerNC({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'merma-cod') buscarParaMerma({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'rem-scanner') verificarScannerRemision({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'auto-scanner') verificarScannerAuto({key:'Enter',preventDefault:()=>{}}); else if (campoDestinoScanner === 'busca-st') filtrarStockTake(); else if (campoDestinoScanner === 'busca-inventario') { setTimeout(()=>filtrarEstoque(),100); } }
 function fecharCamera() { document.getElementById('camera-modal').classList.add('hidden'); if(html5QrCode) html5QrCode.stop().then(()=>html5QrCode.clear()); }
 
 let isScanning = false; function filtrarPOS() { const input = document.getElementById('scanner-barras').value.toLowerCase(); const dropdown = document.getElementById('pos-dropdown'); dropdown.innerHTML = ''; if (input.length < 2) { dropdown.classList.add('hidden'); return; } const resultados = productosGlobais.filter(p => p.descricao.toLowerCase().includes(input) || p.codigo_barras.toLowerCase().includes(input)).slice(0, 10); if (resultados.length > 0) { dropdown.classList.remove('hidden'); resultados.forEach(p => { const div = document.createElement('div'); div.className = 'p-4 hover:bg-slate-700/50 cursor-pointer border-b border-slate-700 flex justify-between text-white'; div.innerHTML = `<span>${p.descricao}</span><span class="text-brand-accent">Gs. ${p.preco_venda.toLocaleString('es-PY')}</span>`; div.onclick = () => seleccionarProductoPOS(p); dropdown.appendChild(div); }); } else { dropdown.classList.add('hidden'); } }
@@ -666,26 +668,26 @@ function preencherFiltroCategorias() {
 }
 async function carregarEstoque() { try { const res = await fetch('/listar-produtos', {headers:getSaaSHeaders()}); const lista = await res.json(); productosGlobais = lista.sort((a, b) => a.descricao.localeCompare(b.descricao)); preencherFiltroCategorias(); filtrarEstoque(); if(document.getElementById('tela-stocktake') && !document.getElementById('tela-stocktake').classList.contains('hidden')) renderTabelaStockTake(productosGlobais); } catch(e){} }
 function calcularLucro() { const c = parseFloat(document.getElementById('novo-custo').value)||0; const v = parseFloat(document.getElementById('novo-preco').value)||0; if(v>0 && c>=0) { document.getElementById('info-lucro').innerText = `GP: ${((v-c)/v*100).toFixed(1)}%`; document.getElementById('info-lucro').className="text-green-400 text-xs"; } }
-async function cadastrarProduto() { 
+async function cadastrarProduto() {
     const codigoOriginal = document.getElementById('produto-original-cod').value;
-    const d = { 
-        codigo_barras: document.getElementById('novo-cod').value, 
-        descricao: document.getElementById('novo-desc').value, 
-        categoria: document.getElementById('novo-cat').value, 
-        subcategoria: "-", 
-        preco_custo: parseFloat(document.getElementById('novo-custo').value)||0, 
-        preco_venda: parseFloat(document.getElementById('novo-preco').value)||0, 
-        quantidade: parseInt(document.getElementById('novo-qtd').value)||0, 
-        codigo_proveedor: document.getElementById('novo-prov')?.value||"" 
-    }; 
-    try { 
+    const d = {
+        codigo_barras: document.getElementById('novo-cod').value,
+        descricao: document.getElementById('novo-desc').value,
+        categoria: document.getElementById('novo-cat').value,
+        subcategoria: "-",
+        preco_custo: parseFloat(document.getElementById('novo-custo').value)||0,
+        preco_venda: parseFloat(document.getElementById('novo-preco').value)||0,
+        quantidade: parseInt(document.getElementById('novo-qtd').value)||0,
+        codigo_proveedor: document.getElementById('novo-prov')?.value||""
+    };
+    try {
         const url = codigoOriginal ? `/editar-produto/${codigoOriginal}` : '/cadastrar-produto';
         const method = codigoOriginal ? 'PUT' : 'POST';
-        await fetch(url, {method, headers:getSaaSHeaders(), body:JSON.stringify(d)}); 
-        carregarEstoque(); 
-        toggleFormProducto(); 
+        await fetch(url, {method, headers:getSaaSHeaders(), body:JSON.stringify(d)});
+        carregarEstoque();
+        toggleFormProducto();
         cancelarEdicaoProduto();
-    } catch(e){} 
+    } catch(e){}
 }
 function abrirEditarProduto(codigo) {
     const produto = productosGlobais.find(p => p.codigo_barras === codigo);
@@ -763,38 +765,38 @@ async function carregarCierreCaja() {
     } catch(e) {}
 }
 
-async function carregarHistorico(busca="") { 
-    const i=document.getElementById('filtro-data-inicio-hist')?.value||''; 
-    const f=document.getElementById('filtro-data-fim-hist')?.value||''; 
-    try { 
-        const res=await fetch(`/listar-notas?busca=${busca}&inicio=${i}&fim=${f}`, {headers:getSaaSHeaders()}); 
-        const d=await res.json(); const tb=document.getElementById('tabela-historico'); tb.innerHTML=''; 
-        d.historico.forEach(n=>{ 
-            tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-xs font-mono text-gray-400">${n.cdc.substring(0,20)}...</td><td class="p-4 text-white">${n.nome_cliente}</td><td class="p-4 text-right text-brand-accent">Gs. ${n.valor_total.toLocaleString('es-PY')}</td><td class="p-4">${n.metodo_pago}</td><td class="p-4 flex gap-2"><button onclick="imprimirTicketHistorico('${n.cdc}')" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition">🖨️ Ticket</button><a href="${n.link_pdf}" target="_blank" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition">📄 PDF</a></td></tr>`; 
-        }); 
-    } catch(e){} 
-} 
+async function carregarHistorico(busca="") {
+    const i=document.getElementById('filtro-data-inicio-hist')?.value||'';
+    const f=document.getElementById('filtro-data-fim-hist')?.value||'';
+    try {
+        const res=await fetch(`/listar-notas?busca=${busca}&inicio=${i}&fim=${f}`, {headers:getSaaSHeaders()});
+        const d=await res.json(); const tb=document.getElementById('tabela-historico'); tb.innerHTML='';
+        d.historico.forEach(n=>{
+            tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-xs font-mono text-gray-400">${n.cdc.substring(0,20)}...</td><td class="p-4 text-white">${n.nome_cliente}</td><td class="p-4 text-right text-brand-accent">Gs. ${n.valor_total.toLocaleString('es-PY')}</td><td class="p-4">${n.metodo_pago}</td><td class="p-4 flex gap-2"><button onclick="imprimirTicketHistorico('${n.cdc}')" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition">🖨️ Ticket</button><a href="${n.link_pdf}" target="_blank" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition">📄 PDF</a></td></tr>`;
+        });
+    } catch(e){}
+}
 function buscarNotas() { carregarHistorico(document.getElementById('busca').value); }
 
 // Função auxiliar para aguardar elemento estar visível
-// Função wrapper simplificada — sem observer nem timeout que possa travar
+// Função wrapper simplificada - sem observer nem timeout que possa travar
 async function carregarDashboardComVisibilidade() {
     await new Promise(r => setTimeout(r, 100));
     await carregarDashboard();
 }
 
-async function carregarDashboard() { 
-    try { 
+async function carregarDashboard() {
+    try {
         // Verificar se é conta Demo (plano Demo ou RUC especial)
         const isDemoAccount = (planoAtivo && (planoAtivo.toLowerCase().includes('demo') || planoAtivo === 'Plan Demo')) || (rucAtual && rucAtual.startsWith('800'));
-        
+
         if (isDemoAccount) {
             // Dados estáticos para conta Demo
             const dashVendas = document.getElementById('dash-vendas');
             const dashNotas = document.getElementById('dash-notas');
             if (dashVendas) dashVendas.innerText = 'Gs. 15.450.000';
             if (dashNotas) dashNotas.innerText = '142';
-            
+
             // Dados mock para gráfico
             const mockTopProdutos = [
                 { nome: 'Arroz 1kg', quantidade: 45 },
@@ -803,7 +805,7 @@ async function carregarDashboard() {
                 { nome: 'Harina 1kg', quantidade: 28 },
                 { nome: 'Fideos 500g', quantidade: 25 }
             ];
-            
+
             // Renderizar gráfico se canvas disponível
             try {
                 const canvas = document.getElementById('grafico-produtos');
@@ -833,27 +835,27 @@ async function carregarDashboard() {
             }
             return; // Abortar fetch
         }
-        
+
         // Mostrar estado de carregamento
         const dashVendas = document.getElementById('dash-vendas');
         const dashNotas = document.getElementById('dash-notas');
         if (dashVendas) dashVendas.innerText = 'Gs. ...';
         if (dashNotas) dashNotas.innerText = '...';
-        
+
         // Limpar gráfico anterior se existir
         if (graficoAtual) {
             graficoAtual.destroy();
             graficoAtual = null;
         }
-        
-        const res = await fetch('/dados-dashboard', {headers: getSaaSHeaders()}); 
+
+        const res = await fetch('/dados-dashboard', {headers: getSaaSHeaders()});
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const d = await res.json(); 
-        
+        const d = await res.json();
+
         // Atualizar métricas
         if (dashVendas) dashVendas.innerText = 'Gs. ' + d.total_vendas.toLocaleString('es-PY');
         if (dashNotas) dashNotas.innerText = d.total_notas;
-        
+
         // Renderizar gráfico apenas se o canvas estiver disponível
         const canvas = document.getElementById('grafico-produtos');
         if (canvas) {
@@ -891,55 +893,55 @@ async function carregarDashboard() {
         const dashNotas = document.getElementById('dash-notas');
         if (dashVendas) dashVendas.innerText = 'Gs. Error';
         if (dashNotas) dashNotas.innerText = 'Error';
-        
+
         // Tentar novamente após 3 segundos
         setTimeout(() => carregarDashboard(), 3000);
     }
 }
 async function carregarCategorias() { try { const res=await fetch('/listar-categorias', {headers:getSaaSHeaders()}); const d=await res.json(); const sf=document.getElementById('novo-cat'); const sfi=document.getElementById('filtro-cat-inventario'); const sfc=document.getElementById('stocktake-categoria'); const tb=document.getElementById('tabela-categorias'); if(sf) sf.innerHTML=''; if(sfi) sfi.innerHTML='<option value="">Todas</option>'; if(sfc) sfc.innerHTML='<option value="">Todas las categorías</option>'; if(tb) tb.innerHTML=''; d.forEach(c=>{ if(sf) sf.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfi) sfi.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfc) sfc.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(tb) tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${c.nome}</td><td class="p-4 text-center"><button onclick="deletarCategoria(${c.id})" class="text-red-400">🗑️</button></td></tr>`; }); } catch(e){} }
 async function adicionarCategoria() { const n=document.getElementById('nova-cat-nome').value; if(n){ await fetch('/cadastrar-categoria',{method:'POST',headers:getSaaSHeaders(),body:JSON.stringify({nome:n})}); carregarCategorias(); document.getElementById('nova-cat-nome').value=''; } } async function deletarCategoria(id) { if(confirm("Del?")) { await fetch(`/deletar-categoria/${id}`,{method:'DELETE',headers:getSaaSHeaders()}); carregarCategorias(); } }
-async function carregarConfiguracao() { 
-    try { 
+async function carregarConfiguracao() {
+    try {
         console.log("A pedir configurações ao servidor...");
-        const res = await fetch('/obter-configuracao', {headers: getSaaSHeaders()}); 
-        const d = await res.json(); 
-        
+        const res = await fetch('/obter-configuracao', {headers: getSaaSHeaders()});
+        const d = await res.json();
+
         console.log("Dados recebidos da base de dados:", d);
 
-        if(d){ 
-            if(document.getElementById('conf-nome')) document.getElementById('conf-nome').value = d.nome_empresa || ''; 
-            if(document.getElementById('conf-ruc')) document.getElementById('conf-ruc').value = d.ruc || ''; 
-            if(document.getElementById('conf-endereco')) document.getElementById('conf-endereco').value = d.endereco || ''; 
-            if(document.getElementById('conf-senha-cert')) document.getElementById('conf-senha-cert').value = d.senha_certificado || ''; 
-            if(document.getElementById('conf-csc')) document.getElementById('conf-csc').value = d.csc || ''; 
-            
+        if(d){
+            if(document.getElementById('conf-nome')) document.getElementById('conf-nome').value = d.nome_empresa || '';
+            if(document.getElementById('conf-ruc')) document.getElementById('conf-ruc').value = d.ruc || '';
+            if(document.getElementById('conf-endereco')) document.getElementById('conf-endereco').value = d.endereco || '';
+            if(document.getElementById('conf-senha-cert')) document.getElementById('conf-senha-cert').value = d.senha_certificado || '';
+            if(document.getElementById('conf-csc')) document.getElementById('conf-csc').value = d.csc || '';
+
             if(document.getElementById('conf-mp-token')) {
-                document.getElementById('conf-mp-token').value = d.mercado_pago_token || ''; 
+                document.getElementById('conf-mp-token').value = d.mercado_pago_token || '';
                 console.log("Token colocado na caixinha:", d.mercado_pago_token);
             }
-            
-            if(document.getElementById('ruc')) document.getElementById('ruc').value = d.ruc || ''; 
-            if(document.getElementById('conf-ambiente')) document.getElementById('conf-ambiente').value = d.ambiente_sifen || 'testes'; 
-            if(document.getElementById('sidebar-nome-loja')) document.getElementById('sidebar-nome-loja').innerText = d.nome_empresa || 'Empresa'; 
-        } 
+
+            if(document.getElementById('ruc')) document.getElementById('ruc').value = d.ruc || '';
+            if(document.getElementById('conf-ambiente')) document.getElementById('conf-ambiente').value = d.ambiente_sifen || 'testes';
+            if(document.getElementById('sidebar-nome-loja')) document.getElementById('sidebar-nome-loja').innerText = d.nome_empresa || 'Empresa';
+        }
     } catch(e){
         console.error("Erro ao carregar configurações:", e);
-    } 
+    }
 }
 
-async function salvarConfiguracao() { 
+async function salvarConfiguracao() {
     try {
-        const f = new FormData(); 
-        f.append('nome_empresa', document.getElementById('conf-nome').value); 
-        f.append('ruc', document.getElementById('conf-ruc').value); 
-        f.append('endereco', document.getElementById('conf-endereco').value); 
-        f.append('senha_certificado', document.getElementById('conf-senha-cert').value); 
-        if(document.getElementById('conf-csc')) f.append('csc', document.getElementById('conf-csc').value); 
-        
+        const f = new FormData();
+        f.append('nome_empresa', document.getElementById('conf-nome').value);
+        f.append('ruc', document.getElementById('conf-ruc').value);
+        f.append('endereco', document.getElementById('conf-endereco').value);
+        f.append('senha_certificado', document.getElementById('conf-senha-cert').value);
+        if(document.getElementById('conf-csc')) f.append('csc', document.getElementById('conf-csc').value);
+
         let tokenParaEnviar = "";
         if(document.getElementById('conf-mp-token')) {
             tokenParaEnviar = document.getElementById('conf-mp-token').value;
-            f.append('mercado_pago_token', tokenParaEnviar); 
+            f.append('mercado_pago_token', tokenParaEnviar);
         }
 
         console.log("A enviar para o servidor o token:", tokenParaEnviar);
@@ -948,10 +950,10 @@ async function salvarConfiguracao() {
             method: 'POST',
             headers: {'X-Empresa-ID': empresaAtualId.toString()},
             body: f
-        }); 
+        });
 
         if (resposta.ok) {
-            showToast("✅ Configuración General Guardada"); 
+            showToast("✅ Configuración General Guardada");
         } else {
             showToast("❌ Error al guardar en el servidor");
             console.error("O servidor rejeitou:", await resposta.text());
@@ -979,26 +981,26 @@ async function carregarStockTake() { await carregarEstoque(); await carregarCate
 }
 function filtrarListaStockTake() { filtrarStockTake(); } function renderTabelaStockTake(l) { const tb=document.getElementById('tabela-stocktake'); tb.innerHTML=''; l.forEach(p=>{ let val=document.getElementById(`st-input-${p.codigo_barras}`)?.value||''; tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${p.descricao}</td><td class="p-4 text-center font-bold text-brand-accent">${p.quantidade}</td><td class="p-4 text-center"><input type="number" id="st-input-${p.codigo_barras}" value="${val}" class="w-24 p-2 bg-white text-center text-slate-800 border border-slate-300 rounded outline-none focus:ring-2 focus:ring-brand-accent" oninput="atualizarDiffST('${p.codigo_barras}',${p.quantidade})"></td><td class="p-4 text-center"><span id="st-diff-${p.codigo_barras}">-</span></td></tr>`; if(val!=='') atualizarDiffST(p.codigo_barras,p.quantidade); }); } function atualizarDiffST(c,q) { let val=document.getElementById(`st-input-${c}`).value; let sp=document.getElementById(`st-diff-${c}`); if(val==='') sp.innerText='-'; else { let d=parseInt(val)-q; sp.innerText=d>0?`+${d}`:d; sp.className=d>0?'text-green-400 font-bold':(d<0?'text-red-400 font-bold':'text-gray-400 font-bold'); } } async function salvarStockTake() { let pay=[]; productosGlobais.forEach(p=>{ let v=document.getElementById(`st-input-${p.codigo_barras}`); if(v&&v.value!=='') if(parseInt(v.value)!==p.quantidade) pay.push({codigo_barras:p.codigo_barras,qtd_fisica:parseInt(v.value)}); }); if(pay.length>0) { await fetch('/salvar-auditoria',{method:'POST',headers:getSaaSHeaders(),body:JSON.stringify({itens:pay})}); showToast("✅ Audit OK"); carregarStockTake(); } }
 
-async function carregarRelatorioVariancia() { 
-    const i=document.getElementById('filtro-data-inicio-var').value; 
-    const f=document.getElementById('filtro-data-fim-var').value; 
-    try { 
-        const res=await fetch(`/relatorio-variancia?inicio=${i}&fim=${f}`, {headers:getSaaSHeaders()}); 
-        const d=await res.json(); 
-        const tb=document.getElementById('tabela-variancia'); 
-        tb.innerHTML=''; 
-        let imp=0; 
-        let un=0; 
-        if(d.length===0){ 
-            tb.innerHTML='<tr><td colspan="6" class="text-center p-6 text-gray-500">Nada</td></tr>'; 
-            document.getElementById('var-impacto-total').innerText='Gs. 0'; 
-            document.getElementById('var-unidades-total').innerText=0; 
-            return; 
-        } 
-        d.forEach(x=>{ 
-            imp+=x.impacto_financeiro; 
-            un+=x.total_unidades; 
-            let c = x.impacto_financeiro>0?'text-green-400':'text-red-400'; 
+async function carregarRelatorioVariancia() {
+    const i=document.getElementById('filtro-data-inicio-var').value;
+    const f=document.getElementById('filtro-data-fim-var').value;
+    try {
+        const res=await fetch(`/relatorio-variancia?inicio=${i}&fim=${f}`, {headers:getSaaSHeaders()});
+        const d=await res.json();
+        const tb=document.getElementById('tabela-variancia');
+        tb.innerHTML='';
+        let imp=0;
+        let un=0;
+        if(d.length===0){
+            tb.innerHTML='<tr><td colspan="6" class="text-center p-6 text-gray-500">Nada</td></tr>';
+            document.getElementById('var-impacto-total').innerText='Gs. 0';
+            document.getElementById('var-unidades-total').innerText=0;
+            return;
+        }
+        d.forEach(x=>{
+            imp+=x.impacto_financeiro;
+            un+=x.total_unidades;
+            let c = x.impacto_financeiro>0?'text-green-400':'text-red-400';
             tb.innerHTML+=`<tr class="border-b border-slate-700">
                 <td class="p-3 text-gray-400 text-xs">${x.fecha}</td>
                 <td class="p-3 text-white font-bold">${x.codigo}</td>
@@ -1006,12 +1008,12 @@ async function carregarRelatorioVariancia() {
                 <td class="p-3 text-white">${x.descricao}</td>
                 <td class="p-3 text-center font-bold ${c}">${x.total_unidades}</td>
                 <td class="p-3 text-right font-bold ${c}">Gs. ${x.impacto_financeiro.toLocaleString('es-PY')}</td>
-            </tr>`; 
-        }); 
-        document.getElementById('var-unidades-total').innerText=un; 
-        document.getElementById('var-impacto-total').innerText=`Gs. ${imp.toLocaleString('es-PY')}`; 
-        document.getElementById('var-impacto-total').className=`text-3xl font-bold ${imp>0?'text-green-400':'text-red-400'}`; 
-    } catch(e){} 
+            </tr>`;
+        });
+        document.getElementById('var-unidades-total').innerText=un;
+        document.getElementById('var-impacto-total').innerText=`Gs. ${imp.toLocaleString('es-PY')}`;
+        document.getElementById('var-impacto-total').className=`text-3xl font-bold ${imp>0?'text-green-400':'text-red-400'}`;
+    } catch(e){}
 }
 
 async function carregarStockTakeReport() {
@@ -1187,8 +1189,8 @@ function filtrarCatalogoPDV() {
     const lista = productosGlobais || [];
     const filtrada = lista.filter(p => {
         // Filtro por texto (nombre o código)
-        const textoOk = term === '' || 
-            p.descricao.toLowerCase().includes(term) || 
+        const textoOk = term === '' ||
+            p.descricao.toLowerCase().includes(term) ||
             (p.codigo_barras && p.codigo_barras.toLowerCase().includes(term));
         // Filtro por categoría (si se seleccionó una)
         const catOk = cat === '' || p.categoria === cat;
@@ -1269,23 +1271,23 @@ function filtrarNC() { const input = document.getElementById('nc-scanner').value
 function seleccionarProdutoNC(prod) { document.getElementById('nc-dropdown').classList.add('hidden'); document.getElementById('nc-scanner').value = ''; const idx = ncProductosCaixa.findIndex(p => p.codigo_barras === prod.codigo_barras); if (idx !== -1) ncProductosCaixa[idx].quantidade += 1; else ncProductosCaixa.push({ codigo_barras: prod.codigo_barras, descricao: prod.descricao, quantidade: 1, preco_unitario: Number(prod.preco_venda) }); atualizarInterfaceNC(); }
 function verificarScannerNC(e) { if(e && e.key === 'Enter') { e.preventDefault(); const codigo = document.getElementById('nc-scanner').value.trim(); document.getElementById('nc-scanner').value = ''; document.getElementById('nc-dropdown').classList.add('hidden'); const pGlobal = productosGlobais.find(p=>p.codigo_barras === codigo); if(pGlobal) seleccionarProdutoNC(pGlobal); } }
 function atualizarInterfaceNC() { const tbody = document.getElementById('nc-lista-produtos'); tbody.innerHTML = ''; let sub = 0; ncProductosCaixa.forEach((p, i) => { const st = p.quantidade * p.preco_unitario; sub += st; tbody.innerHTML += `<div class="bg-slate-700/50 p-3 rounded-lg flex justify-between items-center mb-2"><div><span class="text-black block" style="color: #000 !important;">${p.descricao}</span></div><div class="flex items-center gap-3"><span class="text-black font-bold" style="color: #000 !important;">${p.quantidade} unid.</span><span class="font-bold text-purple-400 w-24 text-right">Gs. ${st.toLocaleString('es-PY')}</span><button onclick="ncProductosCaixa.splice(${i}, 1); atualizarInterfaceNC();" class="text-red-400 font-bold bg-red-900/20 px-2 rounded">✕</button></div></div>`; }); totalNCTela = sub; document.getElementById('nc-valor-total-tela').innerText = sub.toLocaleString('es-PY'); }
-async function emitirNotaCredito() { 
-    const cdcRef = document.getElementById('nc-cdc').value.trim(); 
-    const cl = document.getElementById('nc-cliente').value.trim(); 
-    if(ncProductosCaixa.length === 0 || !cdcRef || !cl) return showToast("Complete todo.", "warning"); 
-    const btn = document.getElementById('btn-emitir-nc'); 
-    btn.disabled = true; 
-    const payload = { 
-        ruc_emissor: document.getElementById('ruc').value, 
-        nome_cliente: cl, 
-        valor_total: totalNCTela, 
-        itens: ncProductosCaixa, 
-        cdc_referencia: cdcRef, 
-        metodo_pago: "Devolucion" 
-    }; 
-    try { 
-        const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payload) }); 
-        const dados = await res.json(); 
+async function emitirNotaCredito() {
+    const cdcRef = document.getElementById('nc-cdc').value.trim();
+    const cl = document.getElementById('nc-cliente').value.trim();
+    if(ncProductosCaixa.length === 0 || !cdcRef || !cl) return showToast("Complete todo.", "warning");
+    const btn = document.getElementById('btn-emitir-nc');
+    btn.disabled = true;
+    const payload = {
+        ruc_emissor: document.getElementById('ruc').value,
+        nome_cliente: cl,
+        valor_total: totalNCTela,
+        itens: ncProductosCaixa,
+        cdc_referencia: cdcRef,
+        metodo_pago: "Devolucion"
+    };
+    try {
+        const res = await fetch('/emitir-nota', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify(payload) });
+        const dados = await res.json();
         if (dados.demo_mode) {
             alert(dados.mensaje);
             ncProductosCaixa = [];
@@ -1293,13 +1295,13 @@ async function emitirNotaCredito() {
             carregarEstoque();
             return;
         }
-        document.getElementById('nc-resultado').classList.remove('hidden'); 
-        document.getElementById('btn-nc-pdf').href = dados.link_pdf; 
-        btn.classList.add('hidden'); 
-        ncProductosCaixa = []; 
-        atualizarInterfaceNC(); 
-        carregarEstoque(); 
-    } catch(e) {} finally { btn.disabled = false; } 
+        document.getElementById('nc-resultado').classList.remove('hidden');
+        document.getElementById('btn-nc-pdf').href = dados.link_pdf;
+        btn.classList.add('hidden');
+        ncProductosCaixa = [];
+        atualizarInterfaceNC();
+        carregarEstoque();
+    } catch(e) {} finally { btn.disabled = false; }
 }
 function novaNC() { document.getElementById('nc-resultado').classList.add('hidden'); document.getElementById('btn-emitir-nc').classList.remove('hidden'); document.getElementById('nc-cdc').value = ''; document.getElementById('nc-cliente').value = ''; document.getElementById('nc-scanner').focus(); }
 
@@ -1406,7 +1408,7 @@ function copiarCodigoPix() {
 // FUNÇÃO QUE CHAMA O PYTHON
 async function gerarPixNaTela(valorGuaranis) {
     try {
-        abrirModalPix(valorGuaranis / 1450); 
+        abrirModalPix(valorGuaranis / 1450);
 
         const resposta = await fetch('/gerar-pix', {
             method: 'POST',
@@ -1421,14 +1423,14 @@ async function gerarPixNaTela(valorGuaranis) {
 
         if (resposta.ok && dados.sucesso) {
             document.getElementById('pix-loading').classList.add('hidden');
-            
+
             const imgQrCode = document.getElementById('pix-qrcode-img');
             imgQrCode.src = "data:image/jpeg;base64," + dados.qr_code_base64;
             imgQrCode.classList.remove('hidden');
 
             document.getElementById('pix-valor-reais').innerText = dados.valor_reais.toFixed(2).replace('.', ',');
             pixCopiaEColaAtual = dados.copia_cola;
-            
+
             iniciarRadarPix(dados.id_pagamento_mp);
 
         } else {
@@ -1448,11 +1450,11 @@ async function gerarPixNaTela(valorGuaranis) {
 
 async function gerarFaturaSaaS(empresaId) {
     if (!confirm("¿Generar factura de mensualidad para esta empresa? (Plazo: 5 días)")) return;
-    
+
     try {
         const res = await fetch(`/super-admin/gerar-fatura/${empresaId}`, { method: 'POST' });
         const dados = await res.json();
-        
+
         if (res.ok && dados.sucesso) {
             showToast("✅ " + dados.detail);
             carregarFaturasSaaS(); // Atualiza a tabela na hora
@@ -1470,8 +1472,8 @@ async function carregarFaturasSaaS() {
         if (res.ok) {
             const faturas = await res.json();
             const tbody = document.getElementById('tabela-faturas-saas');
-            if (!tbody) return; 
-            
+            if (!tbody) return;
+
             tbody.innerHTML = '';
             faturas.forEach(f => {
                 // Como o Python devolve uma lista (tupla), pegamos pelas posições [0, 1, 2...]
@@ -1480,10 +1482,10 @@ async function carregarFaturasSaaS() {
                 const valor = f.valor || f[2];
                 const venc = (f.data_vencimento || f[3]).split(' ')[0]; // Pega só a data, sem a hora
                 const status = f.status || f[4];
-                
+
                 let corStatus = status === 'Pago' ? 'text-green-400 font-bold' : 'text-yellow-400 font-bold animate-pulse';
-                let btnAprovar = status === 'Pendente' 
-                    ? `<button onclick="aprovarPagamentoSaaS(${id})" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-bold transition shadow-lg">Aprobar Pago</button>` 
+                let btnAprovar = status === 'Pendente'
+                    ? `<button onclick="aprovarPagamentoSaaS(${id})" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-bold transition shadow-lg">Aprobar Pago</button>`
                     : `<span class="text-gray-500 text-xs font-bold border border-gray-600 px-2 py-1 rounded">✅ Aprobado</span>`;
 
                 tbody.innerHTML += `
@@ -1502,7 +1504,7 @@ async function carregarFaturasSaaS() {
 
 async function aprovarPagamentoSaaS(faturaId) {
     if (!confirm("¿Confirmar que recibiste la transferencia SIPAP en tu cuenta bancaria?")) return;
-    
+
     try {
         const res = await fetch(`/super-admin/faturas/${faturaId}/pagar`, { method: 'PUT' });
         if (res.ok) {
@@ -1541,7 +1543,7 @@ function actualizarUIEquipe() {
     cargarUsuariosEquipo();
     actualizarEstadoBotonAgregar();
 }
-    
+
 
 function iniciarConfig() {
     // Actualizar UI de gestión de equipo basado en el plan
@@ -1553,18 +1555,18 @@ function iniciarConfig() {
 async function cargarUsuariosEquipo() {
     const tbody = document.getElementById('tabela-equipo');
     if (!tbody) return;
-    
+
     try {
         const res = await fetch('/equipo/listar', { headers: getSaaSHeaders() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         usuariosEquipo = await res.json();
-        
+
         if (usuariosEquipo.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">No hay usuarios registrados aún.</td></tr>';
             actualizarEstadoBotonAgregar();
             return;
         }
-        
+
         let html = '';
         usuariosEquipo.forEach((u, idx) => {
             let rolLabel = u.rol === 'cajero' ? 'Cajero' : 'Gerente';
@@ -1603,12 +1605,12 @@ async function agregarUsuarioEquipo() {
     let rolFormatado = rol.toLowerCase();
     if (rolFormatado === 'manager') rolFormatado = 'gerente';
     if (rolFormatado === 'cashier') rolFormatado = 'cajero';
-    
+
     if (!nombre || !rol || !email || !password) {
         showToast("Complete todos los campos.", "warning");
         return;
     }
-    
+
     // Restricción de límite para Plan Crecimiento (Pro) - validación frontend
     if (planoAtivo.includes('Crecimiento') && rolFormatado === 'cajero') {
         const cajerosActuales = usuariosEquipo.filter(u => u.rol === 'cajero' && u.activo).length;
@@ -1617,18 +1619,18 @@ async function agregarUsuarioEquipo() {
             return;
         }
     }
-    
+
     try {
         const res = await fetch('/equipo/adicionar', {
             method: 'POST',
             headers: { ...getSaaSHeaders(), 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome: nombre, email, senha: password, rol: rolFormatado })
         });
-        
+
         if (!res.ok) {
             let errorMsg = 'Error al agregar usuario';
             const textoResposta = await res.text(); // Lemos o pacote do servidor apenas UMA vez
-            
+
             try {
                 // Tentamos ver se o texto é um dicionário JSON
                 const errorData = JSON.parse(textoResposta);
@@ -1637,15 +1639,15 @@ async function agregarUsuarioEquipo() {
                 // Se não for um JSON, usamos o texto puro mesmo
                 errorMsg = textoResposta || errorMsg;
             }
-            
+
             throw new Error(errorMsg);
         }
-        
+
         // Limpiar campos
         document.getElementById('equipo-nombre').value = '';
         document.getElementById('equipo-email').value = '';
         document.getElementById('equipo-password').value = '';
-        
+
         // Actualizar tabla
         await cargarUsuariosEquipo();
         showToast("Usuario agregado correctamente.");
@@ -1655,25 +1657,25 @@ async function agregarUsuarioEquipo() {
             if (typeof error.message === 'string') mensaje = error.message;
             else if (error.detail) mensaje = error.detail;
             else if (error.error) mensaje = JSON.stringify(error.error);
-            
+
             showToast(mensaje, "error");
         }
 }
 
 async function eliminarUsuarioEquipo(funcionarioId) {
     if (!confirm("¿Eliminar este usuario?")) return;
-    
+
     try {
         const res = await fetch(`/equipo/remover/${funcionarioId}`, {
             method: 'DELETE',
             headers: getSaaSHeaders()
         });
-        
+
         if (!res.ok) {
             const error = await res.json();
             throw new Error(error.detail || 'Error al eliminar usuario');
         }
-        
+
         await cargarUsuariosEquipo();
         showToast("Usuario eliminado.");
     } catch (error) {
@@ -1685,7 +1687,7 @@ async function eliminarUsuarioEquipo(funcionarioId) {
 function actualizarEstadoBotonAgregar() {
     const boton = document.querySelector('button[onclick="agregarUsuarioEquipo()"]');
     if (!boton) return;
-    
+
     if (planoAtivo.includes('Crecimiento')) {
         const cajerosActuales = usuariosEquipo.filter(u => u.rol === 'cajero').length;
         if (cajerosActuales >= 1) {
@@ -1709,7 +1711,7 @@ async function alterarCredenciaisAdmin() {
     const novoLogin = document.getElementById('seguridad-novo-login').value.trim();
     const novaSenha = document.getElementById('seguridad-nova-senha').value.trim();
     const confirmarSenha = document.getElementById('seguridad-confirmar-senha').value.trim();
-    
+
     if (!senhaAtual || !novoLogin || !novaSenha || !confirmarSenha) {
         showToast("Complete todos los campos del formulario.", "error");
         return;
@@ -1722,7 +1724,7 @@ async function alterarCredenciaisAdmin() {
         showToast("Las nuevas contraseñas no coinciden. Por favor, verifique.", "error");
         return;
     }
-    
+
     try {
         const res = await fetch('/api/admin/credenciais', {
             method: 'POST',
@@ -1733,7 +1735,7 @@ async function alterarCredenciaisAdmin() {
                 nova_senha: novaSenha
             })
         });
-        
+
         if (res.ok) {
             const data = await res.json();
             showToast(data.mensagem || "Credenciales actualizadas correctamente.");
