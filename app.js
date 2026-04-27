@@ -152,18 +152,36 @@ async function fazerLogin() {
                     document.getElementById('app-screen').classList.add('flex');
                     document.getElementById('mobile-header').classList.remove('hidden');
                     
-                    // Forçar BRUTA: remover hidden de TODOS os containers e overlays
-                    // Forçar que QUALQUER overlay/z-index fique escondido
+                    // ESCONDER QUALQUER overlay/z-index
                     ['login-screen', 'superadmin-screen', 'hub-overlay', 'overlay', 'bloqueio-caixa'].forEach(function(id) {
                         var el = document.getElementById(id);
                         if(el) { el.style.display = 'none'; el.classList.add('hidden'); }
                     });
-                    document.querySelectorAll('.section-tela').forEach(function(t) {
-                        t.classList.remove('hidden', 'invisible', 'opacity-0');
-                        t.style.display = '';
+                    // TESTE NUCLEAR: forçar wrapper por ID
+                    var wrapper = document.getElementById('main-content-wrapper');
+                    if(wrapper) {
+                        wrapper.classList.remove('hidden', 'invisible', 'opacity-0');
+                        wrapper.style.display = 'block';
+                        // Injetar faixa vermelha de prova
+                        wrapper.insertAdjacentHTML('afterbegin', '<div id="pyra-v25-banner" style="background:red; color:white; padding:20px; text-align:center; font-weight:bold; width:100%; z-index:9999;">WRAPPER ESTÁ VISÍVEL V=25</div>');
+                        console.log('WRAPPER ENCONTRADO E FORÇADO');
+                    } else {
+                        console.error('ERRO CRÍTICO: main-content-wrapper NÃO EXISTE NO DOM');
+                    }
+                    // Alvo por ID, não por classe - cada seção
+                    ['tela-dashboard', 'tela-pos', 'tela-config', 'tela-cierre', 'tela-inventario', 'tela-operaciones', 'tela-proveedores', 'tela-entrada', 'tela-remision', 'tela-autofactura', 'tela-categorias', 'tela-reportes', 'tela-stocktake', 'tela-variancia', 'tela-stocktakereport', 'tela-ayuda'].forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if(el) {
+                            el.classList.remove('hidden', 'invisible', 'opacity-0');
+                            el.style.display = 'block';
+                        } else {
+                            console.error('ERRO CRÍTICO: ' + id + ' NÃO EXISTE NO DOM');
+                        }
                     });
-                    document.getElementById('tela-pos').style.display = '';
-                } catch(e) { console.warn('Brute force visibility:', e); }
+                    // POS específico para já mostrar conteúdo
+                    var posEl = document.getElementById('tela-pos');
+                    if(posEl) { posEl.style.display = 'block'; }
+                } catch(e) { console.warn('Visibility error:', e); }
                 
                 ajustarCamposFiscais(); // Ajusta obrigatoriedade do RUC conforme plano 
             } 
