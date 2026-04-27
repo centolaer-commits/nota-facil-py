@@ -515,7 +515,6 @@ function mudarTela(telaId, elementoBotao) {
         if(telaId === 'config') carregarConfiguracao();
         if(telaId === 'categorias') carregarCategorias();
         if(telaId === 'dashboard') {
-            // Chamar o carregamento dos dados imediatamente
             carregarDashboard();
         }
         if(telaId === 'pos') {
@@ -796,7 +795,11 @@ async function carregarDashboard() {
             const dashNotas = document.getElementById('dash-notas');
             if (dashVendas) dashVendas.innerText = 'Gs. 15.450.000';
             if (dashNotas) dashNotas.innerText = '142';
-
+            
+            // Forçar exibição (conta demo)
+            const secDash = document.getElementById('tela-dashboard');
+            if (secDash) { secDash.classList.remove('hidden'); secDash.style.display = 'block'; }
+            
             // Dados mock para gráfico
             const mockTopProdutos = [
                 { nome: 'Arroz 1kg', quantidade: 45 },
@@ -855,6 +858,14 @@ async function carregarDashboard() {
         // Atualizar métricas
         if (dashVendas) dashVendas.innerText = 'Gs. ' + d.total_vendas.toLocaleString('es-PY');
         if (dashNotas) dashNotas.innerText = d.total_notas;
+
+        // Forçar exibição da seção dashboard, garantindo que não está com display: none
+        const secaoDashboard = document.getElementById('tela-dashboard');
+        if (secaoDashboard) {
+            secaoDashboard.classList.remove('hidden');
+            secaoDashboard.classList.remove('d-none');
+            secaoDashboard.style.display = 'block';
+        }
 
         // Renderizar gráfico apenas se o canvas estiver disponível
         const canvas = document.getElementById('grafico-produtos');
