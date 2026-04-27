@@ -113,19 +113,8 @@ async function fazerLogin() {
                 carregarEmpresasSaaS(); showToast("¡Bienvenido al Panel Super Admin!");
             } else {
                 document.getElementById('app-screen').classList.remove('hidden'); document.getElementById('app-screen').classList.add('flex'); document.getElementById('mobile-header').classList.remove('hidden');
-                // Forçar exibição completa do sistema (teste visibilidade)
+                // Mostrar Dashboard imediatamente (teste visibilidade v19)
                 mudarTela('dashboard', null);
-                // Garantia extra: se mesmo assim não aparecer, injetar marcador vermelho
-                try {
-                    const app = document.getElementById('app-screen');
-                    if (app) {
-                        const testDiv = document.createElement('div');
-                        testDiv.id = 'test-visivel';
-                        testDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:red;color:white;padding:20px;font-size:24px;font-weight:bold;text-align:center';
-                        testDiv.textContent = '🔴 PYRA V=18 ATIVO - SISTEMA RODANDO';
-                        document.body.insertBefore(testDiv, document.body.firstChild);
-                    }
-                } catch(e) { console.error('Test error:', e); }
                 // Mapeia rótulo amigável do perfil
                 let etiquetaPerfil = 'Cajero';
                 if (rolUsuario === PERFIL_OWNER) etiquetaPerfil = 'Dueño';
