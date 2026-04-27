@@ -142,20 +142,26 @@ async function fazerLogin() {
                 
                 await carregarConfiguracao(); await carregarCategorias(); if(!isInicial) await carregarProveedores(); await carregarEstoque(); checarStatusCaixa(); atualizarStatusConexao(); 
 
+                console.log("LOGIN SUCCESS - ATTEMPTING TO RENDER");
                 showToast(`¡Sesión Iniciada!`);
                 
+                console.log("LOGIN - FORCING VISIBILITY");
                 // Forçar visibilidade do container pai e seção ativa
                 try {
                     document.getElementById('app-screen').classList.remove('hidden', 'invisible', 'opacity-0');
                     document.getElementById('app-screen').classList.add('flex');
                     document.getElementById('mobile-header').classList.remove('hidden');
                     
-                    // Forçar BRUTA: remover hidden de TODOS os containers
-                    document.querySelectorAll('.section-tela').forEach(t => {
+                    // Forçar BRUTA: remover hidden de TODOS os containers e overlays
+                    // Forçar que QUALQUER overlay/z-index fique escondido
+                    ['login-screen', 'superadmin-screen', 'hub-overlay', 'overlay', 'bloqueio-caixa'].forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if(el) { el.style.display = 'none'; el.classList.add('hidden'); }
+                    });
+                    document.querySelectorAll('.section-tela').forEach(function(t) {
                         t.classList.remove('hidden', 'invisible', 'opacity-0');
                         t.style.display = '';
                     });
-                    // Mostrar POS por defeito
                     document.getElementById('tela-pos').style.display = '';
                 } catch(e) { console.warn('Brute force visibility:', e); }
                 
@@ -480,7 +486,8 @@ function calcularMensualidad() {
 }
 
 function mudarTela(telaId, elementoBotao) { 
-    document.querySelectorAll('.section-tela').forEach(t => { t.classList.add('hidden'); t.classList.add('d-none'); t.style.display = 'none'; }); 
+    try {
+    document.querySelectorAll('.section-tela').forEach(t => { t.classList.add('hidden'); t.style.display = 'none'; }); 
     const telaAlvo = document.getElementById('tela-' + telaId);
     if(telaAlvo) {
         ['hidden', 'invisible', 'opacity-0'].forEach(cls => telaAlvo.classList.remove(cls));
@@ -506,6 +513,7 @@ function mudarTela(telaId, elementoBotao) {
         checarStatusCaixa();
         ajustarCamposFiscais();
     }
+    } catch(mt_error) { console.error('MUDARTELA ERROR:', mt_error, 'telaId:', telaId); }
 }
 
 async function checarStatusCaixa() { try { const res = await fetch('/status-caixa', { headers: getSaaSHeaders() }); const status = await res.json(); const bloqueio = document.getElementById('bloqueio-caixa'); const badge = document.getElementById('badge-caixa'); if(!status.aberto) { bloqueio.classList.remove('hidden'); bloqueio.classList.add('flex'); badge.classList.add('hidden'); } else { bloqueio.classList.add('hidden'); badge.classList.remove('hidden'); } } catch(e) {} }
