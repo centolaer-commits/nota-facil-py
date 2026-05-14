@@ -1766,3 +1766,20 @@ async function alterarCredenciaisAdmin() {
         showToast("Error de conexión", "error");
     }
 }
+
+
+window.eliminarEmpresa = async function(empresa_id) {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta empresa y todos sus datos?')) return;
+    try {
+        const resp = await fetch(`/super-admin/empresas/${empresa_id}`, { method: "DELETE" });
+        const data = await resp.json();
+        if (resp.ok) {
+            alert("Empresa eliminada exitosamente.");
+            carregarEmpresasSaaS();
+        } else {
+            alert("Error: " + (data.detail || data.mensaje || "No se pudo eliminar la empresa."));
+        }
+    } catch(e) {
+        alert("Error de conexion al eliminar empresa.");
+    }
+}
