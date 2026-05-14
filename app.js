@@ -816,47 +816,33 @@ async function carregarDashboardComVisibilidade() {
 }
 
 async function carregarDashboard() {
-    // Mostrar estado de carregamento
     const dashVendas = document.getElementById('dash-vendas');
     const dashNotas = document.getElementById('dash-notas');
-    if (dashVendas) dashVendas.innerText = 'Gs. ...';
-    if (dashNotas) dashNotas.innerText = '...';
 
     try {
         const res = await fetch('/dados-dashboard', {headers: getSaaSHeaders()});
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const d = await res.json();
 
-        // Garantir que os campos existam mesmo vazios
         const totalVendas = typeof d.total_vendas === 'number' ? d.total_vendas : 0;
         const totalNotas = typeof d.total_notas === 'number' ? d.total_notas : 0;
         const topProdutos = Array.isArray(d.top_produtos) ? d.top_produtos : [];
 
-        // Atualizar métricas
+        // Atualizar métricas — sem loading flash
         if (dashVendas) dashVendas.innerText = 'Gs. ' + totalVendas.toLocaleString('es-PY');
         if (dashNotas) dashNotas.innerText = String(totalNotas);
 
-        // Renderizar gráfico
-        const canvas = document.getElementById('grafico-produtos');
-        const emptyMsg = document.getElementById('grafico-empty-msg');
+        // Gráfico — se canvas não estiver pronto, apenas ignora (sem retry)
+        var canvas = document.getElementById('grafico-produtos');
+        var emptyMsg = document.getElementById('grafico-empty-msg');
 
         if (canvas) {
-            if (canvas.offsetParent === null || canvas.clientWidth === 0) {
-                setTimeout(function() { carregarDashboard(); }, 100);
-                return;
-            }
-
-            // Limpar gráfico anterior
-            if (graficoAtual) {
-                graficoAtual.destroy();
-                graficoAtual = null;
-            }
+            if (graficoAtual) { graficoAtual.destroy(); graficoAtual = null; }
 
             if (topProdutos.length === 0) {
-                // Estado vazio — ocultar canvas, mostrar mensagem
                 canvas.classList.add('hidden');
                 if (emptyMsg) emptyMsg.classList.remove('hidden');
-            } else {
+            } else if (canvas.offsetParent !== null && canvas.clientWidth > 0) {
                 canvas.classList.remove('hidden');
                 if (emptyMsg) emptyMsg.classList.add('hidden');
 
@@ -878,6 +864,13 @@ async function carregarDashboard() {
                         animation: { duration: 500, easing: 'easeOutQuart' }
                     }
                 });
+            } else if (topProdutos.length > 0) {
+                // Canvas existe com dados mas oculto — mostra mensagem vazia
+                canvas.classList.add('hidden');
+                if (emptyMsg) {
+                    emptyMsg.classList.remove('hidden');
+                    emptyMsg.innerText = 'Gráfico no disponible en esta vista';
+                }
             }
         }
     } catch(e) {
