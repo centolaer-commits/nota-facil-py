@@ -342,10 +342,10 @@ async function carregarEmpresasSaaS() {
                 <td class="p-4 font-bold text-white">${emp.nome}</td>
                 <td class="p-4">${emp.ruc}</td>
                 <td class="p-4">${emp.plano}</td>
-                <td class="p-4 text-slate-400 text-xs">${emp.criado_em ? new Date(emp.criado_em).toLocaleDateString("es-PY") : "-"}</td>
-                <td class="p-4 text-slate-400 text-xs">${emp.vencimento ? new Date(emp.vencimento).toLocaleDateString("es-PY") : "-"}</td>
+                <td class="p-4 text-slate-400 text-xs">${emp.criado_em && emp.criado_em !== "N/A" ? new Date(emp.criado_em).toLocaleDateString("es-PY") : "N/D"}</td>
+                <td class="p-4 text-slate-400 text-xs">${emp.vencimento && emp.vencimento !== "N/A" ? new Date(emp.vencimento).toLocaleDateString("es-PY") : "N/D"}</td>
                 <td class="p-4 ${corStatus}">${emp.status}</td>
-                <td class="p-4 flex gap-3"><button onclick="abrirModalEditarEmpresa(${emp.id}, '${emp.plano}', ${emp.valor})" class="text-blue-400 font-bold hover:underline">Editar</button> <button onclick="gerarFaturaSaaS(${emp.id})" class="text-brand-accent font-bold hover:underline">Generar Factura</button></td>`; 
+                <td class="p-4 flex gap-3"><button onclick="abrirModalEditarEmpresa(${emp.id}, '${emp.plano}', ${emp.valor})" class="text-blue-400 font-bold hover:underline">Editar</button> <button onclick="gerarFaturaSaaS(${emp.id})" class="text-brand-accent font-bold hover:underline">Generar Factura</button> <button onclick="eliminarEmpresa(${emp.id})" class="text-red-400 font-bold hover:underline">Eliminar</button></td>`; 
             }); 
         } 
         

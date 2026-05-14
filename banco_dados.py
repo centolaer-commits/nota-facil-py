@@ -592,6 +592,42 @@ def listar_todas_empresas():
     conexao.close()
     return [{"id": l[0], "nome": l[1], "ruc": l[2], "ambiente": l[3], "plano": l[4], "status": l[5], "criado_em": str(l[6])[:10] if l[6] else "N/A", "vencimento": str(l[7])[:10] if l[7] else "N/A", "valor": l[8], "email": l[9] or ""} for l in linhas]
 
+
+def deletar_empresa(empresa_id: int) -> dict:
+    """Exclui uma empresa e todos os dados associados (CASCATA manual)."""
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    try:
+        # Deletar dados dependentes (maioria sem ON DELETE CASCADE)
+        cursor.execute("DELETE FROM faturas_saas WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM notas_credito WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM notas_remision WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM auditorias_itens WHERE auditoria_id IN (SELECT id FROM auditorias WHERE empresa_id = %s)", (empresa_id,))
+        cursor.execute("DELETE FROM auditorias WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM mermas WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM autofacturas WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM compras WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM caixa_movimentacoes WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM caixa_sessoes WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM proveedores WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM categorias WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM produtos WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM notas WHERE empresa_id = %s", (empresa_id,))
+        cursor.execute("DELETE FROM funcionarios WHERE empresa_id = %s", (empresa_id,))
+        # Finalmente, deletar a empresa
+        cursor.execute("DELETE FROM empresas WHERE id = %s", (empresa_id,))
+        if cursor.rowcount == 0:
+            return {"erro": "Empresa no encontrada"}
+        conexao.commit()
+        return {"sucesso": True}
+    except Exception as e:
+        conexao.rollback()
+        import traceback
+        traceback.print_exc()
+        return {"erro": f"Erro al eliminar empresa: {e}"}
+    finally:
+        cursor.close()
+        conexao.close()
 def criar_nova_empresa(nome, ruc, senha_admin, senha_caixa, plano, valor):
     conexao = get_conexao()
     cursor = conexao.cursor()
