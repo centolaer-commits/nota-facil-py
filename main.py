@@ -15,6 +15,12 @@ from gerador_pdf import gerar_pdf_nota
 from conexao_sifen import enviar_xml_para_sifen
 import banco_dados
 
+import smtplib
+from email.mime.multipart import MIMEMultipart, MIMEBase
+from email.mime.text import MIMEText
+from email import encoders
+import tempfile
+from apscheduler.schedulers.background import BackgroundScheduler
 app = FastAPI(title="NubePY SaaS - SIFEN")
 app.add_middleware(
     CORSMiddleware,
@@ -27,6 +33,93 @@ app.add_middleware(
 if not os.path.exists("notas_pdf"): os.makedirs("notas_pdf")
 if not os.path.exists("certificados"): os.makedirs("certificados")
 
+
+# ============================================================
+# AUTO-COBRANCA - Email + Faturamento
+# ============================================================
+
+def enviar_fatura_email(destinatario: str, pdf_path: str, empresa_nome: str):
+    """Envia PDF da fatura por email. SMTP config via env vars."""
+    smtp_server = os.getenv("SMTP_SERVER", "")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_password = os.getenv("SMTP_PASSWORD", "")
+    smtp_from = os.getenv("SMTP_FROM", "noreply@nubepy.com")
+
+    if not smtp_server or not smtp_user:
+        print(f"[FATURA] SMTP nao configurado. Fatura para {empresa_nome} salva em {pdf_path}")
+        return False
+
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = smtp_from
+        msg["To"] = destinatario
+        msg["Subject"] = f"Fatura NubePY - {empresa_nome}"
+
+        corpo = f"""
+<html><body>
+<h2>Fatura de Assinatura - NubePY</h2>
+<p>Segue em anexo a fatura da sua assinatura NubePY.</p>
+<p>Equipe NubePY</p>
+</body></html>
+        """
+        msg.attach(MIMEText(corpo, "html"))
+
+        with open(pdf_path, "rb") as f:
+            anexo = MIMEBase("application", "octet-stream")
+            anexo.set_payload(f.read())
+        encoders.encode_base64(anexo)
+        anexo.add_header("Content-Disposition", f"attachment; filename=fatura_{empresa_nome}.pdf")
+        msg.attach(anexo)
+
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+
+        print(f"[FATURA] Email enviado para {destinatario} ({empresa_nome})")
+        return True
+    except Exception as e:
+        print(f"[FATURA] Erro ao enviar email para {destinatario}: {e}")
+        return False
+
+
+def rotina_faturamento_diario():
+    """Rotina diaria (meia-noite)."""
+    print("[FATURA] === Rotina de faturamento diario iniciada ===")
+    try:
+        empresas = banco_dados.listar_empresas_vencendo_hoje()
+        print(f"[FATURA] Empresas a faturar hoje: {len(empresas)}")
+
+        for emp in empresas:
+            try:
+                from gerador_pdf import gerar_fatura_saas
+                pdf_path = gerar_fatura_saas(emp)
+
+                if pdf_path:
+                    if emp["email"]:
+                        enviar_fatura_email(emp["email"], pdf_path, emp["nome"])
+
+                    banco_dados.atualizar_vencimento_empresa(emp["id"])
+                    banco_dados.salvar_fatura_saas(emp["id"], emp["valor"], emp["vencimento"])
+
+                    try:
+                        os.remove(pdf_path)
+                    except Exception:
+                        pass
+
+                    print(f"[FATURA] OK: {emp['nome']} ({emp['ruc']}) - Gs. {emp['valor']:.2f}")
+                else:
+                    print(f"[FATURA] ERRO ao gerar PDF: {emp['nome']}")
+            except Exception as e:
+                print(f"[FATURA] ERRO processando {emp.get('nome', '?')}: {e}")
+                import traceback
+                traceback.print_exc()
+    except Exception as e:
+        print(f"[FATURA] ERRO na rotina: {e}")
+    print("[FATURA] === Rotina finalizada ===")
+
+
 @app.on_event("startup")
 def startup_event():
     """Injeta dados de demo no banco ao iniciar o servidor"""
@@ -34,6 +127,11 @@ def startup_event():
     print("[STARTUP] Dados de demo verificados/injetados.")
 
 class DadosLogin(BaseModel):
+    # Inicializa scheduler de faturamento automatico
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(rotina_faturamento_diario, "cron", hour=0, minute=0)
+    scheduler.start()
+    print("[FATURA] Scheduler iniciado - faturamento diario a meia-noite (00:00)")
     ruc: str
     senha: str
 

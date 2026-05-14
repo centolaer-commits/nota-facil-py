@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import hashlib
 import traceback
 import os
@@ -249,6 +249,10 @@ def inicializar_banco():
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS csc TEXT DEFAULT ''")
         # HERE IS THE NEW MERCADO PAGO TOKEN COLUMN
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS mercado_pago_token TEXT DEFAULT ''")
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS email_contato TEXT DEFAULT ''")
+        # Backfill data_criacao para registros existentes
+        cursor.execute("UPDATE empresas SET data_criacao = data_vencimento - INTERVAL '30 days' WHERE data_criacao IS NULL AND data_vencimento IS NOT NULL")
     except Exception as e:
         pass
 
@@ -583,17 +587,17 @@ def obter_metricas_saas():
 def listar_todas_empresas():
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute("SELECT id, nome_empresa, ruc, ambiente_sifen, plano, status_assinatura, data_vencimento, valor_mensalidade FROM empresas ORDER BY id ASC")
+    cursor.execute("SELECT id, nome_empresa, ruc, ambiente_sifen, plano, status_assinatura, data_criacao, data_vencimento, valor_mensalidade, email_contato FROM empresas ORDER BY id ASC")
     linhas = cursor.fetchall()
     conexao.close()
-    return [{"id": l[0], "nome": l[1], "ruc": l[2], "ambiente": l[3], "plano": l[4], "status": l[5], "vencimento": str(l[6]) if l[6] else "N/A", "valor": l[7]} for l in linhas]
+    return [{"id": l[0], "nome": l[1], "ruc": l[2], "ambiente": l[3], "plano": l[4], "status": l[5], "criado_em": str(l[6])[:10] if l[6] else "N/A", "vencimento": str(l[7])[:10] if l[7] else "N/A", "valor": l[8], "email": l[9] or ""} for l in linhas]
 
 def criar_nova_empresa(nome, ruc, senha_admin, senha_caixa, plano, valor):
     conexao = get_conexao()
     cursor = conexao.cursor()
     vencimento = date.today() + timedelta(days=30)
     try:
-        cursor.execute("INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, valor_mensalidade, status_assinatura, data_vencimento) VALUES (%s, %s, %s, %s, %s, %s, 'Activo', %s)", (nome, ruc, senha_admin, senha_caixa, plano, valor, vencimento))
+        cursor.execute("INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, valor_mensalidade, status_assinatura, data_vencimento, email_contato) VALUES (%s, %s, %s, %s, %s, %s, 'Activo', %s)", (nome, ruc, senha_admin, senha_caixa, plano, valor, vencimento, ''))
         conexao.commit()
         return True, "Empresa creada exitosamente."
     except psycopg2.IntegrityError:
@@ -1675,3 +1679,55 @@ def injetar_dados_demo():
             cursor.close()
         if conexao:
             conexao.close()
+
+
+# ====================================================================
+# AUTO-COBRANCA - Faturamento SaaS automatico
+# ====================================================================
+
+
+def listar_empresas_vencendo_hoje():
+    """
+    Retorna empresas cujo data_vencimento == hoje e status = Activo.
+    """
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("""
+        SELECT id, nome_empresa, ruc, plano, valor_mensalidade, email_contato, data_vencimento
+        FROM empresas
+        WHERE data_vencimento = CURRENT_DATE AND status_assinatura = 'Activo'
+    """)
+    linhas = cursor.fetchall()
+    conexao.close()
+    return [{"id": l[0], "nome": l[1], "ruc": l[2], "plano": l[3],
+            "valor": l[4], "email": l[5] or "", "vencimento": str(l[6])}
+            for l in linhas]
+
+
+def atualizar_vencimento_empresa(empresa_id: int):
+    """
+    Adiciona 30 dias ao data_vencimento da empresa.
+    """
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("""
+        UPDATE empresas
+        SET data_vencimento = data_vencimento + INTERVAL '30 days'
+        WHERE id = %s
+    """, (empresa_id,))
+    conexao.commit()
+    conexao.close()
+
+
+def salvar_fatura_saas(empresa_id: int, valor: float, data_vencimento: str):
+    """
+    Registra fatura gerada na tabela faturas_saas.
+    """
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute("""
+        INSERT INTO faturas_saas (empresa_id, valor, data_vencimento, status)
+        VALUES (%s, %s, %s, 'Pendente')
+    """, (empresa_id, valor, data_vencimento))
+    conexao.commit()
+    conexao.close()

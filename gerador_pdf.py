@@ -78,3 +78,74 @@ def gerar_pdf_nota(dados_nota, cdc, interno=False):
         os.remove(temp_qr)
     
     return nome_arquivo
+
+def gerar_fatura_saas(empresa: dict) -> str | None:
+    """Gera PDF de fatura SaaS. Retorna path ou None."""
+    try:
+        from datetime import date
+
+        pdf = FPDF()
+        pdf.add_page()
+
+        pdf.set_font("Arial", "B", 20)
+        pdf.set_text_color(13, 148, 136)
+        pdf.cell(0, 15, "NubePY", ln=True, align="C")
+        pdf.set_font("Arial", "", 10)
+        pdf.set_text_color(100, 116, 139)
+        pdf.cell(0, 6, "Sistema de Facturacion SIFEN", ln=True, align="C")
+        pdf.cell(0, 6, "Asuncion - Paraguay", ln=True, align="C")
+        pdf.ln(8)
+
+        pdf.set_draw_color(13, 148, 136)
+        pdf.set_line_width(0.5)
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(8)
+
+        pdf.set_font("Arial", "B", 16)
+        pdf.set_text_color(30, 41, 59)
+        pdf.cell(0, 10, "FATURA DE ASSINATURA", ln=True, align="C")
+        pdf.ln(10)
+
+        pdf.set_font("Arial", "B", 11)
+        pdf.set_text_color(51, 65, 85)
+        nome = empresa.get("nome", "-")
+        ruc = empresa.get("ruc", "-")
+        plano = empresa.get("plano", "-")
+        venc = empresa.get("vencimento", "-")
+        valor = empresa.get("valor", 0)
+        pdf.cell(0, 7, f"Empresa: {nome}", ln=True)
+        pdf.cell(0, 7, f"RUC: {ruc}", ln=True)
+        pdf.cell(0, 7, f"Plano: {plano}", ln=True)
+        pdf.cell(0, 7, f"Periodo: {venc} a +30 dias", ln=True)
+        pdf.ln(5)
+
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(8)
+
+        pdf.set_font("Arial", "B", 11)
+        pdf.set_text_color(30, 41, 59)
+        pdf.cell(0, 7, "Descricao", ln=True)
+        pdf.set_font("Arial", "", 11)
+        pdf.set_text_color(71, 85, 105)
+        pdf.cell(0, 7, f"Mensalidade NubePY - Plano {plano}", ln=True)
+        pdf.set_font("Arial", "B", 12)
+        pdf.set_text_color(13, 148, 136)
+        pdf.cell(0, 10, f"Total: Gs. {valor:,.0f}", ln=True, align="R")
+        pdf.ln(10)
+
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(5)
+        pdf.set_font("Arial", "", 8)
+        pdf.set_text_color(148, 163, 184)
+        pdf.cell(0, 5, "NubePY - Sistema de Facturacion Electronica SIFEN", ln=True, align="C")
+        pdf.cell(0, 5, "www.nubepy.com | soporte@nubepy.com", ln=True, align="C")
+
+        safe_name = nome.replace(" ", "_").replace("/", "-")[:30]
+        pdf_path = os.path.join(tempfile.gettempdir(), f"fatura_{safe_name}_{date.today().isoformat()}.pdf")
+        pdf.output(pdf_path)
+        print(f"[FATURA] PDF gerado: {pdf_path}")
+        return pdf_path
+
+    except Exception as e:
+        print(f"[FATURA] Erro ao gerar PDF: {e}")
+        return None

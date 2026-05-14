@@ -338,7 +338,14 @@ async function carregarEmpresasSaaS() {
             empresas.forEach(emp => { 
                 let corStatus = emp.status === 'Activo' ? 'text-green-400' : 'text-red-400'; 
                 // ADICIONAMOS O BOTÃO "COBRAR" BEM AQUI NO FINAL DA LINHA ABAIXO:
-                tbody.innerHTML += `<tr class="border-b border-slate-700"><td class="p-4 font-bold text-white">${emp.nome}</td><td class="p-4">${emp.ruc}</td><td class="p-4">${emp.plano}</td><td class="p-4 ${corStatus}">${emp.status}</td><td class="p-4 flex gap-3"><button onclick="abrirModalEditarEmpresa(${emp.id}, '${emp.plano}', ${emp.valor})" class="text-blue-400 font-bold hover:underline">Editar</button> <button onclick="gerarFaturaSaaS(${emp.id})" class="text-brand-accent font-bold hover:underline">Generar Factura</button></td></tr>`; 
+                tbody.innerHTML += `<tr class="border-b border-slate-700">
+                <td class="p-4 font-bold text-white">${emp.nome}</td>
+                <td class="p-4">${emp.ruc}</td>
+                <td class="p-4">${emp.plano}</td>
+                <td class="p-4 text-slate-400 text-xs">${emp.criado_em ? new Date(emp.criado_em).toLocaleDateString("es-PY") : "-"}</td>
+                <td class="p-4 text-slate-400 text-xs">${emp.vencimento ? new Date(emp.vencimento).toLocaleDateString("es-PY") : "-"}</td>
+                <td class="p-4 ${corStatus}">${emp.status}</td>
+                <td class="p-4 flex gap-3"><button onclick="abrirModalEditarEmpresa(${emp.id}, '${emp.plano}', ${emp.valor})" class="text-blue-400 font-bold hover:underline">Editar</button> <button onclick="gerarFaturaSaaS(${emp.id})" class="text-brand-accent font-bold hover:underline">Generar Factura</button></td>`; 
             }); 
         } 
         

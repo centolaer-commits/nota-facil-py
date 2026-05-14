@@ -12,3 +12,4 @@ lxml
 zeep
 requests
 mercadopago==2.3.0
+apscheduler>=3.10,<4.0
