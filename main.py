@@ -125,13 +125,13 @@ def startup_event():
     """Injeta dados de demo no banco ao iniciar o servidor"""
     banco_dados.injetar_dados_demo()
     print("[STARTUP] Dados de demo verificados/injetados.")
-
-class DadosLogin(BaseModel):
     # Inicializa scheduler de faturamento automatico
     scheduler = BackgroundScheduler()
     scheduler.add_job(rotina_faturamento_diario, "cron", hour=0, minute=0)
     scheduler.start()
     print("[FATURA] Scheduler iniciado - faturamento diario a meia-noite (00:00)")
+
+class DadosLogin(BaseModel):
     ruc: str
     senha: str
 
