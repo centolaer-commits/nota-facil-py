@@ -499,7 +499,25 @@ function mudarTela(telaId, elementoBotao) {
 }
 
 async function checarStatusCaixa() { try { const res = await fetch('/status-caixa', { headers: getSaaSHeaders() }); const status = await res.json(); const bloqueio = document.getElementById('bloqueio-caixa'); const badge = document.getElementById('badge-caixa'); if(!status.aberto) { bloqueio.classList.remove('hidden'); bloqueio.classList.add('flex'); badge.classList.add('hidden'); } else { bloqueio.classList.add('hidden'); badge.classList.remove('hidden'); } } catch(e) {} }
-async function abrirTurnoCaixa() { const valor = parseFloat(document.getElementById('valor-abertura-caixa').value) || 0; try { const res = await fetch('/abrir-caixa', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({valor_inicial: valor}) }); if(res.ok) { showToast("✅ Turno abierto."); checarStatusCaixa(); } } catch(e) {} }
+async function abrirTurnoCaixa() {
+    let valorStr = (document.getElementById('valor-abertura-caixa').value || '').replace(/\./g, '');
+    const valor = parseFloat(valorStr) || 0;
+    try {
+        const res = await fetch('/abrir-caixa', {
+            method: 'POST',
+            headers: getSaaSHeaders(),
+            body: JSON.stringify({valor_inicial: valor})
+        });
+        if(res.ok) {
+            showToast("✅ Turno abierto.");
+            checarStatusCaixa();
+        } else {
+            alert("Error al abrir caja: " + (await res.text()));
+        }
+    } catch(e) {
+        alert("Error de conexión al abrir caja: " + e.message);
+    }
+}
 async function fecharTurnoCaixa() { const valor = prompt("Efectivo en gaveta:"); if(valor === null) return; try { const res = await fetch('/fechar-caixa', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({valor_final: parseFloat(valor)||0}) }); if(res.ok) { showToast("✅ Cerrado."); mudarTela('pos', null); } } catch(e) {} }
 function abrirModalSangria() { document.getElementById('modal-sangria').classList.remove('hidden'); document.getElementById('modal-sangria').classList.add('flex'); } function fecharModalSangria() { document.getElementById('modal-sangria').classList.add('hidden'); }
 async function salvarSangria() { const valor = parseFloat(document.getElementById('sangria-valor').value) || 0; const motivo = document.getElementById('sangria-motivo').value.trim(); try { const res = await fetch('/registrar-sangria', { method: 'POST', headers: getSaaSHeaders(), body: JSON.stringify({valor, motivo}) }); if (res.ok) { showToast("✅ Retiro registrado."); fecharModalSangria(); } } catch(e) {} }
