@@ -198,7 +198,7 @@ def inicializar_banco():
         ''')
     except Exception as e:
         pass
-        
+
     try:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS notas_remision (
@@ -241,7 +241,7 @@ def inicializar_banco():
                 custo_unitario REAL
             )
         ''')
-        
+
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS plano TEXT DEFAULT 'Inicial'")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS status_assinatura TEXT DEFAULT 'Activo'")
         cursor.execute("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS data_vencimento DATE")
@@ -259,11 +259,11 @@ def inicializar_banco():
     try:
         vencimento_inicial = date.today() + timedelta(days=365)
         cursor.execute('''
-            INSERT INTO empresas (id, nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade) 
-            VALUES (1, 'Mi Empresa S.A.', '80012345-6', 'admin123', 'caja123', 'VIP', 'Activo', %s, 0) 
+            INSERT INTO empresas (id, nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade)
+            VALUES (1, 'Mi Empresa S.A.', '80012345-6', 'admin123', 'caja123', 'VIP', 'Activo', %s, 0)
             ON CONFLICT DO NOTHING
         ''', (vencimento_inicial,))
-        
+
         cursor.execute("SELECT 1 FROM categorias WHERE nome = 'General' AND empresa_id = 1")
         if not cursor.fetchone():
             cursor.execute("INSERT INTO categorias (empresa_id, nome) VALUES (1, 'General')")
@@ -299,11 +299,11 @@ def validar_plano_funcionario(plano_empresa, rol_funcionario):
     # Gerentes só em planos VIP/Premium/Lite Premium
     if rol_funcionario == 'gerente' and plano_empresa not in ['VIP', 'Premium', 'Lite Premium']:
         return "Su plan actual no permite acceso como Gerente. Actualice al Plan VIP."
-    
+
     # Cajeros em plano Inicial não são permitidos
     if rol_funcionario == 'cajero' and plano_empresa == 'Inicial':
         return "El Plan Inicial es para 1 solo usuario (el dueño). Actualice al Plan Crecimiento."
-    
+
     return None # Sem restrições
 
 def plano_permite_sifen(plano_empresa):
@@ -348,10 +348,10 @@ def autenticar_usuario(identificador, senha_fornecida):
                 print("[AUTH DEBUG] Senha de ADMIN correta")
                 cursor.close()
                 conexao.close()
-                
+
                 # Identifica se é o dono do sistema
                 cargo = "superadmin" if identificador == "NUBE" else "admin"
-                
+
                 return {
                     "sucesso": True,
                     "empresa_id": emp_id,
@@ -359,7 +359,7 @@ def autenticar_usuario(identificador, senha_fornecida):
                     "plano": plano,
                     "nome_empresa": nome_empresa
                 }
-            
+
             # Verificar senha de caixa (texto plano - legado)
             if senha_fornecida == senha_caixa:
                 print("[AUTH DEBUG] Senha de CAJA correta")
@@ -377,7 +377,7 @@ def autenticar_usuario(identificador, senha_fornecida):
         # FASE 2: Buscar funcionário por EMAIL (fallback)
         # ==========================================================
         print(f"[AUTH DEBUG] Buscando funcionário por email...")
-        
+
         cursor.execute("""
             SELECT f.id, f.rol, f.nome, f.email, f.empresa_id, e.plano, e.nome_empresa
             FROM funcionarios f
@@ -399,14 +399,14 @@ def autenticar_usuario(identificador, senha_fornecida):
 
             if cursor.fetchone():
                 print(f"[AUTH DEBUG] Hash da senha do funcionário OK")
-                
+
                 # Validar restrições de plano
                 erro_plano = validar_plano_funcionario(plano, rol)
                 if erro_plano:
                     cursor.close()
                     conexao.close()
                     return {"sucesso": False, "mensagem": erro_plano}
-                
+
                 cursor.close()
                 conexao.close()
                 return {
@@ -507,7 +507,7 @@ def remover_funcionario(empresa_id, funcionario_id):
         cursor.execute("SELECT id FROM funcionarios WHERE id = %s AND empresa_id = %s", (funcionario_id, empresa_id))
         if not cursor.fetchone():
             return {"sucesso": False, "mensagem": "Funcionário não encontrado"}
-        
+
         # Desativar em vez de excluir (soft delete)
         cursor.execute("UPDATE funcionarios SET ativo = FALSE WHERE id = %s", (funcionario_id,))
         conexao.commit()
@@ -528,7 +528,7 @@ def atualizar_funcionario(empresa_id, funcionario_id, nome=None, email=None, sen
         cursor.execute("SELECT id FROM funcionarios WHERE id = %s AND empresa_id = %s", (funcionario_id, empresa_id))
         if not cursor.fetchone():
             return {"sucesso": False, "mensagem": "Funcionário não encontrado"}
-        
+
         updates = []
         params = []
         if nome is not None:
@@ -546,13 +546,13 @@ def atualizar_funcionario(empresa_id, funcionario_id, nome=None, email=None, sen
         if ativo is not None:
             updates.append("ativo = %s")
             params.append(ativo)
-        
+
         if not updates:
             return {"sucesso": False, "mensagem": "Nenhum campo para atualizar"}
-        
+
         params.append(funcionario_id)
         cursor.execute(f"""
-            UPDATE funcionarios 
+            UPDATE funcionarios
             SET {', '.join(updates)}
             WHERE id = %s
         """, tuple(params))
@@ -830,7 +830,7 @@ def salvar_auditoria_estoque(empresa_id, itens_auditados):
 def obter_relatorio_variancia(empresa_id, data_inicio, data_fim):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    
+
     cursor.execute('''
         SELECT a.data AS fecha,
                ai.codigo_barras AS codigo,
@@ -843,10 +843,10 @@ def obter_relatorio_variancia(empresa_id, data_inicio, data_fim):
         GROUP BY ai.codigo_barras, ai.descricao, a.data
         ORDER BY a.data DESC
     ''', (empresa_id, data_inicio, data_fim))
-    
+
     dados = cursor.fetchall()
     conexao.close()
-    
+
     resultado = []
     for fecha, codigo, descricao, total_unidades, impacto_financeiro in dados:
         resultado.append({
@@ -857,13 +857,13 @@ def obter_relatorio_variancia(empresa_id, data_inicio, data_fim):
             "total_unidades": total_unidades,   # Soma das diferenças (pode ser negativo)
             "impacto_financeiro": impacto_financeiro  # Impacto em guaranies
         })
-    
+
     return resultado
 
 def listar_auditorias(empresa_id, data_inicio, data_fim):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    
+
     cursor.execute('''
         SELECT id,
                data,
@@ -873,10 +873,10 @@ def listar_auditorias(empresa_id, data_inicio, data_fim):
         WHERE empresa_id = %s AND DATE(data) BETWEEN %s AND %s
         ORDER BY data DESC
     ''', (empresa_id, data_inicio, data_fim))
-    
+
     dados = cursor.fetchall()
     conexao.close()
-    
+
     resultado = []
     for id, data, impacto_financeiro, total_itens in dados:
         resultado.append({
@@ -885,7 +885,7 @@ def listar_auditorias(empresa_id, data_inicio, data_fim):
             "impacto_financeiro": impacto_financeiro,  # Impacto total da auditoria
             "total_itens": total_itens          # Número de itens auditados
         })
-    
+
     return resultado
 
 def obter_detalhes_auditoria(empresa_id, auditoria_id):
@@ -919,13 +919,13 @@ def registrar_merma(empresa_id, codigo_barras, quantidade, motivo):
         prod = cursor.fetchone()
         if not prod: return False, "Producto no encontrado."
         desc, custo, qtd_atual = prod
-        
+
         if qtd_atual < quantidade:
             return False, f"Stock insuficiente (Solo tienes {qtd_atual})."
 
         cursor.execute('UPDATE produtos SET quantidade = quantidade - %s WHERE empresa_id = %s AND codigo_barras = %s', (quantidade, empresa_id, codigo_barras))
         cursor.execute('INSERT INTO mermas (empresa_id, codigo_barras, descricao, quantidade, custo_unitario, motivo) VALUES (%s, %s, %s, %s, %s, %s)', (empresa_id, codigo_barras, desc, quantidade, custo, motivo))
-        
+
         conexao.commit()
         return True, "Baja de producto registrada correctamente."
     except Exception as e:
@@ -1018,12 +1018,12 @@ def salvar_nota(empresa_id, ruc, cliente, valor, cdc, itens, link_pdf="", link_q
             item_dict['preco_custo'] = row[0] if row else 0
             cursor.execute('UPDATE produtos SET quantidade = quantidade - %s WHERE empresa_id = %s AND codigo_barras = %s', (item_dict.get('quantidade', 0), empresa_id, item_dict['codigo_barras']))
         else:
-            item_dict['preco_custo'] = 0 
+            item_dict['preco_custo'] = 0
         itens_com_custo.append(item_dict)
 
     itens_json = json.dumps(itens_com_custo)
     cursor.execute('''
-        INSERT INTO notas (empresa_id, ruc_emissor, nome_cliente, valor_total, cdc, itens, link_pdf, link_qrcode, metodo_pago, caixa_id) 
+        INSERT INTO notas (empresa_id, ruc_emissor, nome_cliente, valor_total, cdc, itens, link_pdf, link_qrcode, metodo_pago, caixa_id)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (empresa_id, ruc, cliente, valor, cdc, itens_json, link_pdf, link_qrcode, metodo_pago, caixa_id))
     conexao.commit()
@@ -1033,11 +1033,11 @@ def salvar_nota_credito(empresa_id, cdc_ref, cdc_novo, cliente, valor, itens, li
     conexao = get_conexao()
     cursor = conexao.cursor()
     itens_json = json.dumps(itens)
-    
+
     for item in itens:
         if item.get('codigo_barras'):
             cursor.execute('UPDATE produtos SET quantidade = quantidade + %s WHERE empresa_id = %s AND codigo_barras = %s', (item.get('quantidade', 0), empresa_id, item['codigo_barras']))
-            
+
     cursor.execute('''
         INSERT INTO notas_credito (empresa_id, cdc_referencia, cdc_novo, nome_cliente, valor_total, itens, link_pdf)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -1048,20 +1048,20 @@ def salvar_nota_credito(empresa_id, cdc_ref, cdc_novo, cliente, valor, itens, li
 def listar_todas_notas(empresa_id, busca="", data_inicio=None, data_fim=None):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    
+
     query = "SELECT id, nome_cliente, valor_total, cdc, link_pdf, data_emissao, metodo_pago FROM notas WHERE empresa_id = %s"
     params = [empresa_id]
-    
+
     if data_inicio and data_fim:
         query += " AND DATE(data_emissao) >= %s AND DATE(data_emissao) <= %s"
         params.extend([data_inicio, data_fim])
-        
+
     if busca:
         query += " AND (nome_cliente ILIKE %s OR cdc ILIKE %s)"
         params.extend([f"%{busca}%", f"%{busca}%"])
-        
+
     query += " ORDER BY id DESC"
-    
+
     cursor.execute(query, tuple(params))
     linhas = cursor.fetchall()
     conexao.close()
@@ -1096,7 +1096,7 @@ def gerar_vendas_mock_hoje(empresa_id):
         horas = random.randint(8, 20)
         minutos = random.randint(0, 59)
         data_emissao = datetime(hoje.year, hoje.month, hoje.day, horas, minutos)
-        
+
         cliente = random.choice(clientes)
         metodo = random.choice(metodos)
         itens = []
@@ -1120,11 +1120,11 @@ def gerar_vendas_mock_hoje(empresa_id):
                 "iva_total": int(iva_unitario * quantidade)
             })
             total += preco * quantidade
-        
+
         # CDC fictício
         cdc = f"1234567890{random.randint(10000, 99999)}"
         link_pdf = f"https://demo.nubepy.com/nota/{cdc}.pdf"
-        
+
         cursor.execute('''
             INSERT INTO notas (empresa_id, nome_cliente, ruc_cliente, valor_total, itens, metodo_pago, data_emissao, ambiente, cdc, link_pdf)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -1161,52 +1161,59 @@ def verificar_e_semear_demo(empresa_id):
     return True
 
 def obter_dados_dashboard(empresa_id):
-    # Auto‑seed para demo (self‑healing)
-    verificar_e_semear_demo(empresa_id)
-    
     conexao = get_conexao()
     cursor = conexao.cursor()
-    cursor.execute('SELECT valor_total, itens FROM notas WHERE empresa_id = %s AND DATE(data_emissao) = CURRENT_DATE', (empresa_id,))
+
+    # Últimos 30 dias (inclui hoje)
+    cursor.execute('''
+        SELECT valor_total, itens FROM notas
+        WHERE empresa_id = %s AND data_emissao >= CURRENT_DATE - INTERVAL '30 days'
+    ''', (empresa_id,))
     notas = cursor.fetchall()
     conexao.close()
-    
-    total_vendas = 0
+
+    total_vendas = sum(n[0] for n in notas)
     total_notas = len(notas)
     produtos_vendidos = {}
-    
+
     for nota in notas:
-        total_vendas += nota[0]
-        itens = json.loads(nota[1]) 
+        if not nota[1]:
+            continue
+        itens = json.loads(nota[1])
         for item in itens:
             nome = item.get("descricao", "Manual / Otros")
             qtd = item.get("quantidade", 0)
             produtos_vendidos[nome] = produtos_vendidos.get(nome, 0) + qtd
-                
+
     top_produtos = sorted(produtos_vendidos.items(), key=lambda x: x[1], reverse=True)[:5]
-    return {"total_vendas": total_vendas, "total_notas": total_notas, "top_produtos": [{"nome": p[0], "quantidade": p[1]} for p in top_produtos]}
+    return {
+        "total_vendas": total_vendas or 0,
+        "total_notas": total_notas or 0,
+        "top_produtos": [{"nome": p[0], "quantidade": p[1]} for p in top_produtos]
+    }
 
 def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
     conexao = get_conexao()
     cursor = conexao.cursor()
-    
+
     if not data_inicio: data_inicio = str(date.today())
     if not data_fim: data_fim = str(date.today())
-    
+
     cursor.execute("SELECT valor_total, itens, metodo_pago FROM notas WHERE empresa_id = %s AND DATE(data_emissao) >= %s AND DATE(data_emissao) <= %s", (empresa_id, data_inicio, data_fim))
     notas_periodo = cursor.fetchall()
-    
+
     total_vendas_periodo = 0
     lucro_bruto_periodo = 0
     total_notas_periodo = len(notas_periodo)
-    
+
     cursor.execute("SELECT SUM(valor) FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'SANGRIA' AND DATE(data) >= %s AND DATE(data) <= %s", (empresa_id, data_inicio, data_fim))
     total_sangrias = cursor.fetchone()[0] or 0
-    
+
     cursor.execute("SELECT SUM(valor) FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'AUTOFACTURA' AND DATE(data) >= %s AND DATE(data) <= %s", (empresa_id, data_inicio, data_fim))
     total_autofacturas = cursor.fetchone()[0] or 0
-    
+
     total_sangrias_geral = total_sangrias + total_autofacturas
-    
+
     itens_agrupados = {}
     for nota in notas_periodo:
         total_vendas_periodo += nota[0]
@@ -1215,15 +1222,15 @@ def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
             preco_venda = item.get('preco_unitario', 0)
             preco_custo = item.get('preco_custo', 0)
             qtd = item.get('quantidade', 0)
-            
+
             receita_item = preco_venda * qtd
             lucro_item = (preco_venda - preco_custo) * qtd
             lucro_bruto_periodo += lucro_item
-            
+
             cod = item.get('codigo_barras')
             desc = item.get('descricao', 'Manual / Otros')
             chave = cod if cod else desc
-            
+
             if chave not in itens_agrupados:
                 itens_agrupados[chave] = {
                     "codigo_barras": cod, "descricao": desc, "vendidos": 0, "estoque_restante": 0, "receita_total": 0, "lucro_total": 0, "margem": 0
@@ -1231,12 +1238,12 @@ def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
             itens_agrupados[chave]["vendidos"] += qtd
             itens_agrupados[chave]["receita_total"] += receita_item
             itens_agrupados[chave]["lucro_total"] += lucro_item
-            
+
     lista_detalhada = list(itens_agrupados.values())
     for item in lista_detalhada:
         if item["receita_total"] > 0:
             item["margem"] = round((item["lucro_total"] / item["receita_total"]) * 100, 1)
-            
+
         if item["codigo_barras"]:
             cursor.execute("SELECT quantidade FROM produtos WHERE empresa_id = %s AND codigo_barras = %s", (empresa_id, item["codigo_barras"]))
             row = cursor.fetchone()
@@ -1245,7 +1252,7 @@ def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
             item["estoque_restante"] = "-"
 
     lista_detalhada.sort(key=lambda x: x["receita_total"], reverse=True)
-    
+
     # Construir lista de transações para tabela de cierre
     transacoes = []
     # Adicionar notas (vendas)
@@ -1258,7 +1265,7 @@ def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
             "monto": valor_total,
             "detalle": f"{nome_cliente} ({metodo_pago})"
         })
-    
+
     # Adicionar sangrias
     cursor.execute("SELECT data, motivo, valor FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'SANGRIA' AND DATE(data) >= %s AND DATE(data) <= %s ORDER BY data DESC", (empresa_id, data_inicio, data_fim))
     sangrias = cursor.fetchall()
@@ -1269,7 +1276,7 @@ def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
             "monto": valor,
             "detalle": motivo
         })
-    
+
     # Adicionar autofacturas
     cursor.execute("SELECT data, motivo, valor FROM caixa_movimentacoes WHERE empresa_id = %s AND tipo = 'AUTOFACTURA' AND DATE(data) >= %s AND DATE(data) <= %s ORDER BY data DESC", (empresa_id, data_inicio, data_fim))
     autofacturas = cursor.fetchall()
@@ -1280,17 +1287,17 @@ def obter_fechamento_caixa(empresa_id, data_inicio=None, data_fim=None):
             "monto": valor,
             "detalle": motivo
         })
-    
+
     # Ordenar transações por data decrescente
     transacoes.sort(key=lambda x: x["fecha_hora"], reverse=True)
-    
+
     conexao.close()
-    
+
     return {
-        "vendas_hoje": total_vendas_periodo, 
-        "lucro_bruto": lucro_bruto_periodo, 
-        "notas_emitidas": total_notas_periodo, 
-        "total_sangrias": total_sangrias_geral, 
+        "vendas_hoje": total_vendas_periodo,
+        "lucro_bruto": lucro_bruto_periodo,
+        "notas_emitidas": total_notas_periodo,
+        "total_sangrias": total_sangrias_geral,
         "detalhes_itens": lista_detalhada,
         "transacoes": transacoes
     }
@@ -1322,8 +1329,8 @@ def editar_proveedor(empresa_id, proveedor_id, nome, ruc, telefone, email, ender
     cursor = conexao.cursor()
     try:
         cursor.execute('''
-            UPDATE proveedores 
-            SET nome = %s, ruc = %s, telefone = %s, email = %s, endereco = %s 
+            UPDATE proveedores
+            SET nome = %s, ruc = %s, telefone = %s, email = %s, endereco = %s
             WHERE id = %s AND empresa_id = %s
         ''', (nome, ruc, telefone, email, endereco, proveedor_id, empresa_id))
         conexao.commit()
@@ -1356,26 +1363,26 @@ def salvar_entrada_factura(empresa_id, proveedor_id, numero_factura, data_emissa
     try:
         valor_total = 0
         itens_json = json.dumps(itens)
-        
+
         for item in itens:
             cod = item['codigo_barras']
             qtd = item['quantidade']
             custo = item['custo_unitario']
-            
+
             subtotal = qtd * custo
             valor_total += subtotal
-            
+
             cursor.execute('''
-                UPDATE produtos 
-                SET quantidade = quantidade + %s, preco_custo = %s 
+                UPDATE produtos
+                SET quantidade = quantidade + %s, preco_custo = %s
                 WHERE empresa_id = %s AND codigo_barras = %s
             ''', (qtd, custo, empresa_id, cod))
-        
+
         cursor.execute('''
             INSERT INTO compras (empresa_id, proveedor_id, numero_factura, data_emissao, valor_total, itens)
             VALUES (%s, %s, %s, %s, %s, %s)
         ''', (empresa_id, proveedor_id, numero_factura, data_emissao, valor_total, itens_json))
-        
+
         conexao.commit()
         return True, "Entrada registrada y stock actualizado."
     except Exception as e:
@@ -1420,7 +1427,7 @@ def alterar_credenciais_admin(empresa_id, senha_atual, novo_ruc, nova_senha):
     try:
         conexao = get_conexao()
         cursor = conexao.cursor()
-        
+
         # 1. Verificar senha atual
         cursor.execute("""
             SELECT senha_admin FROM empresas WHERE id = %s
@@ -1428,26 +1435,26 @@ def alterar_credenciais_admin(empresa_id, senha_atual, novo_ruc, nova_senha):
         linha = cursor.fetchone()
         if not linha:
             return {"sucesso": False, "mensagem": "Empresa não encontrada"}
-        
+
         senha_admin_atual = linha[0]
         if senha_atual != senha_admin_atual:
             return {"sucesso": False, "mensagem": "Senha atual incorreta"}
-        
+
         # 2. Verificar se novo RUC já existe (e não é o mesmo da empresa atual)
         cursor.execute("""
             SELECT id FROM empresas WHERE ruc = %s AND id != %s
         """, (novo_ruc, empresa_id))
         if cursor.fetchone():
             return {"sucesso": False, "mensagem": "O novo RUC já está em uso por outra empresa"}
-        
+
         # 3. Atualizar RUC e senha_admin
         cursor.execute("""
             UPDATE empresas SET ruc = %s, senha_admin = %s WHERE id = %s
         """, (novo_ruc, nova_senha, empresa_id))
         conexao.commit()
-        
+
         return {"sucesso": True, "mensagem": "Credenciais atualizadas com sucesso"}
-        
+
     except psycopg2.Error as e:
         if conexao:
             conexao.rollback()
@@ -1460,22 +1467,22 @@ def alterar_credenciais_admin(empresa_id, senha_atual, novo_ruc, nova_senha):
             conexao.close()
 
 def injetar_dados_demo():
-    """Cria o usuÃ¡rio de teste pÃºblico (RUC 9999999-9) com dados completos de demonstraÃ§Ã£o"""
+    """Cria o usuÃ¡rio de teste pÃoblico (RUC 9999999-9) com dados completos de demonstraÃ§Ã£o"""
     conexao = None
     cursor = None
     try:
         import random
         from datetime import datetime, date, timedelta
-        
+
         conexao = get_conexao()
         cursor = conexao.cursor()
-        
+
         vencimento = date.today() + timedelta(days=365)
-        
+
         # Verificar se empresa demo jÃ¡ existe
         cursor.execute("SELECT id FROM empresas WHERE ruc = %s", ('9999999-9',))
         existing = cursor.fetchone()
-        
+
         if existing:
             empresa_id = existing[0]
             print(f"[DEMO] Empresa demo jÃ¡ existe (ID: {empresa_id}).")
@@ -1485,58 +1492,58 @@ def injetar_dados_demo():
                 INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, status_assinatura, data_vencimento, valor_mensalidade)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
-            ''', ('UsuÃ¡rio PÃºblico Demo', '9999999-9', 'demo123', 'demo123', 'Demo', 'Activo', vencimento, 0))
-            
+            ''', ('UsuÃ¡rio PÃoblico Demo', '9999999-9', 'demo123', 'demo123', 'Demo', 'Activo', vencimento, 0))
+
             empresa_id = cursor.fetchone()[0]
             print(f"[DEMO] Empresa demo criada (ID: {empresa_id}).")
-        
+
         # ========== LIMPEZA SELETIVA ==========
         print(f"[DEMO] LIMPEZA FORÃ‡ADA: Deletando vendas e produtos existentes para empresa ID {empresa_id}...")
-        
+
         # 1. Notas (vendas)
         cursor.execute("DELETE FROM notas WHERE empresa_id = %s", (empresa_id,))
         notas_deleted = cursor.rowcount
         print(f"[DEMO]   - Notas removidas: {notas_deleted}")
-        
+
         # 2. Produtos
         cursor.execute("DELETE FROM produtos WHERE empresa_id = %s", (empresa_id,))
         produtos_deleted = cursor.rowcount
         print(f"[DEMO]   - Produtos removidos: {produtos_deleted}")
-        
+
         # 3. Outras tabelas (se existirem)
         try:
             cursor.execute("DELETE FROM compras WHERE empresa_id = %s", (empresa_id,))
             print(f"[DEMO]   - Compras removidas: {cursor.rowcount}")
         except:
             pass
-        
+
         try:
             cursor.execute("DELETE FROM autofacturas WHERE empresa_id = %s", (empresa_id,))
             print(f"[DEMO]   - Autofacturas removidas: {cursor.rowcount}")
         except:
             pass
-        
+
         try:
             cursor.execute("DELETE FROM mermas WHERE empresa_id = %s", (empresa_id,))
             print(f"[DEMO]   - Mermas removidas: {cursor.rowcount}")
         except:
             pass
-        
+
         try:
             cursor.execute("DELETE FROM notas_credito WHERE empresa_id = %s", (empresa_id,))
             print(f"[DEMO]   - Notas crÃ©dito removidas: {cursor.rowcount}")
         except:
             pass
-        
+
         try:
             cursor.execute("DELETE FROM notas_remision WHERE empresa_id = %s", (empresa_id,))
-            print(f"[DEMO]   - Notas remisiÃ³n removidas: {cursor.rowcount}")
+            print(f"[DEMO]   - Notas remisiÃ3n removidas: {cursor.rowcount}")
         except:
             pass
-        
-        # NÃƒO deletar categorias e provedores (podem ter constraints Ãºnicas)
+
+        # NÃƒO deletar categorias e provedores (podem ter constraints Ãonicas)
         print(f"[DEMO] LIMPEZA FORÃ‡ADA CONCLUÃDA. Categorias e provedores mantidos.")
-        
+
         # ========== CATEGORIAS ==========
         categorias = ['General', 'Bebidas', 'LÃ¡cteos', 'Limpeza', 'Enlatados', 'PanaderÃ­a', 'Carnes']
         total_categorias = 0
@@ -1547,16 +1554,16 @@ def injetar_dados_demo():
             ''', (empresa_id, cat))
             total_categorias += cursor.rowcount
         print(f"[DEMO] {total_categorias}/{len(categorias)} categorias criadas.")
-        
+
         # ========== PROVEDORES ==========
         provedores = [
-            ('Distribuidora Central S.A.', '80012345-1', '021 234 567', 'ventas@distcentral.com.py', 'Av. Eusebio Ayala km 4.5, AsunciÃ³n'),
+            ('Distribuidora Central S.A.', '80012345-1', '021 234 567', 'ventas@distcentral.com.py', 'Av. Eusebio Ayala km 4.5, AsunciÃ3n'),
             ('Importadora del Este S.R.L.', '80023456-2', '021 345 678', 'contacto@importeste.com.py', 'Av. EspaÃ±a 1234, Ciudad del Este'),
-            ('Proveedores del Sur S.A.', '80034567-3', '021 456 789', 'info@proveedorsur.com.py', 'Av. San MartÃ­n 567, EncarnaciÃ³n'),
-            ('Alimentos Norte S.A.', '80045678-4', '021 567 890', 'ventas@alimentosnorte.com.py', 'Av. PerÃº 789, ConcepciÃ³n'),
+            ('Proveedores del Sur S.A.', '80034567-3', '021 456 789', 'info@proveedorsur.com.py', 'Av. San MartÃ­n 567, EncarnaciÃ3n'),
+            ('Alimentos Norte S.A.', '80045678-4', '021 567 890', 'ventas@alimentosnorte.com.py', 'Av. PerÃo 789, ConcepciÃ3n'),
             ('Mayorista Py S.R.L.', '80056789-5', '021 678 901', 'pedidos@mayoristapy.com.py', 'Av. BrasÃ­lia 456, Pedro Juan Caballero')
         ]
-        
+
         total_provedores = 0
         for nome, ruc, telefone, email, endereco in provedores:
             cursor.execute('''
@@ -1565,32 +1572,32 @@ def injetar_dados_demo():
             ''', (empresa_id, nome, ruc, telefone, email, endereco))
             total_provedores += cursor.rowcount
         print(f"[DEMO] {total_provedores}/{len(provedores)} provedores criados.")
-        
+
         # ========== PRODUTOS ==========
         produtos = [
-            # CÃ³digo, DescriÃ§Ã£o, Categoria, Subcategoria, Custo, Venda, Estoque
+            # CÃ3digo, DescriÃ§Ã£o, Categoria, Subcategoria, Custo, Venda, Estoque
             ('ARR-001', 'Arroz Premium 1kg', 'General', '', 10000, 12500, 45),
             ('ACE-002', 'Aceite Girasol 900ml', 'General', '', 15000, 18500, 28),
-            ('AZU-003', 'AzÃºcar Refinado 1kg', 'General', '', 7000, 8500, 62),
+            ('AZU-003', 'AzÃocar Refinado 1kg', 'General', '', 7000, 8500, 62),
             ('COC-004', 'Coca-Cola 2L', 'Bebidas', 'Gaseosas', 8000, 10500, 36),
             ('SPR-005', 'Sprite 1.5L', 'Bebidas', 'Gaseosas', 7500, 9800, 42),
-            ('CER-006', 'Cerveza Pilsen 1L', 'Bebidas', 'AlcohÃ³licas', 12000, 15800, 24),
+            ('CER-006', 'Cerveza Pilsen 1L', 'Bebidas', 'AlcohÃ3licas', 12000, 15800, 24),
             ('LEH-007', 'Leche Entera 1L', 'LÃ¡cteos', '', 6000, 8500, 58),
             ('YOU-008', 'Yogur Natural 1kg', 'LÃ¡cteos', '', 8500, 11500, 32),
             ('QUE-009', 'Queso Paraguay 500g', 'LÃ¡cteos', '', 22000, 28500, 18),
-            ('JAB-010', 'JabÃ³n en Polvo 3kg', 'Limpeza', '', 25000, 32500, 22),
+            ('JAB-010', 'JabÃ3n en Polvo 3kg', 'Limpeza', '', 25000, 32500, 22),
             ('DET-011', 'Detergente LÃ­quido 1L', 'Limpeza', '', 12000, 16500, 40),
             ('PAP-012', 'Papel HigiÃ©nico 4un', 'Limpeza', '', 15000, 19500, 55),
-            ('ATA-013', 'AtÃºn en Lata 200g', 'Enlatados', '', 7500, 9800, 30),
+            ('ATA-013', 'AtÃon en Lata 200g', 'Enlatados', '', 7500, 9800, 30),
             ('MAI-014', 'MaÃ­z en Lata 400g', 'Enlatados', '', 6500, 8200, 38),
-            ('PAN-015', 'Pan FrancÃªs un', 'PanaderÃ­a', '', 1500, 2500, 120),
+            ('PAN-015', 'Pan FrancÃas un', 'PanaderÃ­a', '', 1500, 2500, 120),
             ('RES-016', 'Carne Res 1kg', 'Carnes', '', 35000, 45500, 15),
             ('POL-017', 'Pollo Entero 1.5kg', 'Carnes', '', 22000, 29500, 20),
-            ('JAM-018', 'JamÃ³n Cocido 200g', 'Carnes', '', 12500, 16800, 25),
+            ('JAM-018', 'JamÃ3n Cocido 200g', 'Carnes', '', 12500, 16800, 25),
             ('GAL-019', 'Galletas MarÃ­a 500g', 'PanaderÃ­a', '', 4500, 6500, 48),
             ('CAF-020', 'CafÃ© Molido 500g', 'Bebidas', '', 18000, 23500, 16)
         ]
-        
+
         total_produtos = 0
         for cod, desc, cat, subcat, custo, venda, qtd in produtos:
             cursor.execute('''
@@ -1599,24 +1606,24 @@ def injetar_dados_demo():
             ''', (empresa_id, cod, desc, cat, subcat, custo, venda, qtd))
             total_produtos += cursor.rowcount
         print(f"[DEMO] {total_produtos}/{len(produtos)} produtos criados.")
-        
+
         # ========== VENDAS (ÃšLTIMOS 30 DIAS) ==========
         metodos_pago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Efectivo', 'Tarjeta']
         clientes = [
             ('Consumidor Final', '80012345-1'),
             ('Juan PÃ©rez', '1234567-8'),
             ('MarÃ­a GonzÃ¡lez', '2345678-9'),
-            ('Carlos LÃ³pez', '3456789-0'),
+            ('Carlos LÃ3pez', '3456789-0'),
             ('Ana MartÃ­nez', '4567890-1'),
             ('Luis RodrÃ­guez', '5678901-2'),
             ('Supermercado Central', '80098765-4'),
             ('Restaurante El Buen Sabor', '80087654-3')
         ]
-        
+
         # ========== CAIXA ABERTO (PARA DEMO) ==========
         # Verificar se jÃ¡ existe uma sessÃ£o de caixa aberta
         cursor.execute('''
-            SELECT id FROM caixa_sessoes 
+            SELECT id FROM caixa_sessoes
             WHERE empresa_id = %s AND status = 'ABERTO'
         ''', (empresa_id,))
         caixa_row = cursor.fetchone()
@@ -1631,13 +1638,13 @@ def injetar_dados_demo():
         else:
             caixa_id = caixa_row[0]
             print(f"[DEMO] SessÃ£o de caixa aberta jÃ¡ existe (ID: {caixa_id}).")
-        
-        # Gerar 25 vendas nos Ãºltimos 30 dias
+
+        # Gerar 25 vendas nos Ãoltimos 30 dias
         # As primeiras 5 vendas sÃ£o de hoje para aparecer no dashboard
         hoje = datetime.now()
         total_vendas = 0
         for i in range(25):
-            # Data aleatÃ³ria nos Ãºltimos 30 dias
+            # Data aleatÃ3ria nos Ãoltimos 30 dias
             if i < 5:
                 dias_atras = 0  # Hoje - para dashboard
             else:
@@ -1645,23 +1652,23 @@ def injetar_dados_demo():
             horas_atras = random.randint(0, 23)
             minutos_atras = random.randint(0, 59)
             data_venda = hoje - timedelta(days=dias_atras, hours=horas_atras, minutes=minutos_atras)
-            
-            # Selecionar cliente aleatÃ³rio
+
+            # Selecionar cliente aleatÃ3rio
             nome_cliente, ruc_cliente = random.choice(clientes)
-            
-            # Selecionar 1 a 4 produtos aleatÃ³rios para esta venda
+
+            # Selecionar 1 a 4 produtos aleatÃ3rios para esta venda
             num_itens = random.randint(1, 4)
             itens_selecionados = random.sample(produtos[:15], num_itens)  # Usar apenas os primeiros 15 para variar
-            
+
             itens_json = []
             valor_total = 0
-            
+
             for prod in itens_selecionados:
                 codigo, descricao, categoria, subcat, custo, venda, estoque = prod
                 quantidade = random.randint(1, 3)
                 subtotal = venda * quantidade
                 valor_total += subtotal
-                
+
                 itens_json.append({
                     'codigo_barras': codigo,
                     'codigo': codigo,
@@ -1671,13 +1678,13 @@ def injetar_dados_demo():
                     'preco_custo': custo,
                     'subtotal': subtotal
                 })
-            
-            # CDC fictÃ­cio (Ãºnico)
+
+            # CDC fictÃ­cio (Ãonico)
             cdc = f'9999999-9-{data_venda.strftime("%Y%m%d")}-{i:06d}'
-            
-            # MÃ©todo de pago aleatÃ³rio
+
+            # MÃ©todo de pago aleatÃ3rio
             metodo = random.choice(metodos_pago)
-            
+
             cursor.execute('''
                 INSERT INTO notas (empresa_id, ruc_emissor, nome_cliente, valor_total, cdc, itens, data_emissao, metodo_pago, caixa_id)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -1693,15 +1700,15 @@ def injetar_dados_demo():
                 caixa_id
             ))
             total_vendas += cursor.rowcount
-        print(f"[DEMO] {total_vendas}/25 vendas histÃ³ricas criadas.")
+        print(f"[DEMO] {total_vendas}/25 vendas histÃ3ricas criadas.")
         conexao.commit()
-        print(f"[DEMO] âœ… Dados de demo completos injetados com sucesso. Empresa ID: {empresa_id}")
+        print(f"[DEMO] âœ... Dados de demo completos injetados com sucesso. Empresa ID: {empresa_id}")
         print(f"[DEMO]   - {total_categorias}/{len(categorias)} categorias")
         print(f"[DEMO]   - {total_provedores}/{len(provedores)} provedores")
         print(f"[DEMO]   - {total_produtos}/{len(produtos)} produtos")
-        print(f"[DEMO]   - {total_vendas}/25 vendas histÃ³ricas")
+        print(f"[DEMO]   - {total_vendas}/25 vendas histÃ3ricas")
         return empresa_id
-        
+
     except Exception as e:
         print(f"[DEMO ERRO] {e}")
         import traceback

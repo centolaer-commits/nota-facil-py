@@ -815,40 +815,60 @@ async function carregarDashboardComVisibilidade() {
     }
 }
 
-async function carregarDashboard() { 
-    try { 
-        // Verificar se é conta Demo (plano Demo ou RUC especial)
-        const isDemoAccount = (planoAtivo && (planoAtivo.toLowerCase().includes('demo') || planoAtivo === 'Plan Demo')) || (rucAtual && rucAtual.startsWith('800'));
-        
-        if (isDemoAccount) {
-            // Dados estáticos para conta Demo
-            const dashVendas = document.getElementById('dash-vendas');
-            const dashNotas = document.getElementById('dash-notas');
-            if (dashVendas) dashVendas.innerText = 'Gs. 15.450.000';
-            if (dashNotas) dashNotas.innerText = '142';
-            
-            // Dados mock para gráfico
-            const mockTopProdutos = [
-                { nome: 'Arroz 1kg', quantidade: 45 },
-                { nome: 'Azúcar 1kg', quantidade: 38 },
-                { nome: 'Aceite 900ml', quantidade: 32 },
-                { nome: 'Harina 1kg', quantidade: 28 },
-                { nome: 'Fideos 500g', quantidade: 25 }
-            ];
-            
-            // Renderizar gráfico se canvas disponível
-            const canvas = document.getElementById('grafico-produtos');
-            if (canvas && canvas.offsetParent !== null && canvas.clientWidth !== 0) {
-                await new Promise(resolve => requestAnimationFrame(resolve));
-                const ctx = canvas.getContext('2d');
-                if (graficoAtual) graficoAtual.destroy();
+async function carregarDashboard() {
+    // Mostrar estado de carregamento
+    const dashVendas = document.getElementById('dash-vendas');
+    const dashNotas = document.getElementById('dash-notas');
+    if (dashVendas) dashVendas.innerText = 'Gs. ...';
+    if (dashNotas) dashNotas.innerText = '...';
+
+    try {
+        const res = await fetch('/dados-dashboard', {headers: getSaaSHeaders()});
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const d = await res.json();
+
+        // Garantir que os campos existam mesmo vazios
+        const totalVendas = typeof d.total_vendas === 'number' ? d.total_vendas : 0;
+        const totalNotas = typeof d.total_notas === 'number' ? d.total_notas : 0;
+        const topProdutos = Array.isArray(d.top_produtos) ? d.top_produtos : [];
+
+        // Atualizar métricas
+        if (dashVendas) dashVendas.innerText = 'Gs. ' + totalVendas.toLocaleString('es-PY');
+        if (dashNotas) dashNotas.innerText = String(totalNotas);
+
+        // Renderizar gráfico
+        const canvas = document.getElementById('grafico-produtos');
+        const emptyMsg = document.getElementById('grafico-empty-msg');
+
+        if (canvas) {
+            if (canvas.offsetParent === null || canvas.clientWidth === 0) {
+                setTimeout(function() { carregarDashboard(); }, 100);
+                return;
+            }
+
+            // Limpar gráfico anterior
+            if (graficoAtual) {
+                graficoAtual.destroy();
+                graficoAtual = null;
+            }
+
+            if (topProdutos.length === 0) {
+                // Estado vazio — ocultar canvas, mostrar mensagem
+                canvas.classList.add('hidden');
+                if (emptyMsg) emptyMsg.classList.remove('hidden');
+            } else {
+                canvas.classList.remove('hidden');
+                if (emptyMsg) emptyMsg.classList.add('hidden');
+
+                await new Promise(function(resolve) { requestAnimationFrame(resolve); });
+                var ctx = canvas.getContext('2d');
                 graficoAtual = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: mockTopProdutos.map(p => p.nome),
+                        labels: topProdutos.map(function(p) { return p.nome || 'Sin nombre'; }),
                         datasets: [{
                             label: 'Unidades',
-                            data: mockTopProdutos.map(p => p.quantidade),
+                            data: topProdutos.map(function(p) { return p.quantidade || 0; }),
                             backgroundColor: '#0d9488'
                         }]
                     },
@@ -859,74 +879,11 @@ async function carregarDashboard() {
                     }
                 });
             }
-            return; // Abortar fetch
-        }
-        
-        // Mostrar estado de carregamento
-        const dashVendas = document.getElementById('dash-vendas');
-        const dashNotas = document.getElementById('dash-notas');
-        if (dashVendas) dashVendas.innerText = 'Gs. ...';
-        if (dashNotas) dashNotas.innerText = '...';
-        
-        // Limpar gráfico anterior se existir
-        if (graficoAtual) {
-            graficoAtual.destroy();
-            graficoAtual = null;
-        }
-        
-        const res = await fetch('/dados-dashboard', {headers: getSaaSHeaders()}); 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const d = await res.json(); 
-        
-        // Atualizar métricas
-        if (dashVendas) dashVendas.innerText = 'Gs. ' + d.total_vendas.toLocaleString('es-PY');
-        if (dashNotas) dashNotas.innerText = d.total_notas;
-        
-        // Renderizar gráfico apenas se o canvas estiver disponível
-        const canvas = document.getElementById('grafico-produtos');
-        if (canvas) {
-            // Verificar se o canvas está visível e tem dimensões
-            if (canvas.offsetParent === null || canvas.clientWidth === 0) {
-                console.warn('Canvas não visível ou sem dimensões, tentando novamente...');
-                setTimeout(() => carregarDashboard(), 100);
-                return;
-            }
-            
-            // Garantir que o canvas esteja pronto para renderização
-            await new Promise(resolve => requestAnimationFrame(resolve));
-            
-            const ctx = canvas.getContext('2d');
-            if (graficoAtual) graficoAtual.destroy();
-            graficoAtual = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: d.top_produtos.map(p => p.nome),
-                    datasets: [{
-                        label: 'Unidades',
-                        data: d.top_produtos.map(p => p.quantidade),
-                        backgroundColor: '#0d9488'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 500,
-                        easing: 'easeOutQuart'
-                    }
-                }
-            });
         }
     } catch(e) {
         console.error('Erro ao carregar dashboard:', e);
-        // Mostrar erro nas métricas
-        const dashVendas = document.getElementById('dash-vendas');
-        const dashNotas = document.getElementById('dash-notas');
         if (dashVendas) dashVendas.innerText = 'Gs. Error';
         if (dashNotas) dashNotas.innerText = 'Error';
-        
-        // Tentar novamente após 3 segundos
-        setTimeout(() => carregarDashboard(), 3000);
     }
 }
 async function carregarCategorias() { try { const res=await fetch('/listar-categorias', {headers:getSaaSHeaders()}); const d=await res.json(); const sf=document.getElementById('novo-cat'); const sfi=document.getElementById('filtro-cat-inventario'); const sfc=document.getElementById('stocktake-categoria'); const tb=document.getElementById('tabela-categorias'); if(sf) sf.innerHTML=''; if(sfi) sfi.innerHTML='<option value="">Todas</option>'; if(sfc) sfc.innerHTML='<option value="">Todas las categorías</option>'; if(tb) tb.innerHTML=''; d.forEach(c=>{ if(sf) sf.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfi) sfi.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(sfc) sfc.innerHTML+=`<option value="${c.nome}">${c.nome}</option>`; if(tb) tb.innerHTML+=`<tr class="border-b border-slate-700"><td class="p-4 text-white">${c.nome}</td><td class="p-4 text-center"><button onclick="deletarCategoria(${c.id})" class="text-red-400">🗑️</button></td></tr>`; }); } catch(e){} }
