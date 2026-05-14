@@ -633,7 +633,7 @@ def criar_nova_empresa(nome, ruc, senha_admin, senha_caixa, plano, valor):
     cursor = conexao.cursor()
     vencimento = date.today() + timedelta(days=30)
     try:
-        cursor.execute("INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, valor_mensalidade, status_assinatura, data_vencimento, email_contato) VALUES (%s, %s, %s, %s, %s, %s, 'Activo', %s)", (nome, ruc, senha_admin, senha_caixa, plano, valor, vencimento, ''))
+        cursor.execute("INSERT INTO empresas (nome_empresa, ruc, senha_admin, senha_caixa, plano, valor_mensalidade, status_assinatura, data_vencimento, email_contato) VALUES (%s, %s, %s, %s, %s, %s, 'Activo', %s, %s)", (nome, ruc, senha_admin, senha_caixa, plano, valor, vencimento, ''))
         conexao.commit()
         return True, "Empresa creada exitosamente."
     except psycopg2.IntegrityError:
