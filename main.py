@@ -395,6 +395,8 @@ def editar_empresa(empresa_id: int, dados: EdicaoEmpresa):
     return {"mensaje": "Plan actualizado exitosamente."}
 
 @app.get("/status-caixa")
+def status_caixa(x_empresa_id: int = Header(...)):
+    return banco_dados.status_caixa_atual(x_empresa_id)
 
 @app.delete("/super-admin/empresas/{empresa_id}")
 def deletar_empresa_api(empresa_id: int):
@@ -403,9 +405,6 @@ def deletar_empresa_api(empresa_id: int):
     if "erro" in resultado:
         raise HTTPException(status_code=404, detail=resultado["erro"])
     return {"mensaje": "Empresa y todos sus datos eliminados correctamente."}
-
-def status_caixa(x_empresa_id: int = Header(...)):
-    return banco_dados.status_caixa_atual(x_empresa_id)
 
 @app.post("/abrir-caixa")
 def abrir_caixa(dados: CaixaAbertura, x_empresa_id: int = Header(...)):
