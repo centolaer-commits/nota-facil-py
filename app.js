@@ -623,6 +623,14 @@ function atualizarInterfaceCaixa() { const tbody = document.getElementById('list
 function toggleFormProducto() { 
     var form = document.getElementById('form-novo-produto');
     var list = document.getElementById('produto-list-wrapper');
+    // Se o formulario ja esta visivel (modo edicao), resetar para novo produto
+    if (!form.classList.contains('hidden')) {
+        cancelarEdicaoProduto();
+        // Mostrar formulario novamente (cancelarEdicaoProduto oculta)
+        form.classList.remove('hidden');
+        if (list) list.classList.add('hidden');
+        return;
+    }
     form.classList.toggle('hidden');
     if (list) {
         if (form.classList.contains('hidden')) {

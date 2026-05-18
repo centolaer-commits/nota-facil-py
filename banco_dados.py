@@ -750,18 +750,26 @@ def alternar_ambiente_sifen(empresa_id, ambiente):
 def cadastrar_produto(empresa_id, codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor=""):
     conexao = get_conexao()
     cursor = conexao.cursor()
+    # Garantir codigo_barras unico quando vazio: gerar UUID para evitar conflito de PK
+    if not codigo_barras or codigo_barras.strip() == "":
+        import uuid
+        codigo_barras = "S/" + uuid.uuid4().hex[:8].upper()
     cursor.execute('''
         INSERT INTO produtos (empresa_id, codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ON CONFLICT (empresa_id, codigo_barras) DO UPDATE SET
-        descricao = EXCLUDED.descricao,
-        categoria = EXCLUDED.categoria,
-        subcategoria = EXCLUDED.subcategoria,
-        preco_custo = EXCLUDED.preco_custo,
-        preco_venda = EXCLUDED.preco_venda,
-        quantidade = EXCLUDED.quantidade,
-        codigo_proveedor = EXCLUDED.codigo_proveedor
     ''', (empresa_id, codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor))
+    conexao.commit()
+    conexao.close()
+
+def editar_produto(empresa_id, codigo_original, codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor=""):
+    conexao = get_conexao()
+    cursor = conexao.cursor()
+    cursor.execute('''
+        UPDATE produtos
+        SET codigo_barras = %s, descricao = %s, categoria = %s, subcategoria = %s,
+            preco_custo = %s, preco_venda = %s, quantidade = %s, codigo_proveedor = %s
+        WHERE empresa_id = %s AND codigo_barras = %s
+    ''', (codigo_barras, descricao, categoria, subcategoria, preco_custo, preco_venda, quantidade, codigo_proveedor, empresa_id, codigo_original))
     conexao.commit()
     conexao.close()
 

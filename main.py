@@ -665,6 +665,15 @@ def cadastrar_produto(produto: ProdutoNovo, x_empresa_id: int = Header(...)):
     )
     return {"mensaje": "Producto guardado con éxito"}
 
+@app.put("/editar-produto/{codigo_original}")
+def editar_produto(codigo_original: str, produto: ProdutoNovo, x_empresa_id: int = Header(...)):
+    banco_dados.editar_produto(
+        x_empresa_id, codigo_original, produto.codigo_barras, produto.descricao,
+        produto.categoria, produto.subcategoria, produto.preco_custo,
+        produto.preco_venda, produto.quantidade, produto.codigo_proveedor
+    )
+    return {"mensaje": "Producto actualizado con éxito"}
+
 @app.get("/listar-produtos")
 def listar_produtos(x_empresa_id: int = Header(...)):
     return banco_dados.listar_produtos(x_empresa_id)
